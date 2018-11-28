@@ -46,7 +46,7 @@ A multi-target application is a package comprised of multiple application and re
 
 ## Installation
 
-To install the package, first you need to install Go and set your Go workspace.
+To use the package, first you need to install [GO](https://golang.org/dl/) and set your [workspace](https://golang.org/doc/code.html#Workspaces).
 
 Download and install it:
 
