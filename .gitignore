@@ -1,0 +1,34 @@
+# VsCode files
+.vscode
+#Goland files
+.idea
+.idea/inspectionProfiles/
+cmd/internal/
+vendor
+release
+
+# Binaries for programs and plugins
+*.so
+*.dylib
+
+# Test binary, build with `go test -c`
+*.test
+
+*.out
+.editorconfig
+.github
+.history
+build
+fmt
+docker*
+.dockerignore
+.DS_Store
+
+
+cover.html
+cover.out
+coverage.txt
+page.html
+
+internal/tpl/MakeFileTest
+internal/tpl/MakeFileTest.mta
