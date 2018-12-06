@@ -25,63 +25,63 @@ type: map
 
 		Entry("Mapping", `
 type: map
-mapping: NotAMap`, `YAML Schema Error: <mapping> node must be a map`),
+mapping: NotAMap`, `YAML Schema Error: The <mapping> node must be a map.`),
 
 		Entry("SchemaSequenceIssue", `
 type: seq
 sequence: NotASequence
-`, `YAML Schema Error: <sequence> node must be an array`),
+`, `YAML Schema Error: The <sequence> node must be an array.`),
 
 		Entry("sequence One Item", `
 type: seq
 sequence:
 - 1
 - 2
-`, `YAML Schema Error: <sequence> node can only have one item`),
+`, `YAML Schema Error: The <sequence> node can only have one item.`),
 
 		Entry("required value not bool", `
 type: map
 mapping:
   firstName:  {required: 123}
-`, `YAML Schema Error: <required> node must be a boolean but found <123>`),
+`, `YAML Schema Error: The <required> node must be a boolean but found <123>.`),
 
 		Entry("sequence NestedTypeNotString", `
 type: map
 mapping:
   firstName:  {type: [1,2] }
-`, `YAML Schema Error: <type> node must be a string`),
+`, `YAML Schema Error: The <type> node must be a string.`),
 
 		Entry("Pattern NotString", `
 type: map
 mapping:
   firstName:  {pattern: [1,2] }
-`, `YAML Schema Error: <pattern> node must be a string`),
+`, `YAML Schema Error: The <pattern> node must be a string.`),
 
 		Entry("Pattern InvalidRegex", `
 type: map
 mapping:
   firstName:  {required: true, pattern: '/[a-zA-Z+/'}
-`, "YAML Schema Error: <pattern> node not valid: error parsing regexp: missing closing ]: `[a-zA-Z+`"),
+`, "YAML Schema Error: The <pattern> node not valid: error parsing regexp: missing closing ]: `[a-zA-Z+`"),
 
 		Entry("Enum NotString", `
 type: enum
 enums:
   duck : 1
   dog  : 2
-`, `YAML Schema Error: enums values must be listed as array`),
+`, `YAML Schema Error: enums values must be listed as array.`),
 
 		Entry("Enum NoEnumsNode", `
 type: enum
 enumos:
   - duck
   - dog
-`, `YAML Schema Error: enums values must be listed`),
+`, `YAML Schema Error: enums values must be listed.`),
 
 		Entry("Enum ValueNotSimple", `
 type: enum
 enums:
   [duck, [dog, cat]]
-`, `YAML Schema Error: enum values must be simple`),
+`, `YAML Schema Error: enum values must be simple.`),
 	)
 
 	var _ = DescribeTable("Valid input",

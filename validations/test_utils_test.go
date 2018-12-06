@@ -37,5 +37,5 @@ func expectSingleSchemaIssue(actual []YamlValidationIssue, expectedMsg string) {
 	Ω(numOfErrors).Should(Equal(1), "A single validation issue expected but found: <%d>", numOfErrors)
 
 	actualMsg := actual[0]
-	Ω(actual[0].Msg).Should(Equal(expectedMsg), "Expecting <%s>.\n\t But found <%s>.", expectedMsg, actualMsg)
+	Ω(actual[0].Msg).Should(Equal(expectedMsg), "Expecting <%s>.\n\t But found <%s>", expectedMsg, actualMsg)
 }
