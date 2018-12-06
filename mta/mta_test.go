@@ -226,7 +226,7 @@ var _ = Describe("Mta", func() {
 			mta := MTA{
 				Modules: []*Module{&moduleA, &moduleB},
 			}
-			mtaExt := MTAExt{
+			mtaExt := EXT{
 				Modules: []*ModuleExt{&moduleAExt},
 			}
 			Merge(&mta, &mtaExt)

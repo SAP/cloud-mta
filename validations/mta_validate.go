@@ -20,9 +20,8 @@ func GetValidationMode(validationFlag string) (bool, bool, error) {
 	case "project":
 		return false, true, nil
 	}
-	return false, false, errors.New("Wrong argument of validation mode; expected argument of [all, schema, project].")
+	return false, false, errors.New("wrong argument of validation mode; expected argument of [all, schema, project].")
 }
-
 
 // MtaYaml validates an MTA .yaml file
 func MtaYaml(projectPath, mtaFilename string, validateSchema bool, validateProject bool) error {

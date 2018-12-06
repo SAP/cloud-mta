@@ -30,7 +30,7 @@ func (mta *MTA) GetModuleByName(name string) (*Module, error) {
 }
 
 // GetModuleByName returns a specific module by name from extension object
-func (ext *MTAExt) GetModuleByName(name string) (*ModuleExt, error) {
+func (ext *EXT) GetModuleByName(name string) (*ModuleExt, error) {
 	for _, m := range ext.Modules {
 		if m.Name == name {
 			return m, nil
@@ -49,7 +49,7 @@ func (mta *MTA) GetResourceByName(name string) (*Resource, error) {
 	return nil, fmt.Errorf("module %s , not found ", name)
 }
 
-// Unmarshal - returns a reference to the MTA object from a byte array.
+// Unmarshal returns a reference to the MTA object from a byte array.
 func Unmarshal(content []byte) (*MTA, error) {
 	m := &MTA{}
 	// Unmarshal MTA file
@@ -60,9 +60,9 @@ func Unmarshal(content []byte) (*MTA, error) {
 	return m, err
 }
 
-// UnmarshalExt - returns a reference to the MTAExt object from a byte array.
-func UnmarshalExt(content []byte) (*MTAExt, error) {
-	m := &MTAExt{}
+// UnmarshalExt returns a reference to the EXT object from a byte array.
+func UnmarshalExt(content []byte) (*EXT, error) {
+	m := &EXT{}
 	// Unmarshal MTA file
 	err := yaml.Unmarshal([]byte(content), &m)
 	if err != nil {
@@ -71,9 +71,9 @@ func UnmarshalExt(content []byte) (*MTAExt, error) {
 	return m, err
 }
 
-// Merge - merges mta object with mta extension object
+// Merge merges mta object with mta extension object
 // extension properties complement and overwrite mta properties
-func Merge(mta *MTA, mtaExt *MTAExt) {
+func Merge(mta *MTA, mtaExt *EXT) {
 	for _, module := range mta.Modules {
 		extModule, err := mtaExt.GetModuleByName(module.Name)
 		if err == nil {
@@ -81,11 +81,10 @@ func Merge(mta *MTA, mtaExt *MTAExt) {
 			extendMap(&module.Parameters, &extModule.Parameters)
 			extendMap(&module.BuildParams, &extModule.BuildParams)
 		}
-
 	}
 }
 
-// extendMap - extends map with elements of extension map
+// extendMap extends map with elements of mta extension map
 func extendMap(m *map[string]interface{}, ext *map[string]interface{}) {
 	if *m == nil {
 		*m = make(map[string]interface{})
