@@ -1,6 +1,6 @@
 ## Open Development
 
-All work on MBT happens directly on GitHub. 
+All work on MBA package happens directly on GitHub. 
 Both core team members and external contributors send pull requests which go through the same review process.
 
 
@@ -17,7 +17,7 @@ Instead, we cherry-pick non-breaking changes from master to the latest stable ma
 
 ## Semantic Versioning
 
-MBT follows semantic versioning. 
+MTA package follows semantic versioning. 
 We release patch versions for bug-fixes, minor versions for new features, and major versions for any breaking changes. 
 When we make breaking changes, we also introduce deprecation warnings in a minor version 
 so that our users learn about the upcoming changes and migrate their code in advance.
