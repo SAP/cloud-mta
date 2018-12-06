@@ -10,7 +10,7 @@ import (
 	"cloud-mta-build-tool/mta"
 )
 
-// GetValidationMode - convert validation mode flag to validation process flags
+// GetValidationMode converts validation mode flags to validation process flags.
 func GetValidationMode(validationFlag string) (bool, bool, error) {
 	switch validationFlag {
 	case "":
@@ -23,7 +23,7 @@ func GetValidationMode(validationFlag string) (bool, bool, error) {
 	return false, false, errors.New("wrong argument of validation mode. Expected one of [all, schema, project]")
 }
 
-// MtaYaml - Validate MTA yaml
+// MtaYaml validates an MTA .yaml file
 func MtaYaml(projectPath, mtaFilename string, validateSchema bool, validateProject bool) error {
 	if validateProject || validateSchema {
 
