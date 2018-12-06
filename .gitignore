@@ -16,7 +16,7 @@ release
 
 *.out
 .editorconfig
-.github
+
 .history
 build
 fmt
