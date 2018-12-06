@@ -7,7 +7,7 @@ about: Create a report to help us improve
 <!-- Also please test using the latest version build to make sure your issue has not already been fixed: 
 
 <!-- Use Help > Report Issue to prefill these. -->
-- MBT Version:
+- MTA package Version:
 - OS Version:
 
 Steps to Reproduce:
