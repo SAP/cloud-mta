@@ -49,6 +49,7 @@ var _ = Describe("Mta", func() {
 			Provides: []Provides{
 				{
 					Name: "backend_task",
+					Public: true,
 					Properties: map[string]interface{}{
 						"url": "${default-url}/tasks",
 					},
