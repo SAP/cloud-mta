@@ -44,7 +44,8 @@ type Module struct {
 	// List of provided names (MTA internal)to which properties (= configuration data) can be attached
 	Provides []Provides `yaml:"provides,omitempty"`
 	// Parameters can be used to steer the behavior of tools which interpret this descriptor. Parameters are not made available to the module at runtime
-	Parameters map[string]interface{} `yaml:"parameters,omitempty"`
+	Parameters         map[string]interface{} `yaml:"parameters,omitempty"`
+	ParametersMetaData map[string]interface{} `yaml:"parameters-metadata,omitempty"`
 	// Build-parameters are specifically steering the behavior of build tools.
 	BuildParams map[string]interface{} `yaml:"build-parameters,omitempty"`
 }
@@ -67,7 +68,8 @@ type Requires struct {
 	Properties         map[string]interface{} `yaml:"properties,omitempty"`
 	PropertiesMetaData map[string]interface{} `yaml:"properties-metadata,omitempty"`
 	// Parameters can be used to influence the behavior of tools which interpret this descriptor. Parameters are not made available to requiring modules at runtime
-	Parameters map[string]interface{} `yaml:"parameters,omitempty"`
+	Parameters         map[string]interface{} `yaml:"parameters,omitempty"`
+	ParametersMetaData map[string]interface{} `yaml:"parameters-metadata,omitempty"`
 	// THE 'includes' ELEMENT IS ONLY RELEVANT FOR DEVELOPMENT DESCRIPTORS (PRIO TO BUILD), NOT FOR DEPLOYMENT DESCRIPTORS!
 	Includes []Includes `yaml:"includes,omitempty"`
 }
@@ -80,7 +82,8 @@ type Resource struct {
 	// A non-translatable description of this resource. This is not a text for application users
 	Description string `yaml:"description,omitempty"`
 	// Parameters can be used to influence the behavior of tools which interpret this descriptor. Parameters are not made available to requiring modules at runtime
-	Parameters map[string]interface{} `yaml:"parameters,omitempty"`
+	Parameters         map[string]interface{} `yaml:"parameters,omitempty"`
+	ParametersMetaData map[string]interface{} `yaml:"parameters-metadata,omitempty"`
 	// property names and values make up the configuration data which is to be provided to requiring modules at runtime
 	Properties         map[string]interface{} `yaml:"properties,omitempty"`
 	PropertiesMetaData map[string]interface{} `yaml:"properties-metadata,omitempty"`
