@@ -121,6 +121,19 @@ var _ = Describe("Mta", func() {
 			{
 				Name: "plugins",
 				Type: "configuration",
+				Optional: true,
+				Active:   false,
+				Requires: []Requires{
+					{
+						Name: "scheduler_api",
+						Parameters: map[string]interface{}{
+							"par1": "value",
+						},
+						Properties: map[string]interface{}{
+							"prop1": "${value}-~{url}",
+						},
+					},
+				},
 				Includes: []Includes{
 					{
 						Name: "config",
