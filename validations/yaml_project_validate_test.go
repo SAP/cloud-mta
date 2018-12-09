@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"cloud-mta-build-tool/mta"
+	"cloud-mta/mta"
 )
 
 var _ = Describe("ValidateYamlProject", func() {

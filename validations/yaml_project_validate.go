@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"cloud-mta-build-tool/mta"
+	"cloud-mta/mta"
 )
 
 type yamlProjectCheck func(mta *mta.MTA, path string) []YamlValidationIssue
