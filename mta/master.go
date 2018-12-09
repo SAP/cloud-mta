@@ -64,6 +64,8 @@ type Requires struct {
 	Name string `yaml:"name,omitempty"`
 	// A group name which shall be use by a deployer to group properties for lookup by a module runtime.
 	Group string `yaml:"group,omitempty"`
+	// All required and found configuration data sets will be assembled into a JSON array and provided to the module by the lookup name as specified by the value of 'list'
+	List string `yaml:"list,omitempty"`
 	// Provided property values can be accessed by "~{<provided-property-name>}". Such expressions can be part of an arbitrary string
 	Properties         map[string]interface{} `yaml:"properties,omitempty"`
 	PropertiesMetaData map[string]interface{} `yaml:"properties-metadata,omitempty"`

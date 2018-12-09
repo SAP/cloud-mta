@@ -66,6 +66,7 @@ var _ = Describe("Mta", func() {
 				},
 				{
 					Name: "scheduler_api",
+					List: "mylist",
 					Properties: map[string]interface{}{
 						"scheduler_url": "~{url}",
 					},
