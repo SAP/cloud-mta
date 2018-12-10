@@ -34,6 +34,12 @@ var _ = Describe("Mta", func() {
 				"domain":   nil,
 				"password": "asfhuwehkew efgehk",
 			},
+			ParametersMetaData: map[string]interface{}{
+				"domain": map[interface{}]interface{}{
+					"optional": false,
+					"overwritable": true,
+				},
+			},
 			Includes: []Includes{
 				{
 					Name: "config",
@@ -126,6 +132,12 @@ var _ = Describe("Mta", func() {
 				Parameters: map[string]interface{}{
 					"filter": map[interface{}]interface{}{
 						"type": "com.acme.plugin",
+					},
+				},
+				ParametersMetaData: map[string]interface{}{
+					"filter": map[interface{}]interface{}{
+						"optional":     false,
+						"overwritable": false,
 					},
 				},
 				Properties: map[string]interface{}{
