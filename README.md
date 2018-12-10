@@ -46,15 +46,19 @@ A multi-target application is a package comprised of multiple application and re
 - [ ] Supports updating scenarios, such as add module/resource, add module property, add dependency, and so on
 - [ ] Supports placeholder resolution
 
+## Requirements
+
+* [Go](https://golang.org/dl/) version > 1.11.x 
+
 ## Installation
 
-To use the package, first you need to install [GO](https://golang.org/dl/) with version >1.11.x and set your [workspace](https://golang.org/doc/code.html#Workspaces).
+1.  Set your [workspace](https://golang.org/doc/code.html#Workspaces).
 
-Download and install it:
+2.  Download and install it:
 
-```sh
-$ go get -u github.com/cloud-mta
-```
+    ```sh
+    $ go get -u github.com/cloud-mta
+    ```
 
 ## Usage
 
