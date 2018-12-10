@@ -22,6 +22,8 @@ type MTA struct {
 	ModuleTypes []*ModuleTypes `yaml:"module-types,omitempty"`
 	// Resource declarations. Resources can be anything required to run the application which is not provided by the application itself
 	Resources []*Resource `yaml:"resources,omitempty"`
+	// Resource type declarations
+	ResourceTypes []*ResourceTypes `yaml:"resource-types,omitempty"`
 	// Parameters can be used to steer the behavior of tools which interpret this descriptor
 	Parameters map[string]interface{} `yaml:"parameters,omitempty"`
 }
@@ -50,6 +52,20 @@ type Module struct {
 	ParametersMetaData map[string]interface{} `yaml:"parameters-metadata,omitempty"`
 	// Build-parameters are specifically steering the behavior of build tools.
 	BuildParams map[string]interface{} `yaml:"build-parameters,omitempty"`
+}
+
+// Module type declarations
+type ModuleTypes struct {
+	// An MTA internal name of the module type. Can be specified in the 'type' element of modules
+	Name string `yaml:"name,omitempty"`
+	// The name of the extended type. Can be another resource type defined in this descriptor or one of the default types supported by the deployer
+	Extends string `yaml:"extends,omitempty"`
+	// Properties inherited by all resources of this type
+	Properties         map[string]interface{} `yaml:"properties,omitempty"`
+	PropertiesMetaData map[string]interface{} `yaml:"properties-metadata,omitempty"`
+	// Parameters inherited by all resources of this type
+	Parameters         map[string]interface{} `yaml:"parameters,omitempty"`
+	ParametersMetaData map[string]interface{} `yaml:"parameters-metadata,omitempty"`
 }
 
 // Provides List of provided names to which properties (config data) can be attached.
@@ -103,16 +119,8 @@ type Resource struct {
 	Requires []Requires `yaml:"requires,omitempty"`
 }
 
-// THE 'includes' ELEMENT IS ONLY RELEVANT FOR DEVELOPMENT DESCRIPTORS (PRIO TO BUILD), NOT FOR DEPLOYMENT DESCRIPTORS!
-type Includes struct {
-	// A name of an include s ection. This name will be used by a builder to generate a parameter section in the deployment descriptor
-	Name string `yaml:"name,omitempty"`
-	// A path pointing to a file which contains a map of parameters, either in JSON or in YAML format.
-	Path string `yaml:"path,omitempty"`
-}
-
-// Module type declarations
-type ModuleTypes struct {
+// Resource type declarations
+type ResourceTypes struct {
 	// An MTA internal name of the module type. Can be specified in the 'type' element of modules
 	Name string `yaml:"name,omitempty"`
 	// The name of the extended type. Can be another resource type defined in this descriptor or one of the default types supported by the deployer
@@ -123,6 +131,14 @@ type ModuleTypes struct {
 	// Parameters inherited by all resources of this type
 	Parameters         map[string]interface{} `yaml:"parameters,omitempty"`
 	ParametersMetaData map[string]interface{} `yaml:"parameters-metadata,omitempty"`
+}
+
+// THE 'includes' ELEMENT IS ONLY RELEVANT FOR DEVELOPMENT DESCRIPTORS (PRIO TO BUILD), NOT FOR DEPLOYMENT DESCRIPTORS!
+type Includes struct {
+	// A name of an include s ection. This name will be used by a builder to generate a parameter section in the deployment descriptor
+	Name string `yaml:"name,omitempty"`
+	// A path pointing to a file which contains a map of parameters, either in JSON or in YAML format.
+	Path string `yaml:"path,omitempty"`
 }
 
 // EXT mta extension schema
