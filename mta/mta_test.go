@@ -12,54 +12,114 @@ import (
 )
 
 var _ = Describe("Mta", func() {
+	modules := []*Module{
+		{
+			Name: "backend",
+			Type: "java.tomcat",
+			Path: "java",
+			BuildParams: map[string]interface{}{
+				"builder": "maven",
+			},
+			Properties: map[string]interface{}{
+				"backend_type": nil,
+			},
+			Parameters: map[string]interface{}{
+				"domain":   nil,
+				"password": "asfhuwehkew efgehk",
+			},
+			Includes: []Includes{
+				{
+					Name: "config",
+					Path: "cfg/parameters.json",
+				},
+			},
+			Provides: []Provides{
+				{
+					Name: "backend_task",
+					Properties: map[string]interface{}{
+						"url": "${default-url}/tasks",
+					},
+				},
+			},
+			Requires: []Requires{
+				{
+					Name: "database",
+				},
+				{
+					Name: "scheduler_api",
+					Properties: map[string]interface{}{
+						"scheduler_url": "~{url}",
+					},
+					Includes: []Includes{
+						{
+							Name: "config",
+							Path: "cfg/parameters.json",
+						},
+					},
+				},
+			},
+		},
+		{
+			Name: "scheduler",
+			Type: "javascript.nodejs",
+			Provides: []Provides{
+				{
+					Name: "scheduler_api",
+					Properties: map[string]interface{}{
+						"url": "${default-url}/api/v2",
+					},
+				},
+			},
+			Requires: []Requires{
+				{
+					Name: "backend_task",
+					Properties: map[string]interface{}{
+						"task_url": "~{url}",
+					},
+				},
+			},
+		},
+	}
+	schemaVersion := "3.2"
+	mta := &MTA{
+		SchemaVersion: &schemaVersion,
+		ID:            "com.acme.scheduling",
+		Version:       "1.132.1-edfsd+ewfe",
+		Parameters:    map[string]interface{}{"deployer-version": ">=1.2.0",},
+		Modules:       modules,
+		Resources: []*Resource{
+			{
+				Name: "database",
+				Type: "postgresql",
+			},
+			{
+				Name: "plugins",
+				Type: "configuration",
+				Includes: []Includes{
+					{
+						Name: "config",
+						Path: "cfg/security.json",
+					},
+					{
+						Name: "creation",
+						Path: "djdk.yaml",
+					},
+				},
+				Parameters: map[string]interface{}{
+					"filter": map[interface{}]interface{}{
+						"type": "com.acme.plugin",
+					},
+				},
+				Properties: map[string]interface{}{
+					"plugin_name": "${name}",
+					"plugin_url":  "${url}/sources",
+				},
+			},
+		}}
 	var _ = Describe("MTA tests", func() {
 
 		var _ = Describe("Parsing", func() {
 			It("Modules parsing - sanity", func() {
-				var moduleSrv = Module{
-					Name: "srv",
-					Type: "java",
-					Path: "srv",
-					Requires: []Requires{
-						{
-							Name: "db",
-							Properties: map[string]interface{}{
-								"JBP_CONFIG_RESOURCE_CONFIGURATION": `[tomcat/webapps/ROOT/META-INF/context.xml: {"service_name_for_DefaultDB" : "~{hdi-container-name}"}]`,
-							},
-						},
-					},
-					Provides: []Provides{
-						{
-							Name:       "srv_api",
-							Properties: map[string]interface{}{"url": "${default-url}"},
-						},
-					},
-					Parameters: map[string]interface{}{"memory": "512M"},
-					Properties: map[string]interface{}{
-						"VSCODE_JAVA_DEBUG_LOG_LEVEL": "ALL",
-						"APPC_LOG_LEVEL":              "info",
-					},
-				}
-				var moduleUI = Module{
-					Name: "ui",
-					Type: "html5",
-					Path: "ui",
-					Requires: []Requires{
-						{
-							Name:  "srv_api",
-							Group: "destinations",
-							Properties: map[string]interface{}{
-								"forwardAuthToken": true,
-								"strictSSL":        false,
-								"name":             "srv_api",
-								"url":              "~{url}",
-							},
-						},
-					},
-					BuildParams: map[string]interface{}{"builder": "grunt"},
-					Parameters:  map[string]interface{}{"disk-quota": "256M", "memory": "256M"},
-				}
-				var modules = []*Module{&moduleSrv, &moduleUI}
 				mtaFile, _ := ioutil.ReadFile("./testdata/mta.yaml")
 				// Unmarshal file
 				oMta := &MTA{}
@@ -72,58 +132,12 @@ var _ = Describe("Mta", func() {
 		})
 
 		var _ = Describe("Get methods on MTA", func() {
-			modules := []*Module{
-				{
-					Name: "someproj-db",
-					Type: "hdb",
-					Path: "db",
-					Requires: []Requires{
-						{
-							Name: "someproj-hdi-container",
-						},
-						{
-							Name: "someproj-logging",
-						},
-					},
-				},
-				{
-					Name: "someproj-java",
-					Type: "java",
-					Path: "srv",
-					Parameters: map[string]interface{}{
-						"memory":     "512M",
-						"disk-quota": "256M",
-					},
-				},
-			}
-			schemaVersion := "0.0.2"
-			mta := &MTA{
-				SchemaVersion: &schemaVersion,
-				ID:            "MTA",
-				Version:       "1.1.1",
-				Modules:       modules,
-				Resources: []*Resource{
-					{
-						Name: "someproj-hdi-container",
-						Properties: map[string]interface{}{
-							"hdi-container-name": "${service-name}",
-						},
-						Type: "container",
-					},
-					{
-						Name: "someproj-apprepo-rt",
-						Type: "org.cloudfoundry.managed-service",
-						Parameters: map[string]interface{}{
-							"service":      "html5-apps-repo",
-							"service-plan": "app-runtime",
-						},
-					},
-				}}
 			It("GetModules", func() {
 				Ω(mta.GetModules()).Should(Equal(modules))
 			})
 			It("GetResourceByName - Sanity", func() {
-				Ω(mta.GetResourceByName("someproj-hdi-container")).Should(Equal(mta.Resources[0]))
+				Ω(mta.GetResourceByName("database")).Should(Equal(mta.Resources[0]))
+				Ω(mta.GetResourceByName("plugins")).Should(Equal(mta.Resources[1]))
 			})
 			It("GetResourceByName - Negative", func() {
 				_, err := mta.GetResourceByName("")
@@ -133,7 +147,8 @@ var _ = Describe("Mta", func() {
 				Ω(mta.GetResources()).Should(Equal(mta.Resources))
 			})
 			It("GetModuleByName - Sanity ", func() {
-				Ω(mta.GetModuleByName("someproj-db")).Should(Equal(modules[0]))
+				Ω(mta.GetModuleByName("backend")).Should(Equal(modules[0]))
+				Ω(mta.GetModuleByName("scheduler")).Should(Equal(modules[1]))
 			})
 			It("GetModuleByName - Negative ", func() {
 				_, err := mta.GetModuleByName("foo")
@@ -150,6 +165,7 @@ var _ = Describe("Mta", func() {
 			Ω(err).Should(Succeed())
 			m, err := Unmarshal(content)
 			Ω(err).Should(Succeed())
+			Ω(*mta).Should(BeEquivalentTo(*m))
 			Ω(len(m.Modules)).Should(Equal(2))
 		})
 		It("Invalid content", func() {

@@ -35,7 +35,9 @@ type Module struct {
 	// A file path which identifies the location of module artifacts.
 	Path string `yaml:"path,omitempty"`
 	// Provided property values can be accessed by "~{<name-of-provides-section>/<provided-property-name>}". Such expressions can be part of an arbitrary string
-	Properties map[string]interface{} `yaml:"properties,omitempty"`
+	Properties         map[string]interface{} `yaml:"properties,omitempty"`
+	// THE 'includes' ELEMENT IS ONLY RELEVANT FOR DEVELOPMENT DESCRIPTORS (PRIO TO BUILD), NOT FOR DEPLOYMENT DESCRIPTORS!
+	Includes []Includes `yaml:"includes,omitempty"`
 	// list of names either matching a resource name or a name provided by another module within the same MTA
 	Requires []Requires `yaml:"requires,omitempty"`
 	// List of provided names (MTA internal)to which properties (= configuration data) can be attached
@@ -48,8 +50,9 @@ type Module struct {
 
 // Provides List of provided names to which properties (config data) can be attached.
 type Provides struct {
-	Name       string
-	Properties map[string]interface{} `yaml:"properties,omitempty"`
+	Name string
+	// property names and values make up the configuration data which is to be provided to requiring modules at runtime
+	Properties         map[string]interface{} `yaml:"properties,omitempty"`
 }
 
 // Requires list of names either matching a resource name or a name provided by another module within the same MTA.
@@ -59,9 +62,11 @@ type Requires struct {
 	// A group name which shall be use by a deployer to group properties for lookup by a module runtime.
 	Group string `yaml:"group,omitempty"`
 	// Provided property values can be accessed by "~{<provided-property-name>}". Such expressions can be part of an arbitrary string
-	Properties map[string]interface{} `yaml:"properties,omitempty"`
+	Properties         map[string]interface{} `yaml:"properties,omitempty"`
 	// Parameters can be used to influence the behavior of tools which interpret this descriptor. Parameters are not made available to requiring modules at runtime
 	Parameters map[string]interface{} `yaml:"parameters,omitempty"`
+	// THE 'includes' ELEMENT IS ONLY RELEVANT FOR DEVELOPMENT DESCRIPTORS (PRIO TO BUILD), NOT FOR DEPLOYMENT DESCRIPTORS!
+	Includes []Includes `yaml:"includes,omitempty"`
 }
 
 // Resource can be anything required to run the application which is not provided by the application itself.
@@ -74,7 +79,9 @@ type Resource struct {
 	// Parameters can be used to influence the behavior of tools which interpret this descriptor. Parameters are not made available to requiring modules at runtime
 	Parameters map[string]interface{} `yaml:"parameters,omitempty"`
 	// property names and values make up the configuration data which is to be provided to requiring modules at runtime
-	Properties map[string]interface{} `yaml:"properties,omitempty"`
+	Properties         map[string]interface{} `yaml:"properties,omitempty"`
+	// THE 'includes' ELEMENT IS ONLY RELEVANT FOR DEVELOPMENT DESCRIPTORS (PRIO TO BUILD), NOT FOR DEPLOYMENT DESCRIPTORS!
+	Includes []Includes `yaml:"includes,omitempty"`
 }
 
 // EXT mta extension schema
@@ -113,6 +120,14 @@ type ModuleExt struct {
 	Parameters map[string]interface{} `yaml:"parameters,omitempty"`
 	// Build-parameters are specifically steering the behavior of build tools.
 	BuildParams map[string]interface{} `yaml:"build-parameters,omitempty"`
+}
+
+// THE 'includes' ELEMENT IS ONLY RELEVANT FOR DEVELOPMENT DESCRIPTORS (PRIO TO BUILD), NOT FOR DEPLOYMENT DESCRIPTORS!
+type Includes struct {
+	// A name of an include s ection. This name will be used by a builder to generate a parameter section in the deployment descriptor
+	Name string `yaml:"name,omitempty"`
+	// A path pointing to a file which contains a map of parameters, either in JSON or in YAML format.
+	Path string `yaml:"path,omitempty"`
 }
 
 // ResourceExt - can be anything required to run the application which is not provided by the application itself.
