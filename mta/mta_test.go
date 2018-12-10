@@ -36,7 +36,7 @@ var _ = Describe("Mta", func() {
 			},
 			ParametersMetaData: map[string]interface{}{
 				"domain": map[interface{}]interface{}{
-					"optional": false,
+					"optional":     false,
 					"overwritable": true,
 				},
 			},
@@ -48,7 +48,7 @@ var _ = Describe("Mta", func() {
 			},
 			Provides: []Provides{
 				{
-					Name: "backend_task",
+					Name:   "backend_task",
 					Public: true,
 					Properties: map[string]interface{}{
 						"url": "${default-url}/tasks",
@@ -119,8 +119,8 @@ var _ = Describe("Mta", func() {
 				Type: "postgresql",
 			},
 			{
-				Name: "plugins",
-				Type: "configuration",
+				Name:     "plugins",
+				Type:     "configuration",
 				Optional: true,
 				Active:   false,
 				Requires: []Requires{
@@ -165,7 +165,26 @@ var _ = Describe("Mta", func() {
 					},
 				},
 			},
-		}}
+		},
+		ModuleTypes: []*ModuleTypes{
+			{
+				Name:    "java.tomcat",
+				Extends: "java",
+				Parameters: map[string]interface{}{
+					"buildpack": nil,
+					"memory":    "256M",
+				},
+				ParametersMetaData: map[string]interface{}{
+					"buildpack": map[interface{}]interface{}{
+						"optional": false,
+					},
+				},
+				Properties: map[string]interface{}{
+					"TARGET_RUNTIME": "tomcat",
+				},
+			},
+		},
+	}
 	var _ = Describe("MTA tests", func() {
 
 		var _ = Describe("Parsing", func() {
