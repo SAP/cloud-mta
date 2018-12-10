@@ -23,6 +23,13 @@ var _ = Describe("Mta", func() {
 			Properties: map[string]interface{}{
 				"backend_type": nil,
 			},
+			PropertiesMetaData: map[string]interface{}{
+				"backend_type": map[interface{}]interface{}{
+					"optional":     false,
+					"overwritable": true,
+					"datatype":     "str",
+				},
+			},
 			Parameters: map[string]interface{}{
 				"domain":   nil,
 				"password": "asfhuwehkew efgehk",
@@ -39,6 +46,12 @@ var _ = Describe("Mta", func() {
 					Properties: map[string]interface{}{
 						"url": "${default-url}/tasks",
 					},
+					PropertiesMetaData: map[string]interface{}{
+						"url": map[interface{}]interface{}{
+							"optional":     true,
+							"overwritable": true,
+						},
+					},
 				},
 			},
 			Requires: []Requires{
@@ -49,6 +62,11 @@ var _ = Describe("Mta", func() {
 					Name: "scheduler_api",
 					Properties: map[string]interface{}{
 						"scheduler_url": "~{url}",
+					},
+					PropertiesMetaData: map[string]interface{}{
+						"scheduler_url": map[interface{}]interface{}{
+							"optional": false,
+						},
 					},
 					Includes: []Includes{
 						{
@@ -113,6 +131,11 @@ var _ = Describe("Mta", func() {
 				Properties: map[string]interface{}{
 					"plugin_name": "${name}",
 					"plugin_url":  "${url}/sources",
+				},
+				PropertiesMetaData: map[string]interface{}{
+					"plugin_name": map[interface{}]interface{}{
+						"optional": true,
+					},
 				},
 			},
 		}}

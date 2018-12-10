@@ -36,6 +36,7 @@ type Module struct {
 	Path string `yaml:"path,omitempty"`
 	// Provided property values can be accessed by "~{<name-of-provides-section>/<provided-property-name>}". Such expressions can be part of an arbitrary string
 	Properties         map[string]interface{} `yaml:"properties,omitempty"`
+	PropertiesMetaData map[string]interface{} `yaml:"properties-metadata,omitempty"`
 	// THE 'includes' ELEMENT IS ONLY RELEVANT FOR DEVELOPMENT DESCRIPTORS (PRIO TO BUILD), NOT FOR DEPLOYMENT DESCRIPTORS!
 	Includes []Includes `yaml:"includes,omitempty"`
 	// list of names either matching a resource name or a name provided by another module within the same MTA
@@ -53,6 +54,7 @@ type Provides struct {
 	Name string
 	// property names and values make up the configuration data which is to be provided to requiring modules at runtime
 	Properties         map[string]interface{} `yaml:"properties,omitempty"`
+	PropertiesMetaData map[string]interface{} `yaml:"properties-metadata,omitempty"`
 }
 
 // Requires list of names either matching a resource name or a name provided by another module within the same MTA.
@@ -63,6 +65,7 @@ type Requires struct {
 	Group string `yaml:"group,omitempty"`
 	// Provided property values can be accessed by "~{<provided-property-name>}". Such expressions can be part of an arbitrary string
 	Properties         map[string]interface{} `yaml:"properties,omitempty"`
+	PropertiesMetaData map[string]interface{} `yaml:"properties-metadata,omitempty"`
 	// Parameters can be used to influence the behavior of tools which interpret this descriptor. Parameters are not made available to requiring modules at runtime
 	Parameters map[string]interface{} `yaml:"parameters,omitempty"`
 	// THE 'includes' ELEMENT IS ONLY RELEVANT FOR DEVELOPMENT DESCRIPTORS (PRIO TO BUILD), NOT FOR DEPLOYMENT DESCRIPTORS!
@@ -80,6 +83,7 @@ type Resource struct {
 	Parameters map[string]interface{} `yaml:"parameters,omitempty"`
 	// property names and values make up the configuration data which is to be provided to requiring modules at runtime
 	Properties         map[string]interface{} `yaml:"properties,omitempty"`
+	PropertiesMetaData map[string]interface{} `yaml:"properties-metadata,omitempty"`
 	// THE 'includes' ELEMENT IS ONLY RELEVANT FOR DEVELOPMENT DESCRIPTORS (PRIO TO BUILD), NOT FOR DEPLOYMENT DESCRIPTORS!
 	Includes []Includes `yaml:"includes,omitempty"`
 }
