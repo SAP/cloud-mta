@@ -184,6 +184,21 @@ var _ = Describe("Mta", func() {
 				},
 			},
 		},
+		ResourceTypes: []*ResourceTypes{
+			{
+				Name:    "postgresql",
+				Extends: "managed-service",
+				Parameters: map[string]interface{}{
+					"service":      "postgresql",
+					"service-plan": nil,
+				},
+				ParametersMetaData: map[string]interface{}{
+					"service-plan": map[interface{}]interface{}{
+						"optional": false,
+					},
+				},
+			},
+		},
 	}
 	var _ = Describe("MTA tests", func() {
 
