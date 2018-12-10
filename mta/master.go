@@ -52,6 +52,8 @@ type Module struct {
 	ParametersMetaData map[string]interface{} `yaml:"parameters-metadata,omitempty"`
 	// Build-parameters are specifically steering the behavior of build tools.
 	BuildParams map[string]interface{} `yaml:"build-parameters,omitempty"`
+	// A list containing the names of the modules that must be deployed prior to this one.
+	DeployedAfter interface{} `yaml:"deployed-after,omitempty"`
 }
 
 // Module type declarations
