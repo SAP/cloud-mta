@@ -93,6 +93,12 @@ type Resource struct {
 	PropertiesMetaData map[string]interface{} `yaml:"properties-metadata,omitempty"`
 	// THE 'includes' ELEMENT IS ONLY RELEVANT FOR DEVELOPMENT DESCRIPTORS (PRIO TO BUILD), NOT FOR DEPLOYMENT DESCRIPTORS!
 	Includes []Includes `yaml:"includes,omitempty"`
+	// A resource can be declared to be optional, if the MTA can compensate for its non-existence
+	Optional bool `yaml:"optional,omitempty"`
+	// If a resource is declared to be active, it is allocated and bound according to declared requirements
+	Active bool `yaml:"active,omitempty"`
+	// list of names either matching a resource name or a name provided by another module within the same MTA
+	Requires []Requires `yaml:"requires,omitempty"`
 }
 
 // EXT mta extension schema
