@@ -53,6 +53,8 @@ type Module struct {
 // Provides List of provided names to which properties (config data) can be attached.
 type Provides struct {
 	Name string
+	// Indicates, that the provided properties shall be made publicly available by the deployer
+	Public bool `yaml:"public,omitempty"`
 	// property names and values make up the configuration data which is to be provided to requiring modules at runtime
 	Properties         map[string]interface{} `yaml:"properties,omitempty"`
 	PropertiesMetaData map[string]interface{} `yaml:"properties-metadata,omitempty"`
