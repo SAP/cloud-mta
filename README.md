@@ -38,6 +38,8 @@ A multi-target application is a package comprised of multiple application and re
 - [ ] Supports uniqueness of module and resource names
 - [ ] Supports multiple schema support
 - [ ] Supports advanced `mta.yaml` file (3.1, 3.2) schemas support
+- [ ] Extend the documentation with new capabilities 
+
  
 ### Milestone 3
 
@@ -46,7 +48,7 @@ A multi-target application is a package comprised of multiple application and re
 
 ## Installation
 
-To use the package, first you need to install [GO](https://golang.org/dl/) and set your [workspace](https://golang.org/doc/code.html#Workspaces).
+To use the package, first you need to install [GO](https://golang.org/dl/) with version >1.11.x and set your [workspace](https://golang.org/doc/code.html#Workspaces).
 
 Download and install it:
 
