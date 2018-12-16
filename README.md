@@ -25,23 +25,22 @@ A multi-target application is a package comprised of multiple application and re
  
 ## Roadmap 
 
-### Milestone 1 
+### Milestone 1  Q1 - 2019
  
  - [x] Supports the MTA parser 
  - [x] Supports development descriptor schema validations (2.1) 
  - [ ] Supports semantic validations (MTA->project)
  - [x] Supports `path` validation
  
-### Milestone 2
+### Milestone 2 Q1 - 2019
  
 - [ ] Supports semantic validations (MTA)
 - [ ] Supports uniqueness of module and resource names
 - [ ] Supports multiple schema support
 - [ ] Supports advanced `mta.yaml` file (3.1, 3.2) schemas support
-- [ ] Extend the documentation with new capabilities 
 
  
-### Milestone 3
+### Milestone 3 Q2 - 2019
 
 - [ ] Supports updating scenarios, such as add module/resource, add module property, add dependency, and so on
 - [ ] Supports placeholder resolution
