@@ -56,7 +56,7 @@ A multi-target application is a package comprised of multiple application and re
 2.  Download and install it:
 
     ```sh
-    $ go get -u github.com/SAP/cloud-mta
+    $ go get github.com/SAP/cloud-mta/mta
     ```
 
 ## Usage
