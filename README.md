@@ -64,7 +64,7 @@ A multi-target application is a package comprised of multiple application and re
  - Import it into your source code:
 
 ```go
-import "github.com/cloud-mta/mta"
+import "github.com/sap/cloud-mta/mta"
 ```
 
  -  Quick start example:
