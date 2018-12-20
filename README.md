@@ -91,8 +91,8 @@ if err != nil {
 
 ## Contributions
 
-Contributions are **greatly** appreciated.
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for details.
+Contributions are greatly appreciated.
+See [CONTRIBUTING.md](https://github.com/SAP/cloud-mta/blob/master/.github/CONTRIBUTING.md) for details.
 
 ### How can I obtain support?
 
