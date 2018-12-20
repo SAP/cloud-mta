@@ -88,6 +88,15 @@ if err != nil {
 	return err
 }
 ```
+
+## Contributions
+
+Contributions are **greatly** appreciated.
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for details.
+
+### How can I obtain support?
+Please follow our [Contribution Guidelines](/CONTRIBUTING.md#report-an-issue) on how to report an issue.
+
 ## License
  
 Copyright (c) 2018 SAP SE or an SAP affiliate company. All rights reserved.
