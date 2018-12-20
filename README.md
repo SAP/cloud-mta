@@ -95,7 +95,8 @@ Contributions are **greatly** appreciated.
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for details.
 
 ### How can I obtain support?
-Please follow our [Contribution Guidelines](/CONTRIBUTING.md#report-an-issue) on how to report an issue.
+
+Please follow our [issue template](https://github.com/SAP/cloud-mta/blob/master/.github/ISSUE_TEMPLATE/bug_report.md) on how to report an issue.
 
 ## License
  
