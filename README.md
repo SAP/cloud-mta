@@ -3,8 +3,7 @@
 ![pre-alpha](https://img.shields.io/badge/Release-pre--alpha-orange.svg)
 
 
-<b>Disclaimer</b>: The MTA package is under heavy development and is currently in a `pre-alpha` stage.
-                   Some functionality is still missing and the APIs are subject to change; use at your own risk.
+> <b>Disclaimer</b>: The MTA package is under heavy development and is currently in a `pre-alpha` stage.  Some functionality is still missing and the APIs are subject to change; use at your own risk.
                    
 # MTA
 
@@ -47,9 +46,9 @@ A multi-target application is a package comprised of multiple application and re
 
 ## Requirements
 
-* [Go](https://golang.org/dl/) version > 1.11.x 
+* [Go (version > 1.11.x)](https://golang.org/dl/) 
 
-## Installation
+## Download and Installation
 
 1.  Set your [workspace](https://golang.org/doc/code.html#Workspaces).
 
@@ -63,38 +62,42 @@ A multi-target application is a package comprised of multiple application and re
 
  - Import it into your source code:
 
-```go
-import "github.com/SAP/cloud-mta/mta"
-```
+    ```go
+    import "github.com/SAP/cloud-mta/mta"
+    ```
 
  -  Quick start example:
 
-```go
-
-// sets the path to the MTA project.
-mf, _ := ioutil.ReadFile("/path/mta.yaml")
-// Returns an MTA object.
-if err != nil {
-	return err
-}
-// unmarshal MTA content.
-m := Unmarshal(mf)
-if err != nil {
-	return err
-}
-// returns the module properties.
-module, err := m.GetModuleByName(moduleName)
-if err != nil {
-	return err
-}
-```
+    ```go
+    
+    // sets the path to the MTA project.
+    mf, _ := ioutil.ReadFile("/path/mta.yaml")
+    // Returns an MTA object.
+    if err != nil {
+    	return err
+    }
+    // unmarshal MTA content.
+    m := Unmarshal(mf)
+    if err != nil {
+    	return err
+    }
+    // returns the module properties.
+    module, err := m.GetModuleByName(moduleName)
+    if err != nil {
+    	return err
+    }
+    ```
 
 ## Contributions
 
 Contributions are greatly appreciated.
 See [CONTRIBUTING.md](https://github.com/SAP/cloud-mta/blob/master/.github/CONTRIBUTING.md) for details.
 
-### How can I obtain support?
+## Known Issues
+
+_(please fill this in)_
+
+## Support
 
 Please follow our [issue template](https://github.com/SAP/cloud-mta/blob/master/.github/ISSUE_TEMPLATE/bug_report.md) on how to report an issue.
 
