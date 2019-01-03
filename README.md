@@ -35,8 +35,8 @@ A multi-target application is a package comprised of multiple application and re
  
 - [ ] Supports semantic validations (MTA)
 - [ ] Supports uniqueness of module and resource names
-- [ ] Supports multiple schema support
-- [ ] Supports advanced `mta.yaml` file (3.1, 3.2) schemas support
+- [ ] Supports multiple schema 
+- [ ] Supports advanced `mta.yaml` file (3.1, 3.2) schemas
 
  
 ### Milestone 3 (Q2 - 2019)
