@@ -30,6 +30,7 @@ A multi-target application is a package comprised of multiple application and re
  - [x] Supports development descriptor schema validations (2.1) 
  - [ ] Supports semantic validations (MTA->project)
  - [x] Supports `path` validation
+ - [ ] Add MTA API's usage documentation  
  
 ### Milestone 2 (Q1 - 2019)
  
