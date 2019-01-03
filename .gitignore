@@ -6,6 +6,8 @@
 cmd/internal/
 vendor
 release
+doc.html
+
 
 # Binaries for programs and plugins
 *.so

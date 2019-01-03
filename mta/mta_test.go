@@ -111,7 +111,7 @@ var _ = Describe("Mta", func() {
 		SchemaVersion: &schemaVersion,
 		ID:            "com.acme.scheduling",
 		Version:       "1.132.1-edfsd+ewfe",
-		Parameters:    map[string]interface{}{"deployer-version": ">=1.2.0",},
+		Parameters:    map[string]interface{}{"deployer-version": ">=1.2.0"},
 		Modules:       modules,
 		Resources: []*Resource{
 			{

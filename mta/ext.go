@@ -1,9 +1,8 @@
 package mta
 
 import (
-	"gopkg.in/yaml.v2"
-
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v2"
 )
 
 // UnmarshalExt returns a reference to the EXT object from a byte array.
@@ -41,4 +40,3 @@ func extendMap(m *map[string]interface{}, ext *map[string]interface{}) {
 		}
 	}
 }
-

@@ -46,4 +46,3 @@ type ResourceExt struct {
 	// property names and values make up the configuration data which is to be provided to requiring modules at runtime
 	Properties map[string]interface{} `yaml:"properties,omitempty"`
 }
-
