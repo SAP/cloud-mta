@@ -59,4 +59,3 @@ func Unmarshal(content []byte) (*MTA, error) {
 	}
 	return m, err
 }
-
