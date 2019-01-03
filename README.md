@@ -96,7 +96,7 @@ See [CONTRIBUTING.md](https://github.com/SAP/cloud-mta/blob/master/.github/CONTR
 
 ## Known Issues
 
-_(please fill this in)_
+No known major issues.  To report a new issue, please use our GitHub bug tracking system.
 
 ## Support
 
