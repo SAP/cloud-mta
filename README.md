@@ -1,5 +1,6 @@
 [![CircleCI](https://circleci.com/gh/SAP/cloud-mta.svg?style=svg)](https://circleci.com/gh/SAP/cloud-mta)
 [![Go Report Card](https://goreportcard.com/badge/github.com/SAP/cloud-mta)](https://goreportcard.com/report/github.com/SAP/cloud-mta)
+[![GoDoc](https://godoc.org/github.com/SAP/cloud-mta?status.svg)](https://godoc.org/github.com/SAP/cloud-mta/mta)
 ![GitHub license](https://img.shields.io/badge/license-Apache_2.0-blue.svg)
 ![pre-alpha](https://img.shields.io/badge/Release-pre--alpha-orange.svg)
 
