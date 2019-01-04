@@ -1,4 +1,4 @@
-# Golang CircleCI 2.0 configuration file
+# Golang CircleCI 2.0 config
 version: 2
 jobs:
   build:
@@ -17,4 +17,15 @@ jobs:
       - run: sudo chown circleci:circleci /go/bin
       - run: make tools
       - run: make lint
-
+      - run:
+          name: cov install deps
+          command: |
+            go get golang.org/x/tools/cmd/cover
+            go get github.com/mattn/goveralls
+            go get github.com/modocache/gover
+            go install github.com/mattn/goveralls
+            go install github.com/modocache/gover
+      - run: go test -v cloud-mta/mta -coverprofile=mta.coverprofile
+      - run: go test -v cloud-mta/validations -coverprofile=validations.coverprofile
+      - run: gover
+      - run: goveralls -v -service=circle-ci -coverprofile=gover.coverprofile -repotoken $COVERALLS_TOKEN
