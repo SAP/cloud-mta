@@ -10,7 +10,7 @@ import (
 	. "github.com/onsi/gomega"
 	"gopkg.in/yaml.v2"
 
-	"cloud-mta/mta"
+	"github.com/SAP/cloud-mta/mta"
 )
 
 func getTestPath(relPath ...string) string {

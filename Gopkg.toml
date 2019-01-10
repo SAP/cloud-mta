@@ -26,6 +26,10 @@
 
 
 [[constraint]]
+  branch = "master"
+  name = "github.com/SAP/cloud-mta"
+
+[[constraint]]
   name = "github.com/onsi/ginkgo"
   version = "1.7.0"
 
@@ -35,7 +39,7 @@
 
 [[constraint]]
   name = "github.com/pkg/errors"
-  version = "0.8.0"
+  version = "0.8.1"
 
 [[constraint]]
   branch = "master"
@@ -43,7 +47,7 @@
 
 [[constraint]]
   name = "gopkg.in/yaml.v2"
-  version = "2.2.1"
+  version = "2.2.2"
 
 [prune]
   go-tests = true
