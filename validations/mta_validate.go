@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 
-	"cloud-mta/mta"
+	"github.com/SAP/cloud-mta/mta"
 )
 
 // GetValidationMode converts validation mode flags to validation process flags.
