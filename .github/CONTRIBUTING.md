@@ -1,6 +1,6 @@
 ## Open Development
 
-All work on MBA package happens directly on GitHub. 
+All work on cloud-mta package happens directly on GitHub. 
 Both core team members and external contributors send pull requests which go through the same review process.
 
 
@@ -8,7 +8,7 @@ Both core team members and external contributors send pull requests which go thr
 
 We will do our best to keep the master branch in a good shape, with tests passing at all times. 
 But in order to move fast, we will make API changes that your application might not be compatible with. 
-We recommend that you use the latest stable version of MBT.
+We recommend that you use the latest stable version of cloud-mta.
 
 If you send a pull request, please do it against the `master` branch. 
 We maintain stable branches for major versions separately but we don’t accept pull requests to them directly. 
@@ -17,7 +17,7 @@ Instead, we cherry-pick non-breaking changes from master to the latest stable ma
 
 ## Semantic Versioning
 
-MTA package follows semantic versioning. 
+cloud-mta package follows semantic versioning. 
 We release patch versions for bug-fixes, minor versions for new features, and major versions for any breaking changes. 
 When we make breaking changes, we also introduce deprecation warnings in a minor version 
 so that our users learn about the upcoming changes and migrate their code in advance.
@@ -37,8 +37,10 @@ request changes to it, or close it with an explanation.
 3. If you’ve fixed a bug or added code that should be tested, add tests!
 4. See commit prefix section
 5. Ensure the test suite passes via `go test -v ./... ` Tip: you can use command `make test`.
-6. Format your code with `go fmt` and run [linter](https://github.com/golang/lint) on your changes.
-7. If you haven’t already, complete the CLA.
+6. You can test the binary by using command `make` which will build the binary for each target OS.
+7. If you change some config file you should run `go generate` command, this will create equivalent byte content file. 
+8. Format your code with `go fmt` and run [linter](https://github.com/golang/lint) or better use `make tools` `make lint` on your changes.
+9. If you haven’t already, complete the CLA.
 
 
 ## Contribution Prerequisites
