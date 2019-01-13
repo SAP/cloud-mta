@@ -1,7 +1,6 @@
-Before submitting a pull request, 
-Please make sure the following:
+Before submitting a pull request, Please make sure the following:
 
-##Description
+## Description
 
 Please explain the changes you made.
 
