@@ -90,7 +90,8 @@ var _ = Describe("MTA tests", func() {
 			Entry("invalid", "value", false, false, false),
 		)
 
-		var _ = DescribeTable("validateMtaYaml", func(projectRelPath string, validateSchema, validateProject, expectedSuccess bool) {
+		var _ = DescribeTable("validateMtaYaml", func(projectRelPath string,
+			validateSchema, validateProject, expectedSuccess bool) {
 			err := MtaYaml(getTestPath(projectRelPath), "mta.yaml", validateSchema, validateProject)
 			Ω(err == nil).Should(Equal(expectedSuccess))
 		},
@@ -101,6 +102,18 @@ var _ = Describe("MTA tests", func() {
 			Entry("valid schema", "mtahtml5", true, false, true),
 			Entry("invalid project - no ui5app2 path", "mtahtml5", false, true, false),
 		)
+
+		It("invalid schema", func() {
+			originalSchema := schemaDef
+			schemaDef = []byte(`
+desc: MTA DESCRIPTOR SCHEMA
+# schema version must be extracted from here as there is no "version" element available to version schemas
+  name: com.sap.mta.mta-schema_3.2.0 abc
+`)
+			err := MtaYaml(getTestPath("testproject"), "mta.yaml", true, false)
+			Ω(err).Should(HaveOccurred())
+			schemaDef = originalSchema
+		})
 	})
 
 })
