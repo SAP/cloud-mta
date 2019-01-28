@@ -88,7 +88,7 @@ resources:
    type: org.cloudfoundry.managed-service
 `)
 		mta, _ := mta.Unmarshal(mtaContent)
-		issues := validateNamesUniqueness(mta, "" )
+		issues := validateNamesUniqueness(mta, "")
 		Ω(len(issues)).Should(Equal(0))
 	})
 
@@ -108,7 +108,7 @@ modules:
    type: html5
 `)
 		mta, _ := mta.Unmarshal(mtaContent)
-		issues := validateNamesUniqueness(mta, "" )
+		issues := validateNamesUniqueness(mta, "")
 		Ω(issues[0].Msg).Should(Equal("the ui5app module is not unique because the module with the same name defined"))
 	})
 	It("module and provides have the same name", func() {
@@ -127,7 +127,7 @@ modules:
    type: html5
 `)
 		mta, _ := mta.Unmarshal(mtaContent)
-		issues := validateNamesUniqueness(mta, "" )
+		issues := validateNamesUniqueness(mta, "")
 		Ω(issues[0].Msg).Should(Equal("the ui5app2 module is not unique because the provided with the same name defined"))
 	})
 	It("resource and provides have the same name", func() {
@@ -153,7 +153,7 @@ resources:
    type: com.company.xs.uaa
 `)
 		mta, _ := mta.Unmarshal(mtaContent)
-		issues := validateNamesUniqueness(mta, "" )
+		issues := validateNamesUniqueness(mta, "")
 		Ω(issues[0].Msg).Should(Equal("the test resource is not unique because the provided with the same name defined"))
 	})
 })
