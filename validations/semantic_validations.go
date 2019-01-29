@@ -2,7 +2,7 @@ package validate
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/SAP/cloud-mta/mta"
@@ -19,8 +19,8 @@ func validateModules(mta *mta.MTA, projectPath string) []YamlValidationIssue {
 		if modulePath == "" {
 			modulePath = module.Name
 		}
-		dirName := filepath.Join(projectPath, modulePath)
-		_, err := ioutil.ReadDir(dirName)
+		fullPath := filepath.Join(projectPath, modulePath)
+		_, err := os.Stat(fullPath)
 		if err != nil {
 			issues = append(issues, []YamlValidationIssue{
 				{
