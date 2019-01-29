@@ -60,7 +60,7 @@ func validate(yamlContent []byte, projectPath string, validateSchema bool, valid
 		}
 		yamlValidationLog, err := Yaml(yamlContent, validations...)
 		if err != nil && len(yamlValidationLog) == 0 {
-			yamlValidationLog = appendIssue(yamlValidationLog,  "validation failed because: " + err.Error())
+			yamlValidationLog = appendIssue(yamlValidationLog, "validation failed because: "+err.Error())
 		}
 		issues = append(issues, yamlValidationLog...)
 

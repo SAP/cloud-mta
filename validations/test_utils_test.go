@@ -4,7 +4,6 @@ package validate
 
 import (
 	. "github.com/onsi/gomega"
-
 )
 
 func assertNoParsingErrors(err error) {
