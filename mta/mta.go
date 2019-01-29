@@ -26,7 +26,7 @@ func (mta *MTA) GetModuleByName(name string) (*Module, error) {
 			return m, nil
 		}
 	}
-	return nil, fmt.Errorf("module %s , not found ", name)
+	return nil, fmt.Errorf("the %s module is not defined ", name)
 }
 
 // GetModuleByName returns a specific module by name from extension object
@@ -36,7 +36,7 @@ func (ext *EXT) GetModuleByName(name string) (*ModuleExt, error) {
 			return m, nil
 		}
 	}
-	return nil, fmt.Errorf("module %s , not found ", name)
+	return nil, fmt.Errorf("the %s module is not defined ", name)
 }
 
 // GetResourceByName returns a specific resource by name.
@@ -46,7 +46,7 @@ func (mta *MTA) GetResourceByName(name string) (*Resource, error) {
 			return r, nil
 		}
 	}
-	return nil, fmt.Errorf("module %s , not found ", name)
+	return nil, fmt.Errorf("the %s resource is not defined ", name)
 }
 
 // Unmarshal returns a reference to the MTA object from a byte array.
@@ -55,7 +55,7 @@ func Unmarshal(content []byte) (*MTA, error) {
 	// Unmarshal MTA file
 	err := yaml.Unmarshal([]byte(content), &m)
 	if err != nil {
-		err = errors.Wrap(err, "Error parsing the MTA")
+		err = errors.Wrap(err, "failed to unmarshal the MTA object")
 	}
 	return m, err
 }

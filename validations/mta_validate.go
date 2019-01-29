@@ -1,6 +1,7 @@
 package validate
 
 import (
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
 
@@ -20,7 +21,9 @@ func GetValidationMode(validationFlag string) (bool, bool, error) {
 	case "project":
 		return false, true, nil
 	}
-	return false, false, errors.New("wrong argument of validation mode; expected argument of [all, schema, project]")
+	return false, false,
+		fmt.Errorf("the %s validation mode is incorrect; expected one of the following: all, schema, project",
+			validationFlag)
 }
 
 // MtaYaml validates an MTA.yaml file.
@@ -32,12 +35,12 @@ func MtaYaml(projectPath, mtaFilename string, validateSchema bool, validateProje
 		yamlContent, err := ioutil.ReadFile(mtaPath)
 
 		if err != nil {
-			return errors.Wrapf(err, "Validation of %v failed on reading MTA content.", mtaPath)
+			return errors.Wrapf(err, "could not read the %v file; the validation failed", mtaPath)
 		}
 		// Validates MTA content.
 		issues, err := validate(yamlContent, projectPath, validateSchema, validateProject)
 		if len(issues) > 0 {
-			return errors.Errorf("Validation of %v failed. Issues: \n%v %s", mtaPath, issues.String(), err)
+			return errors.Errorf("validation of the %v file failed with the following issues: \n%v %s", mtaPath, issues.String(), err)
 		}
 	}
 
@@ -55,7 +58,7 @@ func validate(yamlContent []byte, projectPath string, validateSchema bool, valid
 		}
 		yamlValidationLog, err := Yaml(yamlContent, validations...)
 		if err != nil && len(yamlValidationLog) == 0 {
-			yamlValidationLog = append(yamlValidationLog, []YamlValidationIssue{{Msg: "Validation failed." + err.Error()}}...)
+			yamlValidationLog = append(yamlValidationLog, []YamlValidationIssue{{Msg: "validation failed because: " + err.Error()}}...)
 		}
 		issues = append(issues, yamlValidationLog...)
 
@@ -65,7 +68,7 @@ func validate(yamlContent []byte, projectPath string, validateSchema bool, valid
 		Unmarshal := yaml.Unmarshal
 		err := Unmarshal(yamlContent, &mtaStr)
 		if err != nil {
-			return nil, errors.Wrap(err, "Read failed getting the MTA .yaml path while reading the MTA file.")
+			return nil, errors.Wrap(err, "validation failed when unmarshalling the MTA file")
 		}
 		projectIssues := validateYamlProject(&mtaStr, projectPath)
 		issues = append(issues, projectIssues...)
