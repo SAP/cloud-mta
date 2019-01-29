@@ -216,7 +216,7 @@ func buildPatternValidation(y *simpleyaml.Yaml) ([]YamlCheck, []YamlValidationIs
 	if patternNode.IsFound() {
 		patternValue, err := patternNode.String()
 		if err != nil {
-			schemaIssues = append(schemaIssues, YamlValidationIssue{"invalid .yaml file schema: the pattern node must be a string"})
+			schemaIssues = appendIssue(schemaIssues, "invalid .yaml file schema: the pattern node must be a string")
 			return validations, schemaIssues
 		}
 		// TODO: we must validate: NOT MAP/SEQ
@@ -232,7 +232,8 @@ func buildPatternValidation(y *simpleyaml.Yaml) ([]YamlCheck, []YamlValidationIs
 }
 
 // Utility to reduce verbosity
-func invokeLeafValidation(y *simpleyaml.Yaml, validations []YamlCheck, schemaIsssues []YamlValidationIssue, leafBuilder func(y *simpleyaml.Yaml) ([]YamlCheck, []YamlValidationIssue)) ([]YamlCheck, []YamlValidationIssue) {
+func invokeLeafValidation(y *simpleyaml.Yaml, validations []YamlCheck, schemaIsssues []YamlValidationIssue,
+	leafBuilder func(y *simpleyaml.Yaml) ([]YamlCheck, []YamlValidationIssue)) ([]YamlCheck, []YamlValidationIssue) {
 	newValidations, newSchemaIssues := leafBuilder(y)
 	validations = append(validations, newValidations...)
 	schemaIsssues = append(schemaIsssues, newSchemaIssues...)

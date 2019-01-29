@@ -39,18 +39,20 @@ func MtaYaml(projectPath, mtaFilename string, validateSchema bool, validateProje
 		}
 		// Validates MTA content.
 		issues, err := validate(yamlContent, projectPath, validateSchema, validateProject)
+		if err != nil {
+			issues = appendIssue(issues, err.Error())
+		}
 		if len(issues) > 0 {
-			return errors.Errorf("validation of the %v file failed with the following issues: \n%v %s", mtaPath, issues.String(), err)
+			return errors.Errorf("validation of the %v file failed with the following issues: \n%v", mtaPath, issues.String())
 		}
 	}
 
 	return nil
 }
 
-// validate validates an MTA schema.
+// validate - validates the MTA descriptor
 func validate(yamlContent []byte, projectPath string, validateSchema bool, validateProject bool) (YamlValidationIssues, error) {
-	//noinspection GoPreferNilSlice
-	issues := []YamlValidationIssue{}
+	var issues []YamlValidationIssue
 	if validateSchema {
 		validations, schemaValidationLog := BuildValidationsFromSchemaText(schemaDef)
 		if len(schemaValidationLog) > 0 {
@@ -58,19 +60,18 @@ func validate(yamlContent []byte, projectPath string, validateSchema bool, valid
 		}
 		yamlValidationLog, err := Yaml(yamlContent, validations...)
 		if err != nil && len(yamlValidationLog) == 0 {
-			yamlValidationLog = append(yamlValidationLog, []YamlValidationIssue{{Msg: "validation failed because: " + err.Error()}}...)
+			yamlValidationLog = appendIssue(yamlValidationLog,  "validation failed because: " + err.Error())
 		}
 		issues = append(issues, yamlValidationLog...)
 
 	}
 	if validateProject {
 		mtaStr := mta.MTA{}
-		Unmarshal := yaml.Unmarshal
-		err := Unmarshal(yamlContent, &mtaStr)
+		err := yaml.Unmarshal(yamlContent, &mtaStr)
 		if err != nil {
 			return nil, errors.Wrap(err, "validation failed when unmarshalling the MTA file")
 		}
-		projectIssues := validateYamlProject(&mtaStr, projectPath)
+		projectIssues := runSemanticValidations(&mtaStr, projectPath)
 		issues = append(issues, projectIssues...)
 	}
 	return issues, nil
