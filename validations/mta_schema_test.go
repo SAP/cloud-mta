@@ -27,7 +27,7 @@ mapping:
             path:
 
 `)
-		schemaValidations, _ := BuildValidationsFromSchemaText(data)
+		schemaValidations, _ := buildValidationsFromSchemaText(data)
 		input := []byte(`
 _schema-version: "2.0.0"
 ID: mta_proj
@@ -57,8 +57,7 @@ modules:
       supported-platforms: []
 
 `)
-		validateIssues, parseErr := Yaml(input, schemaValidations...)
-		assertNoParsingErrors(parseErr)
+		validateIssues := runSchemaValidations(input, schemaValidations...)
 		expectSingleValidationError(validateIssues, `missing the type required property in the modules[1] .yaml node`)
 	})
 })

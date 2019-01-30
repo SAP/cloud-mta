@@ -14,14 +14,14 @@ var _ = Describe("Schema tests Issues", func() {
 
 	var _ = DescribeTable("Schema issues",
 		func(schema string, message string) {
-			_, schemaIssues := BuildValidationsFromSchemaText([]byte(schema))
+			_, schemaIssues := buildValidationsFromSchemaText([]byte(schema))
 			expectSingleSchemaIssue(schemaIssues, message)
 		},
 		Entry("Parsing", `
 type: map
 # bad indentation
  mapping:
-   firstName:  {required: true}`, `unmarshal []byte to yaml failed: yaml: line 3: did not find expected key`),
+   firstName:  {required: true}`, `validation failed when parsing the MTA file because: unmarshal []byte to yaml failed: yaml: line 3: did not find expected key`),
 
 		Entry("Mapping", `
 type: map
@@ -86,10 +86,9 @@ enums:
 
 	var _ = DescribeTable("Valid input",
 		func(schema, input string) {
-			schemaValidations, schemaIssues := BuildValidationsFromSchemaText([]byte(schema))
+			schemaValidations, schemaIssues := buildValidationsFromSchemaText([]byte(schema))
 			assertNoSchemaIssues(schemaIssues)
-			validateIssues, parseErr := Yaml([]byte(input), schemaValidations...)
-			assertNoParsingErrors(parseErr)
+			validateIssues := runSchemaValidations([]byte(input), schemaValidations...)
 			assertNoValidationErrors(validateIssues)
 		},
 		Entry("required", `
@@ -146,10 +145,9 @@ isHappy: false
 
 	var _ = DescribeTable("Invalid input",
 		func(schema, input, message string) {
-			schemaValidations, schemaIssues := BuildValidationsFromSchemaText([]byte(schema))
+			schemaValidations, schemaIssues := buildValidationsFromSchemaText([]byte(schema))
 			assertNoSchemaIssues(schemaIssues)
-			validateIssues, parseErr := Yaml([]byte(input), schemaValidations...)
-			assertNoParsingErrors(parseErr)
+			validateIssues := runSchemaValidations([]byte(input), schemaValidations...)
 			expectSingleValidationError(validateIssues, message)
 		},
 		Entry("required", `

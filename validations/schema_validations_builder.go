@@ -12,15 +12,15 @@ import (
 	"github.com/smallfish/simpleyaml"
 )
 
-// BuildValidationsFromSchemaText is an entry point that accepts a .yaml file schema as plain text and produces the YAML validation functions
+// buildValidationsFromSchemaText is an entry point that accepts a .yaml file schema as plain text and produces the YAML validation functions
 // and schema issues that are detected.
-func BuildValidationsFromSchemaText(yaml []byte) ([]YamlCheck, []YamlValidationIssue) {
+func buildValidationsFromSchemaText(yaml []byte) ([]YamlCheck, []YamlValidationIssue) {
 	var validations []YamlCheck
 	var schemaIssues []YamlValidationIssue
 
 	y, parseError := simpleyaml.NewYaml(yaml)
 	if parseError != nil {
-		schemaIssues = appendIssue(schemaIssues, parseError.Error())
+		schemaIssues = appendIssue(schemaIssues, "validation failed when parsing the MTA file because: "+parseError.Error())
 		return validations, schemaIssues
 	}
 
@@ -81,10 +81,6 @@ func buildValidationsFromSchema(schema *simpleyaml.Yaml) ([]YamlCheck, []YamlVal
 	}
 
 	return validations, schemaIssues
-}
-
-func appendIssue(issues []YamlValidationIssue, issue string) []YamlValidationIssue {
-	return append(issues, []YamlValidationIssue{{issue}}...)
 }
 
 // Create Validations for a mapping
@@ -216,7 +212,7 @@ func buildPatternValidation(y *simpleyaml.Yaml) ([]YamlCheck, []YamlValidationIs
 	if patternNode.IsFound() {
 		patternValue, err := patternNode.String()
 		if err != nil {
-			schemaIssues = append(schemaIssues, YamlValidationIssue{"invalid .yaml file schema: the pattern node must be a string"})
+			schemaIssues = appendIssue(schemaIssues, "invalid .yaml file schema: the pattern node must be a string")
 			return validations, schemaIssues
 		}
 		// TODO: we must validate: NOT MAP/SEQ
@@ -232,10 +228,15 @@ func buildPatternValidation(y *simpleyaml.Yaml) ([]YamlCheck, []YamlValidationIs
 }
 
 // Utility to reduce verbosity
-func invokeLeafValidation(y *simpleyaml.Yaml, validations []YamlCheck, schemaIsssues []YamlValidationIssue, leafBuilder func(y *simpleyaml.Yaml) ([]YamlCheck, []YamlValidationIssue)) ([]YamlCheck, []YamlValidationIssue) {
+func invokeLeafValidation(y *simpleyaml.Yaml, validations []YamlCheck, schemaIsssues []YamlValidationIssue,
+	leafBuilder func(y *simpleyaml.Yaml) ([]YamlCheck, []YamlValidationIssue)) ([]YamlCheck, []YamlValidationIssue) {
 	newValidations, newSchemaIssues := leafBuilder(y)
 	validations = append(validations, newValidations...)
 	schemaIsssues = append(schemaIsssues, newSchemaIssues...)
 
 	return validations, schemaIsssues
+}
+
+func appendIssue(issues []YamlValidationIssue, issue string) []YamlValidationIssue {
+	return append(issues, []YamlValidationIssue{{issue}}...)
 }

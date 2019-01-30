@@ -6,10 +6,6 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func assertNoParsingErrors(err error) {
-	Ω(err).Should(BeNil(), "Yaml Parsing Errors Detected: %v")
-}
-
 func assertNoValidationErrors(errors []YamlValidationIssue) {
 	Ω(len(errors)).Should(Equal(0), "Validation issues detected: %v")
 }
@@ -36,6 +32,5 @@ func expectSingleSchemaIssue(actual []YamlValidationIssue, expectedMsg string) {
 	numOfErrors := len(actual)
 	Ω(numOfErrors).Should(Equal(1), "A single validation issue expected but found: <%d>", numOfErrors)
 
-	actualMsg := actual[0]
-	Ω(actual[0].Msg).Should(Equal(expectedMsg), "Expecting <%s>.\n\t But found <%s>", expectedMsg, actualMsg)
+	Ω(actual[0].Msg).Should(Equal(expectedMsg))
 }
