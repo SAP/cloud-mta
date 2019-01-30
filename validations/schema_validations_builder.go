@@ -12,15 +12,15 @@ import (
 	"github.com/smallfish/simpleyaml"
 )
 
-// BuildValidationsFromSchemaText is an entry point that accepts a .yaml file schema as plain text and produces the YAML validation functions
+// buildValidationsFromSchemaText is an entry point that accepts a .yaml file schema as plain text and produces the YAML validation functions
 // and schema issues that are detected.
-func BuildValidationsFromSchemaText(yaml []byte) ([]YamlCheck, []YamlValidationIssue) {
+func buildValidationsFromSchemaText(yaml []byte) ([]YamlCheck, []YamlValidationIssue) {
 	var validations []YamlCheck
 	var schemaIssues []YamlValidationIssue
 
 	y, parseError := simpleyaml.NewYaml(yaml)
 	if parseError != nil {
-		schemaIssues = appendIssue(schemaIssues, parseError.Error())
+		schemaIssues = appendIssue(schemaIssues, "validation failed when parsing the MTA file because: "+parseError.Error())
 		return validations, schemaIssues
 	}
 
@@ -81,10 +81,6 @@ func buildValidationsFromSchema(schema *simpleyaml.Yaml) ([]YamlCheck, []YamlVal
 	}
 
 	return validations, schemaIssues
-}
-
-func appendIssue(issues []YamlValidationIssue, issue string) []YamlValidationIssue {
-	return append(issues, []YamlValidationIssue{{issue}}...)
 }
 
 // Create Validations for a mapping
@@ -239,4 +235,8 @@ func invokeLeafValidation(y *simpleyaml.Yaml, validations []YamlCheck, schemaIss
 	schemaIsssues = append(schemaIsssues, newSchemaIssues...)
 
 	return validations, schemaIsssues
+}
+
+func appendIssue(issues []YamlValidationIssue, issue string) []YamlValidationIssue {
+	return append(issues, []YamlValidationIssue{{issue}}...)
 }

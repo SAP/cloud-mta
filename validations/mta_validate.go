@@ -6,29 +6,24 @@ import (
 	"path/filepath"
 
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
-
-	"github.com/SAP/cloud-mta/mta"
 )
 
 // GetValidationMode converts validation mode flags to validation process flags.
 func GetValidationMode(validationFlag string) (bool, bool, error) {
 	switch validationFlag {
-	case "":
-		return true, true, nil
 	case "schema":
 		return true, false, nil
-	case "project":
-		return false, true, nil
+	case "semantic":
+		return true, true, nil
 	}
 	return false, false,
-		fmt.Errorf("the %s validation mode is incorrect; expected one of the following: all, schema, project",
+		fmt.Errorf("the %s validation mode is incorrect; expected one of the following: schema, semantic",
 			validationFlag)
 }
 
 // MtaYaml validates an MTA.yaml file.
-func MtaYaml(projectPath, mtaFilename string, validateSchema bool, validateProject bool) error {
-	if validateProject || validateSchema {
+func MtaYaml(projectPath, mtaFilename string, validateSchema bool, validateSemantic bool) error {
+	if validateSemantic || validateSchema {
 
 		mtaPath := filepath.Join(projectPath, mtaFilename)
 		// ParseFile contains MTA yaml content.
@@ -38,12 +33,10 @@ func MtaYaml(projectPath, mtaFilename string, validateSchema bool, validateProje
 			return errors.Wrapf(err, "could not read the %v file; the validation failed", mtaPath)
 		}
 		// Validates MTA content.
-		issues, err := validate(yamlContent, projectPath, validateSchema, validateProject)
-		if err != nil {
-			issues = appendIssue(issues, err.Error())
-		}
+		issues := validate(yamlContent, projectPath, validateSchema, validateSemantic)
 		if len(issues) > 0 {
-			return errors.Errorf("validation of the %v file failed with the following issues: \n%v", mtaPath, issues.String())
+			return errors.Errorf("validation of the %v file failed with the following issues: \n%v",
+				mtaPath, issues.String())
 		}
 	}
 
@@ -51,28 +44,18 @@ func MtaYaml(projectPath, mtaFilename string, validateSchema bool, validateProje
 }
 
 // validate - validates the MTA descriptor
-func validate(yamlContent []byte, projectPath string, validateSchema bool, validateProject bool) (YamlValidationIssues, error) {
+func validate(yamlContent []byte, projectPath string, validateSchema bool, validateSemantic bool) YamlValidationIssues {
 	var issues []YamlValidationIssue
 	if validateSchema {
-		validations, schemaValidationLog := BuildValidationsFromSchemaText(schemaDef)
+		validations, schemaValidationLog := buildValidationsFromSchemaText(schemaDef)
 		if len(schemaValidationLog) > 0 {
-			return schemaValidationLog, nil
+			return schemaValidationLog
 		}
-		yamlValidationLog, err := Yaml(yamlContent, validations...)
-		if err != nil && len(yamlValidationLog) == 0 {
-			yamlValidationLog = appendIssue(yamlValidationLog, "validation failed because: "+err.Error())
-		}
-		issues = append(issues, yamlValidationLog...)
+		issues = append(issues, runSchemaValidations(yamlContent, validations...)...)
 
 	}
-	if validateProject {
-		mtaStr := mta.MTA{}
-		err := yaml.Unmarshal(yamlContent, &mtaStr)
-		if err != nil {
-			return nil, errors.Wrap(err, "validation failed when unmarshalling the MTA file")
-		}
-		projectIssues := runSemanticValidations(&mtaStr, projectPath)
-		issues = append(issues, projectIssues...)
+	if validateSemantic {
+		issues = append(issues, runSemanticValidations(yamlContent, projectPath)...)
 	}
-	return issues, nil
+	return issues
 }

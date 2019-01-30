@@ -3,8 +3,6 @@ package validate
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	"github.com/SAP/cloud-mta/mta"
 )
 
 var _ = Describe("validateNamesUniqueness", func() {
@@ -36,8 +34,7 @@ resources:
       service: destination
    type: org.cloudfoundry.managed-service
 `)
-		mta, _ := mta.Unmarshal(mtaContent)
-		issues := runSemanticValidations(mta, getTestPath("testproject"))
+		issues := runSemanticValidations(mtaContent, getTestPath("testproject"))
 		Ω(len(issues)).Should(Equal(2))
 		Ω(issues[0].Msg).Should(
 			Equal("validation of the modules failed because the ui5app2 path of the ui5app2 module does not exist"))

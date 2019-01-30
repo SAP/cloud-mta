@@ -301,19 +301,19 @@ func getLiteralStringValue(y *simpleyaml.Yaml) string {
 	return ""
 }
 
-// Yaml - Given a YAML text and a set of validations will execute them and will return relevant issue slice
-// And an "err" object in case of a parsing error.
-func Yaml(yaml []byte, validations ...YamlCheck) ([]YamlValidationIssue, error) {
+// runSchemaValidations - Given a YAML text and a set of validations will execute them and will return relevant issue slice
+func runSchemaValidations(yaml []byte, validations ...YamlCheck) ([]YamlValidationIssue) {
 	var issues []YamlValidationIssue
 
 	y, parseError := simpleyaml.NewYaml(yaml)
 	if parseError != nil {
-		return issues, parseError
+		issues = appendIssue(issues, parseError.Error())
+		return issues
 	}
 
 	for _, validation := range validations {
 		issues = append(issues, validation(y, []string{})...)
 	}
 
-	return issues, nil
+	return issues
 }

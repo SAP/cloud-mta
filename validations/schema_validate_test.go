@@ -10,12 +10,11 @@ import (
 	"github.com/smallfish/simpleyaml"
 )
 
-var _ = Describe("Yaml Validation", func() {
+var _ = Describe("runSchemaValidations Validation", func() {
 
-	DescribeTable("Valid Yaml", func(data string, validations ...YamlCheck) {
-		validateIssues, parseErr := Yaml([]byte(data), validations...)
+	DescribeTable("Valid runSchemaValidations", func(data string, validations ...YamlCheck) {
+		validateIssues := runSchemaValidations([]byte(data), validations...)
 
-		assertNoParsingErrors(parseErr)
 		assertNoValidationErrors(validateIssues)
 	},
 		Entry("matchesRegExp", `
@@ -88,10 +87,9 @@ lastName: duck
 `, property("firstName", optional(typeIsNotMapArray()))),
 	)
 
-	DescribeTable("Invalid Yaml", func(data, message string, validations ...YamlCheck) {
-		validateIssues, parseErr := Yaml([]byte(data), validations...)
+	DescribeTable("Invalid runSchemaValidations", func(data, message string, validations ...YamlCheck) {
+		validateIssues := runSchemaValidations([]byte(data), validations...)
 
-		assertNoParsingErrors(parseErr)
 		expectSingleValidationError(validateIssues, message)
 	},
 		Entry("matchesRegExp", `
@@ -164,8 +162,8 @@ lastName: duck
 firstName: Donald
   lastName: duck # invalid indentation
 		`)
-		_, parseErr := Yaml(data, property("lastName", required()))
-		Ω(parseErr).Should(HaveOccurred())
+		issues := runSchemaValidations(data, property("lastName", required()))
+		Ω(len(issues)).Should(Equal(1))
 	})
 
 	It("ForEachInValid", func() {
@@ -186,9 +184,8 @@ classes:
 				property("name", required()),
 				property("room", matchesRegExp("^[0-9]+$")))))
 
-		validateIssues, parseErr := Yaml(data, validations)
+		validateIssues := runSchemaValidations(data, validations)
 
-		assertNoParsingErrors(parseErr)
 		expectMultipleValidationError(validateIssues,
 			[]string{
 				"the classes[0].room value of the oops property does not match the ^[0-9]+$ pattern",
