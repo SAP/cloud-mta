@@ -297,7 +297,7 @@ func getLiteralStringValue(y *simpleyaml.Yaml) string {
 }
 
 // runSchemaValidations - Given a YAML text and a set of validations will execute them and will return relevant issue slice
-func runSchemaValidations(yaml []byte, validations ...YamlCheck) ([]YamlValidationIssue) {
+func runSchemaValidations(yaml []byte, validations ...YamlCheck) []YamlValidationIssue {
 	var issues []YamlValidationIssue
 
 	y, parseError := simpleyaml.NewYaml(yaml)
