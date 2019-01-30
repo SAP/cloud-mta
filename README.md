@@ -22,7 +22,7 @@ The tool commands (APIs) are used to do the following:
    - Get data for constructing a deployment MTA descriptor, such as deployment module types.
    
 
-### Multi-Target Applications
+ ### Multi-Target Applications
 
 A multi-target application is a package comprised of multiple application and resource modules that have been created using different technologies and deployed to different run-times; however, they have a common life cycle. A user can bundle the modules together using the `mta.yaml` file, describe them along with their inter-dependencies to other modules, services, and interfaces, and package them in an MTA project.
  
@@ -38,8 +38,7 @@ A multi-target application is a package comprised of multiple application and re
  
 ### Milestone 2 (Q1 - 2019)
  
-- [ ] Supports semantic validations (MTA)
-- [ ] Supports uniqueness of module and resource names
+- [x] Supports uniqueness of module and resource names
 - [ ] Supports multiple schema 
 - [ ] Supports advanced `mta.yaml` file (3.1, 3.2) schemas
 
