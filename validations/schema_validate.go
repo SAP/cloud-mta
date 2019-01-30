@@ -1,8 +1,3 @@
-// TODO: Implement additional validations
-// 1. Unique:
-// 4. Allowed Properties.
-// 5. TypeIsNotMapOrSet
-
 package validate
 
 import (
