@@ -9,7 +9,7 @@
 
 > <b>Disclaimer</b>: The MTA package is under heavy development and is currently in a `pre-alpha` stage.  Some functionality is still missing and the APIs are subject to change; use at your own risk.
                    
-# MTA
+## Description
 
 MTA tool for exploring and validating the multi-target application descriptor (`mta.yaml`).
 
