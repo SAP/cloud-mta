@@ -11,7 +11,7 @@ func UnmarshalExt(content []byte) (*EXT, error) {
 	// Unmarshal MTA file
 	err := yaml.Unmarshal([]byte(content), &m)
 	if err != nil {
-		err = errors.Wrap(err, "Error parsing the MTA")
+		err = errors.Wrap(err, "failed to unmarshal the mta extension object")
 	}
 	return m, err
 }

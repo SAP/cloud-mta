@@ -84,6 +84,7 @@ var _ = Describe("MTA tests", func() {
 			Ω(res2).Should(Equal(expectedValidateProject))
 			Ω(err == nil).Should(Equal(expectedSuccess))
 		},
+			Entry("default", "", true, true, true),
 			Entry("schema", "schema", true, false, true),
 			Entry("semantic", "semantic", true, true, true),
 			Entry("invalid", "value", false, false, false),

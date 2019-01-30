@@ -17,11 +17,11 @@ type YamlValidationIssue struct {
 type YamlValidationIssues []YamlValidationIssue
 
 func (issues YamlValidationIssues) String() string {
-	s := ""
+	var messages []string
 	for _, issue := range issues {
-		s = s + issue.Msg
+		messages = append(messages, issue.Msg)
 	}
-	return s
+	return strings.Join(messages, "\n")
 }
 
 // YamlCheck - validation check function type
@@ -234,8 +234,8 @@ func matchesEnumValues(enumValues []string) YamlCheck {
 			}
 		}
 		if !found {
-			return []YamlValidationIssue{{Msg: fmt.Sprintf("the %s value of the enum property is invalid; expected one of the following: %s",
-				buildPathString(path), expectedSubset)}}
+			return []YamlValidationIssue{{Msg: fmt.Sprintf("the %s value of the %s enum property is invalid; expected one of the following: %s",
+				value, buildPathString(path), expectedSubset)}}
 		}
 
 		return []YamlValidationIssue{}
