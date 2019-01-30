@@ -15,6 +15,8 @@ func GetValidationMode(validationFlag string) (bool, bool, error) {
 		return true, false, nil
 	case "semantic":
 		return true, true, nil
+	case "":
+		return true, true, nil
 	}
 	return false, false,
 		fmt.Errorf("the %s validation mode is incorrect; expected one of the following: schema, semantic",
