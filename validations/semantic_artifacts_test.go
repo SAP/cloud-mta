@@ -55,6 +55,6 @@ resources:
 		mta, _ := mta.Unmarshal(mtaContent)
 		issues := validateModulesPaths(mta, filepath.Join(wd, "testdata", "testproject"))
 		Ω(issues[0].Msg).Should(
-			Equal("validation of the modules failed because the ui5app2 path of the ui5app2 module does not exist"))
+			Equal("the ui5app2 path of the ui5app2 module does not exist"))
 	})
 })

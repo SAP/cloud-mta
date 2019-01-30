@@ -17,11 +17,11 @@ type YamlValidationIssue struct {
 type YamlValidationIssues []YamlValidationIssue
 
 func (issues YamlValidationIssues) String() string {
-	s := ""
+	var messages []string
 	for _, issue := range issues {
-		s = s + issue.Msg
+		messages = append(messages, issue.Msg)
 	}
-	return s
+	return strings.Join(messages, "\n")
 }
 
 // YamlCheck - validation check function type
