@@ -35,7 +35,7 @@ func validateNameUniqueness(names map[string]string, name string,
 	// name found -> add issue
 	if ok {
 		result = appendIssue(result,
-			fmt.Sprintf("the %s %s is not unique because the %s was found with the same name",
+			fmt.Sprintf("the %s %s is not unique because a %s was found with the same name",
 				name, objectName, prevObjectName))
 	} else {
 		// name not found -> add it to the global map
