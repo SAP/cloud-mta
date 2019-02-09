@@ -12,7 +12,7 @@ type checkSemantic func(mta *mta.MTA, source string) []YamlValidationIssue
 func runSemanticValidations(yamlContent []byte, source string) []YamlValidationIssue {
 	var issues []YamlValidationIssue
 	mtaStr := mta.MTA{}
-	err := yaml.Unmarshal(yamlContent, &mtaStr)
+	err := yaml.UnmarshalStrict(yamlContent, &mtaStr)
 	if err != nil {
 		issues = appendIssue(issues, "validation failed when unmarshalling the MTA file because: "+err.Error())
 		return issues

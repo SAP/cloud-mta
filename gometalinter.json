@@ -15,8 +15,7 @@
     "vetshadow",
     "ineffassign",
     "misspell",
-    "gotypex",
-    "vetshadow"
+    "gotypex"
   ],
   "Cyclo": 10,
   "LineLength": 120
