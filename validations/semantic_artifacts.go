@@ -23,7 +23,7 @@ func validateModulesPaths(mta *mta.MTA, source string) []YamlValidationIssue {
 		_, err := os.Stat(fullPath)
 		if err != nil {
 			// path not exists -> add an issue
-			issues = appendIssue(issues, fmt.Sprintf("the %s path of the %s module does not exist",
+			issues = appendIssue(issues, fmt.Sprintf(`the "%s" path of the "%s" module does not exist`,
 				modulePath, module.Name))
 		}
 	}

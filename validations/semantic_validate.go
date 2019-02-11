@@ -14,7 +14,7 @@ func runSemanticValidations(yamlContent []byte, source string) []YamlValidationI
 	mtaStr := mta.MTA{}
 	err := yaml.UnmarshalStrict(yamlContent, &mtaStr)
 	if err != nil {
-		issues = appendIssue(issues, "validation failed when unmarshalling the MTA file because: "+err.Error())
+		issues = appendIssue(issues, "validation failed when unmarshalling the MTA file: "+err.Error())
 		return issues
 	}
 	validations := []checkSemantic{validateModulesPaths, validateNamesUniqueness}

@@ -19,7 +19,7 @@ func GetValidationMode(validationFlag string) (bool, bool, error) {
 		return true, true, nil
 	}
 	return false, false,
-		fmt.Errorf("the %s validation mode is incorrect; expected one of the following: schema, semantic",
+		fmt.Errorf(`the "%s" validation mode is incorrect; expected one of the following: schema, semantic`,
 			validationFlag)
 }
 
@@ -32,12 +32,12 @@ func MtaYaml(projectPath, mtaFilename string, validateSchema bool, validateSeman
 		yamlContent, err := ioutil.ReadFile(mtaPath)
 
 		if err != nil {
-			return errors.Wrapf(err, "could not read the %v file; the validation failed", mtaPath)
+			return errors.Wrapf(err, `could not read the "%v" file; the validation failed`, mtaPath)
 		}
 		// Validates MTA content.
 		issues := validate(yamlContent, projectPath, validateSchema, validateSemantic)
 		if len(issues) > 0 {
-			return errors.Errorf("validation of the %v file failed with the following issues: \n%v",
+			return errors.Errorf(`the "%v" file is not valid: \n%v`,
 				mtaPath, issues.String())
 		}
 	}

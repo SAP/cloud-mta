@@ -58,6 +58,6 @@ modules:
 
 `)
 		validateIssues := runSchemaValidations(input, schemaValidations...)
-		expectSingleValidationError(validateIssues, `missing the type required property in the modules[1] .yaml node`)
+		expectSingleValidationError(validateIssues, `missing the "type" required property in the modules[1] .yaml node`)
 	})
 })
