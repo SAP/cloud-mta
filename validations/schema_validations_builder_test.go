@@ -21,7 +21,7 @@ var _ = Describe("Schema tests Issues", func() {
 type: map
 # bad indentation
  mapping:
-   firstName:  {required: true}`, `validation failed when parsing the MTA file because: unmarshal []byte to yaml failed: yaml: line 3: did not find expected key`),
+   firstName:  {required: true}`, `validation failed when parsing the MTA file: unmarshal []byte to yaml failed: yaml: line 3: did not find expected key`),
 
 		Entry("Mapping", `
 type: map
@@ -157,7 +157,7 @@ mapping:
 `, `
 firstName: Donald
 lastName: duck
-`, "missing the age required property in the root .yaml node"),
+`, `missing the "age" required property in the root .yaml node`),
 
 		Entry("Enum", `
 type: enum
@@ -167,7 +167,7 @@ enums:
    - cat
    - mouse
    - elephant
-`, `bird`, "the bird value of the root enum property is invalid; expected one of the following: duck,dog,cat,mouse"),
+`, `bird`, `the "bird" value of the "root" enum property is invalid; expected one of the following: duck,dog,cat,mouse`),
 
 		Entry("sequence", `
 type: seq
@@ -181,7 +181,7 @@ sequence:
 
 - age: 80
   lastName: Bunny
-`, "missing the name required property in the root[1] .yaml node"),
+`, `missing the "name" required property in the root[1] .yaml node`),
 
 		Entry("Pattern", `
 type: map
@@ -190,7 +190,7 @@ mapping:
 `, `
 name: Bamba
 age: NaN
-`, "the root.age value of the NaN property does not match the ^[0-9]+$ pattern"),
+`, `the "NaN" value of the "root.age" property does not match the "^[0-9]+$" pattern`),
 
 		Entry("optional With Pattern", `
 type: map
@@ -199,7 +199,7 @@ mapping:
 `, `
 firstName: Donald123
 lastName: duck
-`, "the root.firstName value of the Donald123 property does not match the ^[a-zA-Z]+$ pattern"),
+`, `the "Donald123" value of the "root.firstName" property does not match the "^[a-zA-Z]+$" pattern`),
 
 		Entry("Type Is Bool", `
 type: map
@@ -208,6 +208,6 @@ mapping:
 `, `
 firstName: John
 isHappy: 123
-`, "the root.isHappy property must be a boolean"),
+`, `the "root.isHappy" property must be a boolean`),
 	)
 })

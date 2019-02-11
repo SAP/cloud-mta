@@ -20,7 +20,7 @@ func buildValidationsFromSchemaText(yaml []byte) ([]YamlCheck, []YamlValidationI
 
 	y, parseError := simpleyaml.NewYaml(yaml)
 	if parseError != nil {
-		schemaIssues = appendIssue(schemaIssues, "validation failed when parsing the MTA file because: "+parseError.Error())
+		schemaIssues = appendIssue(schemaIssues, "validation failed when parsing the MTA file: "+parseError.Error())
 		return validations, schemaIssues
 	}
 

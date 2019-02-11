@@ -58,7 +58,7 @@ modules:
 `)
 		mta, _ := mta.Unmarshal(mtaContent)
 		issues := validateNamesUniqueness(mta, "")
-		Ω(issues[0].Msg).Should(Equal("the ui5app module is not unique because a module was found with the same name"))
+		Ω(issues[0].Msg).Should(Equal(`the "ui5app" module name is not unique; a module was found with the same name`))
 	})
 	It("module and provides have the same name", func() {
 		mtaContent := []byte(`
@@ -77,7 +77,7 @@ modules:
 `)
 		mta, _ := mta.Unmarshal(mtaContent)
 		issues := validateNamesUniqueness(mta, "")
-		Ω(issues[0].Msg).Should(Equal("the ui5app2 module is not unique because a provided service was found with the same name"))
+		Ω(issues[0].Msg).Should(Equal(`the "ui5app2" module name is not unique; a provided service was found with the same name`))
 	})
 	It("resource and provides have the same name", func() {
 		mtaContent := []byte(`
@@ -103,6 +103,6 @@ resources:
 `)
 		mta, _ := mta.Unmarshal(mtaContent)
 		issues := validateNamesUniqueness(mta, "")
-		Ω(issues[0].Msg).Should(Equal("the test resource is not unique because a provided service was found with the same name"))
+		Ω(issues[0].Msg).Should(Equal(`the "test" resource name is not unique; a provided service was found with the same name`))
 	})
 })

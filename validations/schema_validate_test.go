@@ -95,13 +95,13 @@ lastName: duck
 		Entry("matchesRegExp", `
 firstName: Donald
 lastName: duck
-`, `the root.firstName value of the Donald property does not match the ^[0-9_\-\.]+$ pattern`,
+`, `the "Donald" value of the "root.firstName" property does not match the "^[0-9_\-\.]+$" pattern`,
 			property("firstName", matchesRegExp("^[0-9_\\-\\.]+$"))),
 
 		Entry("required", `
 firstName: Donald
 lastName: duck
-`, `missing the age required property in the root .yaml node`,
+`, `missing the "age" required property in the root .yaml node`,
 			property("age", required())),
 
 		Entry("required", `
@@ -110,13 +110,13 @@ firstName:
    - 2
    - 3
 lastName: duck
-`, `the root.firstName property must be a string`,
+`, `the "root.firstName" property must be a string`,
 			property("firstName", typeIsNotMapArray())),
 
 		Entry("TypeIsBool", `
 name: bamba
 registered: 123
-`, `the root.registered property must be a boolean`,
+`, `the "root.registered" property must be a boolean`,
 			property("registered", typeIsBoolean())),
 
 		Entry("typeIsArray", `
@@ -125,7 +125,7 @@ firstName:
    - 2
    - 3
 lastName: duck
-`, `the root.lastName property must be an array`,
+`, `the "root.lastName" property must be an array`,
 			property("lastName", typeIsArray())),
 
 		Entry("typeIsMap", `
@@ -136,13 +136,13 @@ firstName:
 lastName:
    a : 1
    b : 2
-`, `the root.firstName property must be a map`,
+`, `the "root.firstName" property must be a map`,
 			property("firstName", typeIsMap())),
 
 		Entry("sequenceFailFast", `
 firstName: Hello
 lastName: World
-`, `missing the missing required property in the root .yaml node`,
+`, `missing the "missing" required property in the root .yaml node`,
 			property("missing", sequenceFailFast(
 				required(),
 				// This second validation should not be executed as sequence breaks early.
@@ -153,7 +153,7 @@ firstName:
   - 1
   - 2
 lastName: duck
-`, `the root.firstName property must be a string`,
+`, `the "root.firstName" property must be a string`,
 			property("firstName", optional(typeIsNotMapArray()))),
 	)
 
@@ -188,8 +188,8 @@ classes:
 
 		expectMultipleValidationError(validateIssues,
 			[]string{
-				"the classes[0].room value of the oops property does not match the ^[0-9]+$ pattern",
-				"missing the name required property in the classes[1] .yaml node"})
+				`the "oops" value of the "classes[0].room" property does not match the "^[0-9]+$" pattern`,
+				`missing the "name" required property in the classes[1] .yaml node`})
 	})
 })
 
