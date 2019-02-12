@@ -28,7 +28,7 @@ func validateRequested(mta *mta.MTA, source string) []YamlValidationIssue {
 			if _, contains := providedSet[requires.Name]; !contains {
 				issues = appendIssue(issues,
 					fmt.Sprintf(`the "%s" name required by the "%s" module is not provided`,
-					requires.Name, module.Name))
+						requires.Name, module.Name))
 			}
 		}
 	}
