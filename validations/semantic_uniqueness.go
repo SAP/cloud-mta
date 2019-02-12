@@ -16,7 +16,7 @@ func validateNamesUniqueness(mta *mta.MTA, source string) []YamlValidationIssue 
 		issues = validateNameUniqueness(names, module.Name, "module", issues)
 		for _, provide := range module.Provides {
 			// validate name of provided service
-			issues = validateNameUniqueness(names, provide.Name, "provided service", issues)
+			issues = validateNameUniqueness(names, provide.Name, "provided property set", issues)
 		}
 	}
 	for _, resource := range mta.Resources {
@@ -34,9 +34,15 @@ func validateNameUniqueness(names map[string]string, name string,
 	prevObjectName, ok := names[name]
 	// name found -> add issue
 	if ok {
+		var article string
+		if objectName == prevObjectName {
+			article = "another"
+		} else {
+			article = "a"
+		}
 		result = appendIssue(result,
-			fmt.Sprintf(`the "%s" %s name is not unique; a %s was found with the same name`,
-				name, objectName, prevObjectName))
+			fmt.Sprintf(`the "%s" %s name is not unique; %s %s was found with the same name`,
+				name, objectName, article, prevObjectName))
 	} else {
 		// name not found -> add it to the global map
 		names[name] = objectName
