@@ -40,7 +40,7 @@ resources:
 		Ω(issues[0].Msg).Should(
 			Equal(`the "ui5app2" path of the "ui5app2" module does not exist`))
 		Ω(issues[1].Msg).
-			Should(Equal(`the "test" resource name is not unique; a provided service was found with the same name`))
+			Should(Equal(`the "test" resource name is not unique; a provided property set was found with the same name`))
 	})
 
 	It("Sanity", func() {
