@@ -17,7 +17,7 @@ func runSemanticValidations(yamlContent []byte, source string) []YamlValidationI
 		issues = appendIssue(issues, "validation failed when unmarshalling the MTA file: "+err.Error())
 		return issues
 	}
-	validations := []checkSemantic{validateModulesPaths, validateNamesUniqueness}
+	validations := []checkSemantic{ifModulePathExists, isNameUnique, ifRequiredDefined}
 	for _, validation := range validations {
 		validationIssues := validation(&mtaStr, source)
 		issues = append(issues, validationIssues...)

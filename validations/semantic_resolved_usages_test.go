@@ -42,7 +42,7 @@ resources:
    type: org.cloudfoundry.managed-service
 `)
 		mta, _ := mta.Unmarshal(mtaContent)
-		issues := validateRequested(mta, "")
+		issues := ifRequiredDefined(mta, "")
 		Ω(len(issues)).Should(Equal(1))
 		Ω(issues[0].Msg).Should(Equal(`the "test1" property set required by the "ui5app2" module is not defined`))
 	})

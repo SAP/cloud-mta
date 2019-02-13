@@ -7,7 +7,7 @@ import (
 	"github.com/SAP/cloud-mta/mta"
 )
 
-var _ = Describe("validateNamesUniqueness", func() {
+var _ = Describe("isNameUnique", func() {
 	It("Sanity", func() {
 		mtaContent := []byte(`
 ID: mtahtml5
@@ -37,7 +37,7 @@ resources:
    type: org.cloudfoundry.managed-service
 `)
 		mta, _ := mta.Unmarshal(mtaContent)
-		issues := validateNamesUniqueness(mta, "")
+		issues := isNameUnique(mta, "")
 		Ω(len(issues)).Should(Equal(0))
 	})
 
@@ -57,7 +57,7 @@ modules:
    type: html5
 `)
 		mta, _ := mta.Unmarshal(mtaContent)
-		issues := validateNamesUniqueness(mta, "")
+		issues := isNameUnique(mta, "")
 		Ω(issues[0].Msg).Should(Equal(`the "ui5app" module name is not unique; another module was found with the same name`))
 	})
 	It("module and provides have the same name", func() {
@@ -76,7 +76,7 @@ modules:
    type: html5
 `)
 		mta, _ := mta.Unmarshal(mtaContent)
-		issues := validateNamesUniqueness(mta, "")
+		issues := isNameUnique(mta, "")
 		Ω(issues[0].Msg).Should(Equal(`the "ui5app2" module name is not unique; a provided property set was found with the same name`))
 	})
 	It("resource and provides have the same name", func() {
@@ -102,7 +102,7 @@ resources:
    type: com.company.xs.uaa
 `)
 		mta, _ := mta.Unmarshal(mtaContent)
-		issues := validateNamesUniqueness(mta, "")
+		issues := isNameUnique(mta, "")
 		Ω(issues[0].Msg).Should(Equal(`the "test" resource name is not unique; a provided property set was found with the same name`))
 	})
 })
