@@ -26,6 +26,7 @@ modules:
    - name: test
    - name: test1
    - name: uaa_mtahtml5
+   - name: ui5app
 
 resources:
  - name: uaa_mtahtml5
@@ -43,6 +44,6 @@ resources:
 		mta, _ := mta.Unmarshal(mtaContent)
 		issues := validateRequested(mta, "")
 		Ω(len(issues)).Should(Equal(1))
-		Ω(issues[0].Msg).Should(Equal(`the "test1" name required by the "ui5app2" module is not provided`))
+		Ω(issues[0].Msg).Should(Equal(`the "test1" property set required by the "ui5app2" module is not defined`))
 	})
 })
