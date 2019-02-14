@@ -8,8 +8,8 @@ import (
 	"github.com/SAP/cloud-mta/mta"
 )
 
-// validateModulesPaths - validates the existence of modules paths used in the MTA descriptor
-func validateModulesPaths(mta *mta.MTA, source string) []YamlValidationIssue {
+// ifModulePathExists - validates the existence of modules paths used in the MTA descriptor
+func ifModulePathExists(mta *mta.MTA, source string) []YamlValidationIssue {
 	var issues []YamlValidationIssue
 	for _, module := range mta.Modules {
 		modulePath := module.Path

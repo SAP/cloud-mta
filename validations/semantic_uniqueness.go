@@ -6,8 +6,8 @@ import (
 	"github.com/SAP/cloud-mta/mta"
 )
 
-// validateNamesUniqueness - validates the global uniqueness of the names of modules, provided services and resources
-func validateNamesUniqueness(mta *mta.MTA, source string) []YamlValidationIssue {
+// isNameUnique - validates the global uniqueness of the names of modules, provided services and resources
+func isNameUnique(mta *mta.MTA, source string) []YamlValidationIssue {
 	var issues []YamlValidationIssue
 	// map: name -> object kind (module, provided services or resource)
 	names := make(map[string]string)

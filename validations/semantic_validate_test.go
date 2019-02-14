@@ -6,7 +6,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("validateNamesUniqueness", func() {
+var _ = Describe("isNameUnique", func() {
 	It("Sanity", func() {
 		mtaContent := []byte(`
 ID: mtahtml5
