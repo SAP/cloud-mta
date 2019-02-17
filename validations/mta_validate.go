@@ -44,6 +44,7 @@ func MtaYaml(projectPath, mtaFilename string,
 			return warnIssues.String(), errors.Errorf(`the "%v" file is not valid: `+"\n%v",
 				mtaPath, errIssues.String())
 		}
+		return warnIssues.String(), nil
 	}
 
 	return "", nil
