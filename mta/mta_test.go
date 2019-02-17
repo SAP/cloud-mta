@@ -252,10 +252,6 @@ var _ = Describe("Mta", func() {
 			Ω(*mta).Should(BeEquivalentTo(*m))
 			Ω(len(m.Modules)).Should(Equal(2))
 		})
-		It("Invalid content", func() {
-			_, err := Unmarshal([]byte("wrong mta"))
-			Ω(err).Should(HaveOccurred())
-		})
 	})
 
 })

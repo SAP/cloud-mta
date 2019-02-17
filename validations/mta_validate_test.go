@@ -1,6 +1,7 @@
 package validate
 
 import (
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -92,7 +93,8 @@ var _ = Describe("MTA tests", func() {
 
 		var _ = DescribeTable("validateMtaYaml", func(projectRelPath string,
 			validateSchema, validateProject, expectedSuccess bool) {
-			err := MtaYaml(getTestPath(projectRelPath), "mta.yaml", validateSchema, validateProject)
+			_, err := MtaYaml(getTestPath(projectRelPath), "mta.yaml",
+				validateSchema, validateProject, true)
 			Ω(err == nil).Should(Equal(expectedSuccess))
 		},
 			Entry("invalid path to yaml - all", "ui5app1", true, true, false),
@@ -103,17 +105,53 @@ var _ = Describe("MTA tests", func() {
 			Entry("invalid project - no ui5app2 path", "mtahtml5", false, true, false),
 		)
 
-		It("invalid schema", func() {
-			originalSchema := schemaDef
-			schemaDef = []byte(`
+		var _ = Describe("validateMtaYaml - strict flag checks", func() {
+			It("strict", func() {
+				warn, err := MtaYaml(getTestPath("mtahtml5"), "mtaNotStrict.yaml",
+					true, true, true)
+				Ω(warn).Should(Equal(""))
+				Ω(err.Error()).Should(ContainSubstring("line 8: field abc not found in type mta.Module"))
+				Ω(err.Error()).Should(ContainSubstring(`line 20: key "url" already set in map`))
+				Ω(err.Error()).Should(ContainSubstring(`the "srv_api1" property set required by the "ui" module is not defined`))
+				Ω(err.Error()).Should(ContainSubstring(`the "srv" path of the "srv" module does not exist`))
+			})
+			It("not strict", func() {
+				warn, err := MtaYaml(getTestPath("mtahtml5"), "mtaNotStrict.yaml",
+					true, true, false)
+				Ω(warn).Should(ContainSubstring("line 8: field abc not found in type mta.Module"))
+				Ω(warn).Should(ContainSubstring(`line 20: key "url" already set in map`))
+				Ω(err.Error()).ShouldNot(ContainSubstring("line 8: field abc not found in type mta.Module"))
+				Ω(err.Error()).ShouldNot(ContainSubstring(`line 20: key "url" already set in map`))
+				Ω(err.Error()).Should(ContainSubstring(`the "srv_api1" property set required by the "ui" module is not defined`))
+				Ω(err.Error()).Should(ContainSubstring(`the "srv" path of the "srv" module does not exist`))
+			})
+
+		})
+
+		var _ = Describe("validate - unmarshalling fails", func() {
+			It("Sanity", func() {
+				err, warn := validate([]byte("bad Yaml"), getTestPath("mtahtml5"),
+					true, false, false, func(mtaContent []byte, mtaStr interface{}) error {
+						return errors.New("err")
+					})
+				Ω(warn).Should(BeNil())
+				Ω(err).ShouldNot(BeNil())
+				Ω(len(err)).Should(Equal(1))
+				Ω(err[0].Msg).Should(ContainSubstring("err"))
+			})
+
+			It("invalid schema", func() {
+				originalSchema := schemaDef
+				schemaDef = []byte(`
 desc: MTA DESCRIPTOR SCHEMA
 # schema version must be extracted from here as there is no "version" element available to version schemas
   name: com.sap.mta.mta-schema_3.2.0 abc
 `)
-			err := MtaYaml(getTestPath("testproject"), "mta.yaml", true, false)
-			Ω(err).Should(HaveOccurred())
-			schemaDef = originalSchema
+				_, err := MtaYaml(getTestPath("testproject"), "mta.yaml",
+					true, false, true)
+				Ω(err).Should(HaveOccurred())
+				schemaDef = originalSchema
+			})
 		})
 	})
-
 })
