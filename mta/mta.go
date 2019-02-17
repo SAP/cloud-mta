@@ -5,7 +5,6 @@ package mta
 import (
 	"fmt"
 
-	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
@@ -53,9 +52,6 @@ func (mta *MTA) GetResourceByName(name string) (*Resource, error) {
 func Unmarshal(content []byte) (*MTA, error) {
 	m := &MTA{}
 	// Unmarshal MTA file
-	err := yaml.UnmarshalStrict([]byte(content), &m)
-	if err != nil {
-		err = errors.Wrap(err, "failed to unmarshal the MTA object")
-	}
+	err := yaml.Unmarshal([]byte(content), &m)
 	return m, err
 }

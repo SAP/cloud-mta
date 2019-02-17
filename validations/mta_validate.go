@@ -2,6 +2,8 @@ package validate
 
 import (
 	"fmt"
+	"github.com/SAP/cloud-mta/mta"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"path/filepath"
 
@@ -24,40 +26,59 @@ func GetValidationMode(validationFlag string) (bool, bool, error) {
 }
 
 // MtaYaml validates an MTA.yaml file.
-func MtaYaml(projectPath, mtaFilename string, validateSchema bool, validateSemantic bool) error {
+func MtaYaml(projectPath, mtaFilename string,
+	validateSchema, validateSemantic, strict bool) (warning string, err error) {
 	if validateSemantic || validateSchema {
 
 		mtaPath := filepath.Join(projectPath, mtaFilename)
 		// ParseFile contains MTA yaml content.
-		yamlContent, err := ioutil.ReadFile(mtaPath)
+		yamlContent, e := ioutil.ReadFile(mtaPath)
 
-		if err != nil {
-			return errors.Wrapf(err, `could not read the "%v" file; the validation failed`, mtaPath)
+		if e != nil {
+			return "", errors.Wrapf(e, `could not read the "%v" file; the validation failed`, mtaPath)
 		}
 		// Validates MTA content.
-		issues := validate(yamlContent, projectPath, validateSchema, validateSemantic)
-		if len(issues) > 0 {
-			return errors.Errorf(`the "%v" file is not valid: \n%v`,
-				mtaPath, issues.String())
+		errIssues, warnIssues := validate(yamlContent, projectPath,
+			validateSchema, validateSemantic, strict, yaml.Unmarshal)
+		if len(errIssues) > 0 {
+			return warnIssues.String(), errors.Errorf(`the "%v" file is not valid: `+"\n%v",
+				mtaPath, errIssues.String())
 		}
 	}
 
-	return nil
+	return "", nil
 }
 
 // validate - validates the MTA descriptor
-func validate(yamlContent []byte, projectPath string, validateSchema bool, validateSemantic bool) YamlValidationIssues {
-	var issues []YamlValidationIssue
+func validate(yamlContent []byte, projectPath string,
+	validateSchema, validateSemantic, strict bool,
+	unmarshal func(mtaContent []byte, mtaStr interface{}) error) (errIssues YamlValidationIssues, warnIssues YamlValidationIssues) {
+
+	mtaStr := mta.MTA{}
+
+	err := yaml.UnmarshalStrict(yamlContent, &mtaStr)
+	if strict && err != nil {
+		errIssues = appendIssue(errIssues, err.Error())
+	} else if err != nil {
+		warnIssues = appendIssue(warnIssues, err.Error())
+		err = unmarshal(yamlContent, &mtaStr)
+		if err != nil {
+			errIssues = appendIssue(errIssues, err.Error())
+			return errIssues, nil
+		}
+	}
+
 	if validateSchema {
 		validations, schemaValidationLog := buildValidationsFromSchemaText(schemaDef)
 		if len(schemaValidationLog) > 0 {
-			return schemaValidationLog
+			errIssues = append(errIssues, schemaValidationLog...)
+			return errIssues, warnIssues
 		}
-		issues = append(issues, runSchemaValidations(yamlContent, validations...)...)
+		errIssues = append(errIssues, runSchemaValidations(yamlContent, validations...)...)
+	}
 
-	}
 	if validateSemantic {
-		issues = append(issues, runSemanticValidations(yamlContent, projectPath)...)
+		errIssues = append(errIssues, runSemanticValidations(&mtaStr, projectPath)...)
 	}
-	return issues
+	return errIssues, warnIssues
 }
