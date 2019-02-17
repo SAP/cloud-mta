@@ -36,7 +36,7 @@ resources:
       service: destination
    type: org.cloudfoundry.managed-service
 `)
-		mtaStr:=mta.MTA{}
+		mtaStr := mta.MTA{}
 		yaml.Unmarshal(mtaContent, &mtaStr)
 		issues := runSemanticValidations(&mtaStr, getTestPath("testproject"))
 		Ω(len(issues)).Should(Equal(2))
