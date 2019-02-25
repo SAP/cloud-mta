@@ -145,7 +145,7 @@ type Includes struct {
 	Path string `yaml:"path,omitempty"`
 }
 
-// Experimental - use for pre/post hook
+// BuildParams - experimental use for pre/post hook
 type BuildParams struct {
 	BeforeAll string `yaml:"before-all,omitempty"`
 	AfterAll  string `yaml:"after-all,omitempty"`
