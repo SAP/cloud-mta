@@ -139,7 +139,7 @@ type ResourceTypes struct {
 
 // Includes The 'includes' element only relevant for development descriptor, not for deployment descriptor
 type Includes struct {
-	// A name of an include s ection. This name will be used by a builder to generate a parameter section in the deployment descriptor
+	// A name of an include section. This name will be used by a builder to generate a parameter section in the deployment descriptor
 	Name string `yaml:"name,omitempty"`
 	// A path pointing to a file which contains a map of parameters, either in JSON or in YAML format.
 	Path string `yaml:"path,omitempty"`
