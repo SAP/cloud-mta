@@ -26,6 +26,8 @@ type MTA struct {
 	ResourceTypes []*ResourceTypes `yaml:"resource-types,omitempty"`
 	// Parameters can be used to steer the behavior of tools which interpret this descriptor
 	Parameters map[string]interface{} `yaml:"parameters,omitempty"`
+	// Experimental - use for pre/post hook
+	BuildParams BuildParams `yaml:"build-parameters,omitempty"`
 }
 
 // Module - modules section.
@@ -141,4 +143,10 @@ type Includes struct {
 	Name string `yaml:"name,omitempty"`
 	// A path pointing to a file which contains a map of parameters, either in JSON or in YAML format.
 	Path string `yaml:"path,omitempty"`
+}
+
+// BuildParams - experimental use for pre/post hook
+type BuildParams struct {
+	BeforeAll string `yaml:"before-all,omitempty"`
+	AfterAll  string `yaml:"after-all,omitempty"`
 }
