@@ -34,6 +34,9 @@ resources:
       path: ./xs-security.json
       service-plan: application
    type: com.company.xs.uaa
+   requires:
+   - name: test
+   - name: test1
 
  - name: dest_mtahtml5
    parameters:
@@ -43,7 +46,7 @@ resources:
 `)
 		mta, _ := mta.Unmarshal(mtaContent)
 		issues := ifRequiredDefined(mta, "")
-		Ω(len(issues)).Should(Equal(1))
+		Ω(len(issues)).Should(Equal(2))
 		Ω(issues[0].Msg).Should(Equal(`the "test1" property set required by the "ui5app2" module is not defined`))
-	})
+		Ω(issues[1].Msg).Should(Equal(`the "test1" property set required by the "uaa_mtahtml5" resource is not defined`))	})
 })
