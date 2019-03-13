@@ -238,5 +238,8 @@ func invokeLeafValidation(y *simpleyaml.Yaml, validations []YamlCheck, schemaIss
 }
 
 func appendIssue(issues []YamlValidationIssue, issue string) []YamlValidationIssue {
+	if issue == "" {
+		return issues
+	}
 	return append(issues, []YamlValidationIssue{{issue}}...)
 }
