@@ -67,7 +67,7 @@ func ifRequiredDefined(mta *mta.MTA, source string) []YamlValidationIssue {
 	return issues
 }
 
-// go through all properties, including hierarchical and collect their leafs
+// collectLeafProperties - go through all properties, including hierarchical and collect their leafs
 func collectLeafProperties(props map[string]interface{}) map[string]interface{} {
 	result := make(map[string]interface{})
 	for name, value := range props {

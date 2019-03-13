@@ -2,6 +2,7 @@ package validate
 
 import (
 	"fmt"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -52,7 +53,6 @@ resources:
 		Ω(issues[1].Msg).Should(Equal(`the "test1" property set required by the "uaa_mtahtml5" resource is not defined`))
 	})
 
-
 	It("check required properties (placeholders usage)", func() {
 		mtaContent := []byte(`
 ID: mtahtml5
@@ -94,7 +94,7 @@ modules:
 		Ω(err).Should(Succeed())
 		issues := ifRequiredDefined(mta, "")
 		Ω(len(issues)).Should(Equal(10))
-		for _, issue := range  issues {
+		for _, issue := range issues {
 			fmt.Println(issue.Msg)
 		}
 
