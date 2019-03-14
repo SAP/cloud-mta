@@ -72,12 +72,12 @@ modules:
        conn_string2: "~{protocol}://~{uri}/odata/" 
    properties: 
      conn_string3: "~{protocol}://~{uri}/odata/" 
-     a: "~{price_opt.protocol}://~{price_opt.uri}/odata/"
-     b: "~{price_opt.protocol1}://~{price_opt.uri}/odata/"
-     c: "~{price_opt1.protocol}://~{price_opt.uri}/odata/"
+     a: "~{price_opt/protocol}://~{price_opt/uri}/odata/"
+     b: "~{price_opt/protocol1}://~{price_opt/uri}/odata/"
+     c: "~{price_opt1/protocol}://~{price_opt/uri}/odata/"
      complex: 
-       a: "~{price_opt1.protocol}://~{price_opt.uri}/odata/"
-       b: "~{price_opt.address.protocolX}://~{price_opt.address.uri}/odata/"
+       a: "~{price_opt1/protocol}://~{price_opt/uri}/odata/"
+       b: "~{price_opt/address}://~{price_opt/address1}/odata/"
 
  - name: pricing-backend
    type: html5
@@ -89,6 +89,11 @@ modules:
        address: 
          protocolX: http
          uriX: myhost.mydomain
+
+ - name1: unnamed
+   type: html5
+   properties: 
+     conn_string: "~{price_opt/protocol}://~{price_opt/uri}/odata/" 
 `)
 		mta, err := mta.Unmarshal(mtaContent)
 		Ω(err).Should(Succeed())

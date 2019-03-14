@@ -2,6 +2,7 @@ package validate
 
 import (
 	"fmt"
+	"reflect"
 	"regexp"
 	"strings"
 
@@ -13,92 +14,100 @@ func ifRequiredDefined(mta *mta.MTA, source string) []YamlValidationIssue {
 	var issues []YamlValidationIssue
 
 	// init set of all provided property sets
-	providedSet := make(map[string]map[string]interface{})
+	provided := make(map[string]map[string]interface{})
 
 	for _, module := range mta.Modules {
 		// add module to provided property sets
-		providedSet[module.Name] = collectLeafProperties(module.Properties)
+		provided[module.Name] = module.Properties
 		// add all property sets provided by module
-		for _, provided := range module.Provides {
-			providedSet[provided.Name] = collectLeafProperties(provided.Properties)
+		for _, prov := range module.Provides {
+			provided[prov.Name] = prov.Properties
 		}
 	}
 
 	// add resources to provided property sets
 	for _, resource := range mta.Resources {
-		providedSet[resource.Name] = collectLeafProperties(resource.Properties)
+		provided[resource.Name] = resource.Properties
 	}
 
 	for _, module := range mta.Modules {
-		issues = append(issues,
-			checkRequiredProperties(providedSet, "", module.Properties,
-				fmt.Sprintf(`"%s" module`, module.Name))...)
-		// check that each required by module property set was provided in mta.yaml
-		for _, requires := range module.Requires {
-			if _, contains := providedSet[requires.Name]; !contains {
-				issues = appendIssue(issues,
-					fmt.Sprintf(`the "%s" property set required by the "%s" module is not defined`,
-						requires.Name, module.Name))
-			}
-			// check that each property of module is resolved
-			issues = append(issues,
-				checkRequiredProperties(providedSet, requires.Name, requires.Properties,
-					fmt.Sprintf(`"%s" module`, module.Name))...)
-		}
+		issues = append(issues, checkComponent(provided, module, "module")...)
 	}
 
 	for _, resource := range mta.Resources {
-		issues = append(issues,
-			checkRequiredProperties(providedSet, "", resource.Properties,
-				fmt.Sprintf(`"%s" resource`, resource.Name))...)
-		// check that each required by resource property set was provided in mta.yaml
-		for _, requires := range resource.Requires {
-			if _, contains := providedSet[requires.Name]; !contains {
-				issues = appendIssue(issues,
-					fmt.Sprintf(`the "%s" property set required by the "%s" resource is not defined`,
-						requires.Name, resource.Name))
-			}
-			// check that each property of resource is resolved
-			issues = append(issues,
-				checkRequiredProperties(providedSet, requires.Name, requires.Properties,
-					fmt.Sprintf(`"%s" resource`, resource.Name))...)
-		}
+		issues = append(issues, checkComponent(provided, resource, "resource")...)
 	}
 	return issues
 }
 
-// collectLeafProperties - go through all properties, including hierarchical and collect their leafs
-func collectLeafProperties(props map[string]interface{}) map[string]interface{} {
-	result := make(map[string]interface{})
-	for name, value := range props {
-		valueMap, ok := value.(map[interface{}]interface{})
+func structFieldToMap(str interface{}, field string) map[string]interface{} {
+	v := reflect.ValueOf(str).Elem().FieldByName(field)
+	if v.IsValid() {
+		mapValue, ok := v.Addr().Interface().(*map[string]interface{})
 		if ok {
-			// property is map
-			subProps := collectLeafProperties(convertMap(valueMap))
-			// combine name of the property with upper level property name
-			for subProp := range subProps {
-				result[name+"."+subProp] = nil
-			}
-		} else {
-			// simple property
-			result[name] = nil
+			return *mapValue
 		}
 	}
-	return result
+	return nil
 }
 
-func convertMap(m map[interface{}]interface{}) map[string]interface{} {
-	result := make(map[string]interface{})
-	for key, value := range m {
-		result[key.(string)] = value
+// 
+func structFieldToRequires(str interface{}) []mta.Requires {
+	v := reflect.ValueOf(str).Elem().FieldByName("Requires")
+	if !v.IsNil() {
+		mapValue, ok := v.Addr().Interface().(*[]mta.Requires)
+		if ok {
+			return *mapValue
+		}
 	}
-	return result
+	return []mta.Requires{}
+}
+
+func structFieldToString(str interface{}) string {
+	v := reflect.ValueOf(str).Elem().FieldByName("Name")
+	strValue := v.Addr().Interface().(*string)
+	return *strValue
+}
+
+func checkComponent(provided map[string]map[string]interface{}, component interface{}, compDesc string) []YamlValidationIssue {
+	var issues []YamlValidationIssue
+
+	compName := structFieldToString(component)
+	issues = append(issues,
+		checkRequiredProperties(provided, "", structFieldToMap(component, "Properties"),
+			fmt.Sprintf(`"%s" %s`, compName, compDesc))...)
+	issues = append(issues,
+		checkRequiredProperties(provided, "", structFieldToMap(component, "Parameters"),
+			fmt.Sprintf(`"%s" %s`, compName, compDesc))...)
+	issues = append(issues,
+		checkRequiredProperties(provided, "", structFieldToMap(component, "BuildParams"),
+			fmt.Sprintf(`"%s" %s`, compName, compDesc))...)
+	// check that each required by resource property set was provided in mta.yaml
+	for _, requires := range structFieldToRequires(component) {
+		if _, contains := provided[requires.Name]; !contains {
+			issues = appendIssue(issues,
+				fmt.Sprintf(`the "%s" property set required by the "%s" %s is not defined`,
+					requires.Name, compName, compDesc))
+		}
+		// check that each property of resource is resolved
+		issues = append(issues,
+			checkRequiredProperties(provided, requires.Name, requires.Properties,
+				fmt.Sprintf(`"%s" %s`, compName, compDesc))...)
+		// check that each parameter of resource is resolved
+		issues = append(issues,
+			checkRequiredProperties(provided, requires.Name, requires.Parameters,
+				fmt.Sprintf(`"%s" %s`, compName, compDesc))...)
+	}
+	return issues
 }
 
 func checkRequiredProperties(providedProps map[string]map[string]interface{}, requiredPropSet string,
 	requiredProps map[string]interface{}, requiringObject string) []YamlValidationIssue {
 
 	var issues []YamlValidationIssue
+	if requiredProps == nil {
+		return nil
+	}
 	for propName, propValue := range requiredProps {
 		issues = append(issues, checkValue(providedProps, propName, requiredPropSet, requiringObject, propValue)...)
 	}
@@ -137,7 +146,7 @@ func checkStringPropertyValue(providedProps map[string]map[string]interface{},
 		// if property set was not provided it has to be presented in placeholder
 		if propSet == "" {
 			// split placeholder to property set and property name
-			requiredPropArr := strings.SplitN(requiredProp, ".", 2)
+			requiredPropArr := strings.SplitN(requiredProp, "/", 2)
 			if len(requiredPropArr) != 2 {
 				// no property set provided
 				issues = appendIssue(issues,
@@ -159,7 +168,7 @@ func checkStringPropertyValue(providedProps map[string]map[string]interface{},
 }
 
 func checkRequiredProperty(providedProps map[string]map[string]interface{}, property,
-	requiredSet, requiredProp, requiringObject string) string {
+requiredSet, requiredProp, requiringObject string) string {
 	providedSet, ok := providedProps[requiredSet]
 	if ok {
 		_, ok = providedSet[requiredProp]
