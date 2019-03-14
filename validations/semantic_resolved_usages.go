@@ -51,7 +51,7 @@ func structFieldToMap(str interface{}, field string) map[string]interface{} {
 	return nil
 }
 
-// 
+//
 func structFieldToRequires(str interface{}) []mta.Requires {
 	v := reflect.ValueOf(str).Elem().FieldByName("Requires")
 	if !v.IsNil() {
@@ -168,7 +168,7 @@ func checkStringPropertyValue(providedProps map[string]map[string]interface{},
 }
 
 func checkRequiredProperty(providedProps map[string]map[string]interface{}, property,
-requiredSet, requiredProp, requiringObject string) string {
+	requiredSet, requiredProp, requiringObject string) string {
 	providedSet, ok := providedProps[requiredSet]
 	if ok {
 		_, ok = providedSet[requiredProp]
