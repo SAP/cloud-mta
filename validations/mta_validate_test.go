@@ -94,7 +94,7 @@ var _ = Describe("MTA tests", func() {
 		var _ = DescribeTable("validateMtaYaml", func(projectRelPath string,
 			validateSchema, validateProject, expectedSuccess bool) {
 			_, err := MtaYaml(getTestPath(projectRelPath), "mta.yaml",
-				validateSchema, validateProject, true)
+				validateSchema, validateProject, true, "")
 			Ω(err == nil).Should(Equal(expectedSuccess))
 		},
 			Entry("invalid path to yaml - all", "ui5app1", true, true, false),
@@ -108,7 +108,7 @@ var _ = Describe("MTA tests", func() {
 		var _ = Describe("validateMtaYaml - strict flag checks", func() {
 			It("strict", func() {
 				warn, err := MtaYaml(getTestPath("mtahtml5"), "mtaNotStrict.yaml",
-					true, true, true)
+					true, true, true, "")
 				Ω(warn).Should(Equal(""))
 				Ω(err.Error()).Should(ContainSubstring("line 8: field abc not found in type mta.Module"))
 				Ω(err.Error()).Should(ContainSubstring(`line 20: key "url" already set in map`))
@@ -117,7 +117,7 @@ var _ = Describe("MTA tests", func() {
 			})
 			It("not strict", func() {
 				warn, err := MtaYaml(getTestPath("mtahtml5"), "mtaNotStrict.yaml",
-					true, true, false)
+					true, true, false, "")
 				Ω(warn).Should(ContainSubstring("line 8: field abc not found in type mta.Module"))
 				Ω(warn).Should(ContainSubstring(`line 20: key "url" already set in map`))
 				Ω(err.Error()).ShouldNot(ContainSubstring("line 8: field abc not found in type mta.Module"))
@@ -131,7 +131,7 @@ var _ = Describe("MTA tests", func() {
 		var _ = Describe("validate - unmarshalling fails", func() {
 			It("Sanity", func() {
 				err, warn := validate([]byte("bad Yaml"), getTestPath("mtahtml5"),
-					true, false, false, func(mtaContent []byte, mtaStr interface{}) error {
+					true, false, false, "", func(mtaContent []byte, mtaStr interface{}) error {
 						return errors.New("err")
 					})
 				Ω(warn).Should(BeNil())
@@ -148,7 +148,7 @@ desc: MTA DESCRIPTOR SCHEMA
   name: com.sap.mta.mta-schema_3.2.0 abc
 `)
 				_, err := MtaYaml(getTestPath("testproject"), "mta.yaml",
-					true, false, true)
+					true, false, true, "")
 				Ω(err).Should(HaveOccurred())
 				schemaDef = originalSchema
 			})

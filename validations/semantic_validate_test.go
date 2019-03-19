@@ -38,12 +38,14 @@ resources:
 `)
 		mtaStr := mta.MTA{}
 		yaml.Unmarshal(mtaContent, &mtaStr)
-		issues := runSemanticValidations(&mtaStr, getTestPath("testproject"))
+		issues := runSemanticValidations(&mtaStr, getTestPath("testproject"), "")
 		Ω(len(issues)).Should(Equal(2))
 		Ω(issues[0].Msg).Should(
 			Equal(`the "ui5app2" path of the "ui5app2" module does not exist`))
 		Ω(issues[1].Msg).
 			Should(Equal(`the "test" resource name is not unique; a provided property set was found with the same name`))
+		issues = runSemanticValidations(&mtaStr, getTestPath("testproject"), "paths,names")
+		Ω(len(issues)).Should(Equal(0))
 	})
 
 })
