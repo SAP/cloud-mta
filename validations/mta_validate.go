@@ -27,7 +27,7 @@ func GetValidationMode(validationFlag string) (bool, bool, error) {
 
 // MtaYaml validates an MTA.yaml file.
 func MtaYaml(projectPath, mtaFilename string,
-	validateSchema, validateSemantic, strict bool) (warning string, err error) {
+	validateSchema, validateSemantic, strict bool, exclude string) (warning string, err error) {
 	if validateSemantic || validateSchema {
 
 		mtaPath := filepath.Join(projectPath, mtaFilename)
@@ -39,7 +39,7 @@ func MtaYaml(projectPath, mtaFilename string,
 		}
 		// Validates MTA content.
 		errIssues, warnIssues := validate(yamlContent, projectPath,
-			validateSchema, validateSemantic, strict, yaml.Unmarshal)
+			validateSchema, validateSemantic, strict, exclude, yaml.Unmarshal)
 		if len(errIssues) > 0 {
 			return warnIssues.String(), errors.Errorf(`the "%v" file is not valid: `+"\n%v",
 				mtaPath, errIssues.String())
@@ -52,7 +52,7 @@ func MtaYaml(projectPath, mtaFilename string,
 
 // validate - validates the MTA descriptor
 func validate(yamlContent []byte, projectPath string,
-	validateSchema, validateSemantic, strict bool,
+	validateSchema, validateSemantic, strict bool, exclude string,
 	unmarshal func(mtaContent []byte, mtaStr interface{}) error) (errIssues YamlValidationIssues, warnIssues YamlValidationIssues) {
 
 	mtaStr := mta.MTA{}
@@ -79,7 +79,7 @@ func validate(yamlContent []byte, projectPath string,
 	}
 
 	if validateSemantic {
-		errIssues = append(errIssues, runSemanticValidations(&mtaStr, projectPath)...)
+		errIssues = append(errIssues, runSemanticValidations(&mtaStr, projectPath, exclude)...)
 	}
 	return errIssues, warnIssues
 }
