@@ -1,8 +1,6 @@
 package validate
 
 import (
-	"fmt"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -78,6 +76,8 @@ modules:
      complex: 
        a: "~{price_opt1/protocol}://~{price_opt/uri}/odata/"
        b: "~{price_opt/address}://~{price_opt/address1}/odata/"
+   parameters: 
+     aaa: "~{protocol}://~{uri}/odata/" 
 
  - name: pricing-backend
    type: html5
@@ -98,10 +98,18 @@ modules:
 		mta, err := mta.Unmarshal(mtaContent)
 		Ω(err).Should(Succeed())
 		issues := ifRequiredDefined(mta, "")
-		Ω(len(issues)).Should(Equal(10))
-		for _, issue := range issues {
-			fmt.Println(issue.Msg)
-		}
-
+		Ω(len(issues)).Should(Equal(12))
+		Ω(issues[0].Msg).Should(Equal(`the "conn_string3" property of the "pricing-ui" module is unresolved; the "protocol" property is not provided`))
+		Ω(issues[1].Msg).Should(Equal(`the "conn_string3" property of the "pricing-ui" module is unresolved; the "uri" property is not provided`))
+		Ω(issues[2].Msg).Should(Equal(`the "b" property of the "pricing-ui" module is unresolved; the "price_opt/protocol1" property is not provided`))
+		Ω(issues[3].Msg).Should(Equal(`the "c" property of the "pricing-ui" module is unresolved; the "price_opt1/protocol" property is not provided`))
+		Ω(issues[4].Msg).Should(Equal(`the "complex.a" property of the "pricing-ui" module is unresolved; the "price_opt1/protocol" property is not provided`))
+		Ω(issues[5].Msg).Should(Equal(`the "complex.b" property of the "pricing-ui" module is unresolved; the "price_opt/address1" property is not provided`))
+		Ω(issues[6].Msg).Should(Equal(`the "aaa" parameter of the "pricing-ui" module is unresolved; the "protocol" property is not provided`))
+		Ω(issues[7].Msg).Should(Equal(`the "aaa" parameter of the "pricing-ui" module is unresolved; the "uri" property is not provided`))
+		Ω(issues[8].Msg).Should(Equal(`the "conn_string1" property of the "pricing-ui" module is unresolved; the "price_opt/protocol1" property is not provided`))
+		Ω(issues[9].Msg).Should(Equal(`the "unknown" property set required by the "pricing-ui" module is not defined`))
+		Ω(issues[10].Msg).Should(Equal(`the "conn_string2" property of the "pricing-ui" module is unresolved; the "unknown/protocol" property is not provided`))
+		Ω(issues[11].Msg).Should(Equal(`the "conn_string2" property of the "pricing-ui" module is unresolved; the "unknown/uri" property is not provided`))
 	})
 })
