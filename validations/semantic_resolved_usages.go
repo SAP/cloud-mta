@@ -75,13 +75,13 @@ func checkComponent(provided map[string]map[string]interface{}, component interf
 	compName := structFieldToString(component)
 	issues = append(issues,
 		checkRequiredProperties(provided, "", structFieldToMap(component, "Properties"),
-			fmt.Sprintf(`"%s" %s`, compName, compDesc))...)
+			fmt.Sprintf(`"%s" %s`, compName, compDesc), "property")...)
 	issues = append(issues,
 		checkRequiredProperties(provided, "", structFieldToMap(component, "Parameters"),
-			fmt.Sprintf(`"%s" %s`, compName, compDesc))...)
+			fmt.Sprintf(`"%s" %s`, compName, compDesc), "parameter")...)
 	issues = append(issues,
 		checkRequiredProperties(provided, "", structFieldToMap(component, "BuildParams"),
-			fmt.Sprintf(`"%s" %s`, compName, compDesc))...)
+			fmt.Sprintf(`"%s" %s`, compName, compDesc), "build parameter")...)
 	// check that each required by resource property set was provided in mta.yaml
 	for _, requires := range structFieldToRequires(component) {
 		if _, contains := provided[requires.Name]; !contains {
@@ -92,54 +92,54 @@ func checkComponent(provided map[string]map[string]interface{}, component interf
 		// check that each property of resource is resolved
 		issues = append(issues,
 			checkRequiredProperties(provided, requires.Name, requires.Properties,
-				fmt.Sprintf(`"%s" %s`, compName, compDesc))...)
+				fmt.Sprintf(`"%s" %s`, compName, compDesc), "property")...)
 		// check that each parameter of resource is resolved
 		issues = append(issues,
 			checkRequiredProperties(provided, requires.Name, requires.Parameters,
-				fmt.Sprintf(`"%s" %s`, compName, compDesc))...)
+				fmt.Sprintf(`"%s" %s`, compName, compDesc), "parameter")...)
 	}
 	return issues
 }
 
 func checkRequiredProperties(providedProps map[string]map[string]interface{}, requiredPropSet string,
-	requiredProps map[string]interface{}, requiringObject string) []YamlValidationIssue {
+	requiredEntities map[string]interface{}, requiringObject, entityKind string) []YamlValidationIssue {
 
 	var issues []YamlValidationIssue
-	if requiredProps == nil {
+	if requiredEntities == nil {
 		return nil
 	}
-	for propName, propValue := range requiredProps {
-		issues = append(issues, checkValue(providedProps, propName, requiredPropSet, requiringObject, propValue)...)
+	for entityName, entityValue := range requiredEntities {
+		issues = append(issues, checkValue(providedProps, entityName, entityKind, requiredPropSet, requiringObject, entityValue)...)
 	}
 	return issues
 }
 
 func checkValue(providedProps map[string]map[string]interface{},
-	propName, propSet, requiringObject string, propValue interface{}) []YamlValidationIssue {
+	entityName, entityKind, propSet, requiringObject string, entityValue interface{}) []YamlValidationIssue {
 	var issues []YamlValidationIssue
-	propValueStr, ok := propValue.(string)
+	propValueStr, ok := entityValue.(string)
 	if ok {
 		// property is simple - check if it can be resolved
-		issues = checkStringPropertyValue(providedProps, propName, propValueStr, propSet, requiringObject)
+		issues = checkStringEntityValue(providedProps, entityName, propValueStr, entityKind, propSet, requiringObject)
 	} else {
-		propValueMap, ok := propValue.(map[interface{}]interface{})
+		propValueMap, ok := entityValue.(map[interface{}]interface{})
 		if ok {
 			// property is a map
 			for key, value := range propValueMap {
 				// check every sub property
-				issues = append(issues, checkValue(providedProps, propName+"."+key.(string), propSet, requiringObject, value)...)
+				issues = append(issues, checkValue(providedProps, entityName+"."+key.(string), entityKind, propSet, requiringObject, value)...)
 			}
 		}
 	}
 	return issues
 }
 
-func checkStringPropertyValue(providedProps map[string]map[string]interface{},
-	propName, propValue, propSet, requiringObject string) []YamlValidationIssue {
+func checkStringEntityValue(providedProps map[string]map[string]interface{},
+	entityName, entityValue, entityKind, propSet, requiringObject string) []YamlValidationIssue {
 	var issues []YamlValidationIssue
 	r := regexp.MustCompile(`~{[^{}]+}`)
 	// find all placeholders
-	matches := r.FindAllString(propValue, -1)
+	matches := r.FindAllString(entityValue, -1)
 	for _, match := range matches {
 		// get placeholder pure name, removing tilda and brackets
 		requiredProp := strings.TrimPrefix(strings.TrimSuffix(match, "}"), "~{")
@@ -150,32 +150,32 @@ func checkStringPropertyValue(providedProps map[string]map[string]interface{},
 			if len(requiredPropArr) != 2 {
 				// no property set provided
 				issues = appendIssue(issues,
-					fmt.Sprintf(`the "%s" property of the %s is unresolved; the "%s" property is not provided`,
-						propName, requiringObject, requiredProp))
+					fmt.Sprintf(`the "%s" %s of the %s is unresolved; the "%s" property is not provided`,
+						entityName, entityKind, requiringObject, requiredProp))
 			} else {
 				// check existence of property if property set
 				issues = appendIssue(issues,
-					checkRequiredProperty(providedProps, propName, requiredPropArr[0], requiredPropArr[1], requiringObject))
+					checkRequiredProperty(providedProps, entityName, entityKind, requiredPropArr[0], requiredPropArr[1], requiringObject))
 			}
 		} else {
 			// check existence of property if property set
 			issues = appendIssue(issues,
-				checkRequiredProperty(providedProps, propName, propSet, requiredProp, requiringObject))
+				checkRequiredProperty(providedProps, entityName, entityKind, propSet, requiredProp, requiringObject))
 		}
 
 	}
 	return issues
 }
 
-func checkRequiredProperty(providedProps map[string]map[string]interface{}, property,
-	requiredSet, requiredProp, requiringObject string) string {
+func checkRequiredProperty(providedProps map[string]map[string]interface{}, entityName, entityKind,
+requiredSet, requiredProp, requiringObject string) string {
 	providedSet, ok := providedProps[requiredSet]
 	if ok {
 		_, ok = providedSet[requiredProp]
 	}
 	if !ok {
-		return fmt.Sprintf(`the "%s" property of the %s is unresolved; the "%s.%s" property is not provided`,
-			property, requiringObject, requiredSet, requiredProp)
+		return fmt.Sprintf(`the "%s" %s of the %s is unresolved; the "%s/%s" property is not provided`,
+			entityName, entityKind, requiringObject, requiredSet, requiredProp)
 	}
 	return ""
 }
