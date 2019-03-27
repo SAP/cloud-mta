@@ -3,14 +3,6 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:8a7691083e0b269105a1dba42e0f1b1b79cfc2346b1a2ded625b88b9999624c7"
-  name = "github.com/SAP/cloud-mta"
-  packages = ["mta"]
-  pruneopts = "UT"
-  revision = "5ef83180c597cd8cfc9ac648a774cfea8c30558c"
-
-[[projects]]
-  branch = "master"
   digest = "1:59392ed8afb901aab4287d4894df8191722e34f3957716f4350c8c133ce99046"
   name = "github.com/hpcloud/tail"
   packages = [
@@ -161,7 +153,6 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/SAP/cloud-mta/mta",
     "github.com/onsi/ginkgo",
     "github.com/onsi/ginkgo/extensions/table",
     "github.com/onsi/gomega",

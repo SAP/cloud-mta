@@ -27,7 +27,7 @@ type MTA struct {
 	// Parameters can be used to steer the behavior of tools which interpret this descriptor
 	Parameters map[string]interface{} `yaml:"parameters,omitempty"`
 	// Experimental - use for pre/post hook
-	BuildParams *BuildParams `yaml:"build-parameters,omitempty"`
+	BuildParams *ProjectBuild `yaml:"build-parameters,omitempty"`
 }
 
 // Module - modules section.
@@ -145,8 +145,24 @@ type Includes struct {
 	Path string `yaml:"path,omitempty"`
 }
 
-// BuildParams - experimental use for pre/post build hook
-type BuildParams struct {
-	BeforeAll map[string]interface{} `yaml:"before-all,omitempty"`
-	AfterAll  map[string]interface{} `yaml:"after-all,omitempty"`
+// ProjectBuild - experimental use for pre/post build hook
+type ProjectBuild struct {
+	BuildParameters struct {
+		BeforeAll struct {
+			Builders Builders `yaml:"builders,omitempty"`
+		} `yaml:"before-all,omitempty"`
+		AfterAll struct {
+			Builders Builders `yaml:"builders,omitempty"`
+		} `yaml:"after-all,omitempty"`
+	} `yaml:"build-parameters,omitempty"`
+}
+
+// Builders - generic builder
+type Builders []struct {
+	Builder           string `yaml:"builder,omitempty"`
+	Timeout           string `yaml:"timeout,omitempty"`
+	BuildArtifactName string `yaml:"build-artifact-name,omitempty"`
+	Options           struct {
+		Execute []string `yaml:"execute,omitempty"`
+	} `yaml:"options,omitempty"`
 }

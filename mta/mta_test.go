@@ -11,6 +11,7 @@ import (
 )
 
 var _ = Describe("Mta", func() {
+
 	modules := []*Module{
 		{
 			Name: "backend",
@@ -106,23 +107,45 @@ var _ = Describe("Mta", func() {
 			},
 		},
 	}
+
+	builders := Builders{
+		{
+			Builder:           "builder1",
+			Timeout:           "123",
+			BuildArtifactName: "myfileName",
+		},
+	}
+
+	buildParams := &ProjectBuild{
+		BuildParameters: struct {
+			BeforeAll struct {
+				Builders Builders `yaml:"builders,omitempty"`
+			} `yaml:"before-all,omitempty"`
+			AfterAll struct {
+				Builders Builders `yaml:"builders,omitempty"`
+			} `yaml:"after-all,omitempty"`
+		}{
+			BeforeAll: struct {
+				Builders Builders `yaml:"builders,omitempty"`
+			}{
+				Builders: builders,
+			},
+			AfterAll: struct {
+				Builders Builders `yaml:"builders,omitempty"`
+			}{
+				Builders: builders,
+			},
+		},
+	}
+
 	schemaVersion := "3.2"
 	mta := &MTA{
 		SchemaVersion: &schemaVersion,
 		ID:            "com.acme.scheduling",
 		Version:       "1.132.1-edfsd+ewfe",
 		Parameters:    map[string]interface{}{"deployer-version": ">=1.2.0"},
-		BuildParams: &BuildParams{BeforeAll: map[string]interface{}{
-			"build-parameters": map[string]interface{}{
-				"builder": "mybuilder",
-			},
-		}, AfterAll: map[string]interface{}{
-			"build-parameters": map[string]interface{}{
-				"builder": "otherbuilder",
-			},
-		},
-		},
-		Modules: modules,
+		BuildParams:   buildParams,
+		Modules:       modules,
 		Resources: []*Resource{
 			{
 				Name: "database",
