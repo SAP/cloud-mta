@@ -171,7 +171,7 @@ func checkStringEntityValue(providedProps map[string]map[string]interface{},
 }
 
 func checkRequiredProperty(providedProps map[string]map[string]interface{}, entityName, entityKind,
-requiredSet, requiredProp, requiringObject string) string {
+	requiredSet, requiredProp, requiringObject string) string {
 	providedSet, ok := providedProps[requiredSet]
 	if ok {
 		_, ok = providedSet[requiredProp]
