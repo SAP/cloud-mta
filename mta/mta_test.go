@@ -117,24 +117,15 @@ var _ = Describe("Mta", func() {
 	}
 
 	buildParams := &ProjectBuild{
-		BuildParameters: struct {
-			BeforeAll struct {
-				Builders Builders `yaml:"builders,omitempty"`
-			} `yaml:"before-all,omitempty"`
-			AfterAll struct {
-				Builders Builders `yaml:"builders,omitempty"`
-			} `yaml:"after-all,omitempty"`
+		BeforeAll: struct {
+			Builders Builders `yaml:"builders,omitempty"`
 		}{
-			BeforeAll: struct {
-				Builders Builders `yaml:"builders,omitempty"`
-			}{
-				Builders: builders,
-			},
-			AfterAll: struct {
-				Builders Builders `yaml:"builders,omitempty"`
-			}{
-				Builders: builders,
-			},
+			Builders: builders,
+		},
+		AfterAll: struct {
+			Builders Builders `yaml:"builders,omitempty"`
+		}{
+			Builders: builders,
 		},
 	}
 
