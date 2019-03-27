@@ -86,6 +86,8 @@ modules:
      properties:
        protocol: http
        uri: myhost.mydomain
+       uri1: ~{aaaa}
+       uri2: ~{pricing-ui/a}
        address: 
          protocolX: http
          uriX: myhost.mydomain
@@ -98,6 +100,6 @@ modules:
 		mta, err := mta.Unmarshal(mtaContent)
 		Ω(err).Should(Succeed())
 		issues := ifRequiredDefined(mta, "")
-		Ω(len(issues)).Should(Equal(12))
+		Ω(len(issues)).Should(Equal(13))
 	})
 })

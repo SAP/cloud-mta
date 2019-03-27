@@ -32,6 +32,9 @@ func ifRequiredDefined(mta *mta.MTA, source string) []YamlValidationIssue {
 
 	for _, module := range mta.Modules {
 		issues = append(issues, checkComponent(provided, module, "module")...)
+		for _, moduleProvides := range module.Provides {
+			issues = append(issues, checkComponent(provided, &moduleProvides, "provided property set of the "+module.Name+" module")...)
+		}
 	}
 
 	for _, resource := range mta.Resources {
@@ -54,7 +57,7 @@ func structFieldToMap(str interface{}, field string) map[string]interface{} {
 //
 func structFieldToRequires(str interface{}) []mta.Requires {
 	v := reflect.ValueOf(str).Elem().FieldByName("Requires")
-	if !v.IsNil() {
+	if v.IsValid() {
 		mapValue, ok := v.Addr().Interface().(*[]mta.Requires)
 		if ok {
 			return *mapValue
