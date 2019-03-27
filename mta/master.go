@@ -147,14 +147,12 @@ type Includes struct {
 
 // ProjectBuild - experimental use for pre/post build hook
 type ProjectBuild struct {
-	BuildParameters struct {
-		BeforeAll struct {
-			Builders Builders `yaml:"builders,omitempty"`
-		} `yaml:"before-all,omitempty"`
-		AfterAll struct {
-			Builders Builders `yaml:"builders,omitempty"`
-		} `yaml:"after-all,omitempty"`
-	} `yaml:"build-parameters,omitempty"`
+	BeforeAll struct {
+		Builders Builders `yaml:"builders,omitempty"`
+	} `yaml:"before-all,omitempty"`
+	AfterAll struct {
+		Builders Builders `yaml:"builders,omitempty"`
+	} `yaml:"after-all,omitempty"`
 }
 
 // Builders - generic builder
