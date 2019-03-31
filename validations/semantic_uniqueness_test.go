@@ -22,6 +22,8 @@ modules:
 
  - name: ui5app2
    type: html5
+   provides:
+   - name: ui5app2
 
 resources:
  - name: uaa_mtahtml5
