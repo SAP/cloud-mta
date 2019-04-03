@@ -15,10 +15,8 @@ func isNameUnique(mta *mta.MTA, source string) []YamlValidationIssue {
 		// validate module name
 		issues = validateNameUniqueness(names, module.Name, "module", issues)
 		for _, provide := range module.Provides {
-			if provide.Name != module.Name {
-				// validate name of provided service
-				issues = validateNameUniqueness(names, provide.Name, "provided property set", issues)
-			}
+			// validate name of provided service
+			issues = validateNameUniqueness(names, provide.Name, "provided property set", issues)
 		}
 	}
 	for _, resource := range mta.Resources {
