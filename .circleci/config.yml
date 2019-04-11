@@ -4,7 +4,7 @@ jobs:
   build:
     docker:
       # specify the version
-      - image: circleci/golang:1.11
+      - image: circleci/golang:1.12.3
     environment:
       - DEP_VERSION: 0.5.0
     working_directory: /go/src/github.com/SAP/cloud-mta
@@ -25,7 +25,7 @@ jobs:
             go get github.com/modocache/gover
             go install github.com/mattn/goveralls
             go install github.com/modocache/gover
-      - run: go test -v cloud-mta/mta -coverprofile=mta.coverprofile
-      - run: go test -v cloud-mta/validations -coverprofile=validations.coverprofile
+      - run: go test -v github.com/SAP/cloud-mta/mta -coverprofile=mta.coverprofile
+      - run: go test -v github.com/SAP/cloud-mta/validations -coverprofile=validations.coverprofile
       - run: gover
       - run: goveralls -v -service=circle-ci -coverprofile=gover.coverprofile -repotoken $COVERALLS_TOKEN
