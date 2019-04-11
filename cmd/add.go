@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Add new module
+// AddModule Add new module
 var AddModule = &cobra.Command{
 	Use:   "modules",
 	Short: "Add new module",
@@ -20,7 +20,7 @@ var AddModule = &cobra.Command{
 	SilenceErrors: true,
 }
 
-// Add new resource
+// AddResources - Add new resource
 var AddResources = &cobra.Command{
 	Use:   "resource",
 	Short: "Add new resources",
