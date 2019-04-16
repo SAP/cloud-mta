@@ -2,18 +2,18 @@ package mta
 
 import (
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 // UnmarshalExt returns a reference to the EXT object from a byte array.
 func UnmarshalExt(content []byte) (*EXT, error) {
-	m := &EXT{}
+	var m EXT
 	// Unmarshal MTA file
 	err := yaml.Unmarshal([]byte(content), &m)
 	if err != nil {
 		err = errors.Wrap(err, "failed to unmarshal the mta extension object")
 	}
-	return m, err
+	return &m, err
 }
 
 // Merge merges mta object with mta extension object
