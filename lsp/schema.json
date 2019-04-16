@@ -1,0 +1,439 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "http://example.com/mta.schema.json",
+  "title": "com.sap.mta.mta-schema_3.1.8",
+  "description": "MTA DESCRIPTOR SCHEMA",
+  "$comment": "Based on https://github.wdf.sap.corp/mta/spec/blob/master/schemas/v3/v3.1/mta-schema.yaml",
+  "type": "object",
+  "required": [
+    "_schema-version",
+    "ID",
+    "version"
+  ],
+  "properties": {
+    "_schema-version": {
+      "description": "Used to indicate to an MTA processing tool (e.g. a deployer), which schema version was taken as the base when authoring a descriptor. Schema versions have to follow the semantic versioning standard with the exception that trailing numbers (<minor>.<patch> or <patch>) can be omitted. A tool (e.g. a deployer) shall then insert the highest numbers it supports.",
+      "type": "string"
+    },
+    "ID": {
+      "description": "A globally unique ID of this MTA. Unlimited string of unicode characters.",
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_\\-\\.]+$"
+    },
+    "description": {
+      "description": "A non-translatable description of this MTA. This is not a text for application users.",
+      "type": "string"
+    },
+    "version": {
+      "description": "Application version. Shall follow the semantic versioning standard.",
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(-(0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(\\.(0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\\+[0-9a-zA-Z-]+(\\.[0-9a-zA-Z-]+)*)?$"
+    },
+    "provider": {
+      "description": "The provider or vendor of this software",
+      "type": "string"
+    },
+    "copyright": {
+      "description": "A copyright statement from the provider",
+      "type": "string"
+    },
+    "modules": {
+      "description": "list of modules",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "type"
+        ],
+        "properties": {
+          "name": {
+            "description": "An MTA internal module name. Names need to be unique within the MTA scope",
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_\\-\\.]+$"
+          },
+          "type": {
+            "description": "a globally unique type ID. Deployment tools will interpret this type ID",
+            "type": "string"
+          },
+          "description": {
+            "description": "a non-translatable description of this module. This is not a text for application users",
+            "type": "string"
+          },
+          "path": {
+            "description": " A (file) path which identifies the location of module artifacts. The path schema may depend on the tool which interprets this descriptor. Path may not be limited to a file system path",
+            "type": "string"
+          },
+          "properties": {
+            "description": "Properties shall be made available to the module at runtime. Provided property values can be accessed by \"~{<name-of-provides-section>/<provided-property-name>}\". Such expressions can be part of an arbitrary string",
+            "$ref": "#/definitions/properties"
+          },
+          "properties-metadata": {
+            "$ref": "#/definitions/properties-metadata"
+          },
+          "parameters": {
+            "description": "Parameters can be used to steer the behavior of tools which interpret this descriptor. Parameters are not made available to the module at runtime",
+            "$ref": "#/definitions/parameters"
+          },
+          "parameters-metadata": {
+            "$ref": "#/definitions/parameters-metadata"
+          },
+          "build-parameters": {
+            "description": "Build-parameters are specifically steering the behavior of build tools. Build-parameters ARE ONLY RELEVANT FOR DEVELOPMENT DESCRIPTORS (PRIO TO BUILD), NOT FOR DEPLOYMENT DESCRIPTORS! ",
+            "type": "object"
+          },
+          "includes": {
+            "description": "THE 'includes' ELEMENT IS ONLY RELEVANT FOR DEVELOPMENT DESCRIPTORS (PRIO TO BUILD), NOT FOR DEPLOYMENT DESCRIPTORS!",
+            "$ref": "#/definitions/includes"
+          },
+          "provides": {
+            "description": "List of provided names (MTA internal)to which properties (= configuration data) can be attached",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "name"
+              ],
+              "properties": {
+                "name": {
+                  "description": "an MTA internal name which can used by a requiring module",
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_\\-\\.]+$"
+                },
+                "public": {
+                  "description": "Indicates, that the provided properties shall be made publicly available by the deployer",
+                  "type": "boolean",
+                  "default": false
+                },
+                "properties": {
+                  "description": "property names and values make up the configuration data which is to be provided to requiring modules at runtime",
+                  "$ref": "#/definitions/properties"
+                },
+                "properties-metadata": {
+                  "$ref": "#/definitions/properties-metadata"
+                }
+              }
+            }
+          },
+          "requires": {
+            "description": "list of names either matching a resource name or a name provided by another module within the same MTA",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "name"
+              ],
+              "properties": {
+                "name": {
+                  "description": "an MTA internal name which must match either a provided name, a resource name, or a module name within the same MTA",
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_\\-\\.]+$"
+                },
+                "group": {
+                  "description": " # A group name which shall be use by a deployer to group properties for lookup by a module runtime. The group name is used as the lookup name. DEPRECATED as of schema version 2.1",
+                  "type": "string"
+                },
+                "list": {
+                  "description": "All required and found configuration data sets will be assembled into a JSON array and provided to the module by the lookup name as specified by the value of 'list'.",
+                  "type": "string"
+                },
+                "properties": {
+                  "description": "Required properties can be mapped from provided properties. Provided property values can be accessed by \"~{<provided-property-name>}\". Such expressions can be part of an arbitrary string",
+                  "$ref": "#/definitions/properties"
+                },
+                "parameters": {
+                  "description": "Parameters can be used to influence the behavior of tools which interpret this descriptor. Parameters are not made available to the module at runtime. Provided property values can be accessed by \"~{<provided-property-name>}\". Such expressions can be part of an arbitrary string",
+                  "$ref": "#/definitions/parameters"
+                },
+                "parameters-metadata": {
+                  "$ref": "#/definitions/parameters-metadata"
+                },
+                "includes": {
+                  "description": "THE 'includes' ELEMENT IS ONLY RELEVANT FOR DEVELOPMENT DESCRIPTORS (PRIO TO BUILD), NOT FOR DEPLOYMENT DESCRIPTORS!",
+                  "$ref": "#/definitions/includes"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "resources": {
+      "description": "Resource declarations. Resources can be anything required to run the application which is not provided by the application itself.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_\\-\\.]+$"
+          },
+          "type": {
+            "description": "A type of a resource. This type is interpreted by and must be known to the deployer. Resources can be untyped",
+            "type": "string"
+          },
+          "description": {
+            "description": "a non-translatable description of this resource. This is not a text for application users",
+            "type": "string"
+          },
+          "properties": {
+            "description": "property names and values make up the configuration data which is to be provided to requiring modules at runtime",
+            "$ref": "#/definitions/properties"
+          },
+          "properties-metadata": {
+            "$ref": "#/definitions/properties-metadata"
+          },
+          "parameters": {
+            "description": "Parameters can be used to influence the behavior of tools which interpret this descriptor. Parameters are not made available to requiring modules at runtime Untyped resources cannot have parameters.",
+            "$ref": "#/definitions/parameters"
+          },
+          "parameters-metadata": {
+            "$ref": "#/definitions/parameters-metadata"
+          },
+          "includes": {
+            "description": "THE 'includes' ELEMENT IS ONLY RELEVANT FOR DEVELOPMENT DESCRIPTORS (PRIO TO BUILD), NOT FOR DEPLOYMENT DESCRIPTORS!",
+            "$ref": "#/definitions/includes"
+          },
+          "optional": {
+            "description": "A resource can be declared to be optional, if the MTA can compensate for its non-existence",
+            "type": "boolean",
+            "default": false
+          },
+          "active": {
+            "description": "If a resource is declared to be active, it is allocated and bound according to declared requirements",
+            "type": "boolean",
+            "default": true
+          },
+          "requires": {
+            "description": "list of names either matching a resource name or a name provided by another module within the same MTA",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "name"
+              ],
+              "properties": {
+                "name": {
+                  "description": "an MTA internal name which must match either a provided name, or a resource name within the same MTA",
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_\\-\\.]+$"
+                },
+                "properties": {
+                  "$ref": "#/definitions/properties"
+                },
+                "properties-metadata": {
+                  "$ref": "#/definitions/properties-metadata"
+                },
+                "parameters": {
+                  "$ref": "#/definitions/parameters"
+                },
+                "parameters-metadata": {
+                  "$ref": "#/definitions/parameters-metadata"
+                },
+                "includes": {
+                  "description": "THE 'includes' ELEMENT IS ONLY RELEVANT FOR DEVELOPMENT DESCRIPTORS (PRIOR TO BUILD), NOT FOR DEPLOYMENT DESCRIPTORS!",
+                  "$ref": "#/definitions/includes"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "description": "Global parameters",
+      "$ref": "#/definitions/parameters"
+    },
+    "parameters-metadata": {
+      "$ref": "#/definitions/parameters-metadata"
+    },
+    "includes": {
+      "description": "THE 'includes' ELEMENT IS ONLY RELEVANT FOR DEVELOPMENT DESCRIPTORS (PRIO TO BUILD), NOT FOR DEPLOYMENT DESCRIPTORS!",
+      "$ref": "#/definitions/includes"
+    }
+  },
+  "definitions": {
+    "properties": {
+      "type": "object"
+    },
+    "properties-metadata": {
+      "type": "object",
+      "properties": {
+        "overwritable": {
+          "type": "boolean",
+          "default": true
+        },
+        "optional": {
+          "type": "boolean",
+          "default": false
+        },
+        "datatype": {
+          "enum": [
+            "str",
+            "int",
+            "float",
+            "bool"
+          ],
+          "type": "string",
+          "default": "str"
+        }
+      }
+    },
+    "parameters": {
+      "type": "object"
+    },
+    "parameters-metadata": {
+      "type": "object",
+      "properties": {
+        "overwritable": {
+          "type": "boolean",
+          "default": true
+        },
+        "optional": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "includes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "path"
+        ],
+        "properties": {
+          "name": {
+            "description": "A name of an include section. This name will be used by a builder to generate a parameter section in the deployment descriptor",
+            "type": "string"
+          },
+          "path": {
+            "description": "A path pointing to a file which contains a map of parameters, either in JSON or in YAML format",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "module": {
+      "type": "object",
+      "required": [
+        "name",
+        "type"
+      ],
+      "properties": {
+        "name": {
+          "description": "An MTA internal module name. Names need to be unique within the MTA scope",
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "type": {
+          "description": "a globally unique type ID. Deployment tools will interpret this type ID",
+          "type": "string"
+        },
+        "description": {
+          "description": "a non-translatable description of this module. This is not a text for application users",
+          "type": "string"
+        },
+        "path": {
+          "description": " A (file) path which identifies the location of module artifacts. The path schema may depend on the tool which interprets this descriptor. Path may not be limited to a file system path",
+          "type": "string"
+        },
+        "properties": {
+          "description": "Properties shall be made available to the module at runtime. Provided property values can be accessed by \"~{<name-of-provides-section>/<provided-property-name>}\". Such expressions can be part of an arbitrary string",
+          "$ref": "#/definitions/properties"
+        },
+        "properties-metadata": {
+          "$ref": "#/definitions/properties-metadata"
+        },
+        "parameters": {
+          "description": "Parameters can be used to steer the behavior of tools which interpret this descriptor. Parameters are not made available to the module at runtime",
+          "$ref": "#/definitions/parameters"
+        },
+        "parameters-metadata": {
+          "$ref": "#/definitions/parameters-metadata"
+        },
+        "build-parameters": {
+          "description": "Build-parameters are specifically steering the behavior of build tools. Build-parameters ARE ONLY RELEVANT FOR DEVELOPMENT DESCRIPTORS (PRIO TO BUILD), NOT FOR DEPLOYMENT DESCRIPTORS! ",
+          "type": "object"
+        },
+        "includes": {
+          "description": "THE 'includes' ELEMENT IS ONLY RELEVANT FOR DEVELOPMENT DESCRIPTORS (PRIO TO BUILD), NOT FOR DEPLOYMENT DESCRIPTORS!",
+          "$ref": "#/definitions/includes"
+        },
+        "provides": {
+          "description": "List of provided names (MTA internal)to which properties (= configuration data) can be attached",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "description": "an MTA internal name which can used by a requiring module",
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]+$"
+              },
+              "public": {
+                "description": "Indicates, that the provided properties shall be made publicly available by the deployer",
+                "type": "boolean",
+                "default": false
+              },
+              "properties": {
+                "description": "property names and values make up the configuration data which is to be provided to requiring modules at runtime",
+                "$ref": "#/definitions/properties"
+              },
+              "properties-metadata": {
+                "$ref": "#/definitions/properties-metadata"
+              }
+            }
+          }
+        },
+        "requires": {
+          "description": "list of names either matching a resource name or a name provided by another module within the same MTA",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "description": "an MTA internal name which must match either a provided name, a resource name, or a module name within the same MTA",
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-.]+$"
+              },
+              "group": {
+                "description": " # A group name which shall be use by a deployer to group properties for lookup by a module runtime. The group name is used as the lookup name. DEPRECATED as of schema version 2.1",
+                "type": "string"
+              },
+              "list": {
+                "description": "All required and found configuration data sets will be assembled into a JSON array and provided to the module by the lookup name as specified by the value of 'list'.",
+                "type": "string"
+              },
+              "properties": {
+                "description": "Required properties can be mapped from provided properties. Provided property values can be accessed by \"~{<provided-property-name>}\". Such expressions can be part of an arbitrary string",
+                "$ref": "#/definitions/properties"
+              },
+              "parameters": {
+                "description": "Parameters can be used to influence the behavior of tools which interpret this descriptor. Parameters are not made available to the module at runtime. Provided property values can be accessed by \"~{<provided-property-name>}\". Such expressions can be part of an arbitrary string",
+                "$ref": "#/definitions/parameters"
+              },
+              "parameters-metadata": {
+                "$ref": "#/definitions/parameters-metadata"
+              },
+              "includes": {
+                "description": "THE 'includes' ELEMENT IS ONLY RELEVANT FOR DEVELOPMENT DESCRIPTORS (PRIO TO BUILD), NOT FOR DEPLOYMENT DESCRIPTORS!",
+                "$ref": "#/definitions/includes"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
