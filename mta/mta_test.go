@@ -280,7 +280,6 @@ var _ = Describe("Mta", func() {
 			Ω(mta).Should(BeEquivalentTo(m))
 		})
 
-
 	})
 
 })
