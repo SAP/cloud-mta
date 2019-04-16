@@ -1,13 +1,13 @@
 package mta
 
 import (
+	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"gopkg.in/yaml.v2"
 )
 
 var _ = Describe("Mta", func() {
@@ -108,11 +108,14 @@ var _ = Describe("Mta", func() {
 		},
 	}
 
-	builders := Builders{
+	buildersBefore := Builders{
 		{
-			Builder:           "builder1",
-			Timeout:           "123",
-			BuildArtifactName: "myfileName",
+			Builder: "mybuilder",
+		},
+	}
+	buildersAfter := Builders{
+		{
+			Builder: "otherbuilder",
 		},
 	}
 
@@ -120,12 +123,12 @@ var _ = Describe("Mta", func() {
 		BeforeAll: struct {
 			Builders Builders `yaml:"builders,omitempty"`
 		}{
-			Builders: builders,
+			Builders: buildersBefore,
 		},
 		AfterAll: struct {
 			Builders Builders `yaml:"builders,omitempty"`
 		}{
-			Builders: builders,
+			Builders: buildersAfter,
 		},
 	}
 
@@ -169,7 +172,7 @@ var _ = Describe("Mta", func() {
 					},
 				},
 				Parameters: map[string]interface{}{
-					"filter": map[interface{}]interface{}{
+					"filter": map[string]interface{}{
 						"type": "com.acme.plugin",
 					},
 				},
@@ -273,9 +276,11 @@ var _ = Describe("Mta", func() {
 			Ω(err).Should(Succeed())
 			m, err := Unmarshal(content)
 			Ω(err).Should(Succeed())
-			// Ω(*mta).Should(BeEquivalentTo(*m))
-			Ω(len(m.Modules)).Should(Equal(2))
+
+			Ω(mta).Should(BeEquivalentTo(m))
 		})
+
+
 	})
 
 })
