@@ -92,7 +92,7 @@ modules:
          protocolX: http
          uriX: myhost.mydomain
 
- - name1: unnamed
+ - name: unnamed
    type: html5
    properties: 
      conn_string: "~{price_opt/protocol}://~{price_opt/uri}/odata/" 
@@ -100,6 +100,6 @@ modules:
 		mta, err := mta.Unmarshal(mtaContent)
 		Ω(err).Should(Succeed())
 		issues := ifRequiredDefined(mta, "")
-		Ω(len(issues)).Should(Equal(13))
+		Ω(len(issues)).Should(Equal(11))
 	})
 })
