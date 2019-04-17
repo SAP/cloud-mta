@@ -365,10 +365,17 @@ func getLiteralStringValue(y *simpleyaml.Yaml) string {
 }
 
 func getMtaNode(yamlContent []byte) *yaml.Node {
+
 	dec := yaml.NewDecoder(bytes.NewReader(yamlContent))
 	dec.KnownFields(true)
+
 	var document yaml.Node
-	dec.Decode(&document)
+	err := dec.Decode(&document)
+
+	// errors of strict decoding are provided by decoding to MTA object
+	if err != nil {
+		err = nil
+	}
 
 	var mtaNode yaml.Node
 	if document.Content != nil {
