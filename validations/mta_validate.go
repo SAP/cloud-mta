@@ -2,12 +2,16 @@ package validate
 
 import (
 	"fmt"
-	"github.com/SAP/cloud-mta/mta"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"path/filepath"
+	"regexp"
+	"strconv"
+	"strings"
 
 	"github.com/pkg/errors"
+
+	"github.com/SAP/cloud-mta/mta"
 )
 
 // GetValidationMode converts validation mode flags to validation process flags.
@@ -39,7 +43,7 @@ func MtaYaml(projectPath, mtaFilename string,
 		}
 		// Validates MTA content.
 		errIssues, warnIssues := validate(yamlContent, projectPath,
-			validateSchema, validateSemantic, strict, exclude, yaml.Unmarshal)
+			validateSchema, validateSemantic, strict, exclude)
 		if len(errIssues) > 0 {
 			return warnIssues.String(), errors.Errorf(`the "%v" file is not valid: `+"\n%v",
 				mtaPath, errIssues.String())
@@ -52,22 +56,17 @@ func MtaYaml(projectPath, mtaFilename string,
 
 // validate - validates the MTA descriptor
 func validate(yamlContent []byte, projectPath string,
-	validateSchema, validateSemantic, strict bool, exclude string,
-	unmarshal func(mtaContent []byte, mtaStr interface{}) error) (errIssues YamlValidationIssues, warnIssues YamlValidationIssues) {
+	validateSchema, validateSemantic, strict bool, exclude string) (errIssues YamlValidationIssues, warnIssues YamlValidationIssues) {
 
-	mtaStr := mta.MTA{}
+	mtaStr, err := mta.Unmarshal(yamlContent)
 
-	err := yaml.UnmarshalStrict(yamlContent, &mtaStr)
 	if strict && err != nil {
-		errIssues = appendIssue(errIssues, err.Error())
+		errIssues = append(errIssues, convertError(err)...)
 	} else if err != nil {
-		warnIssues = appendIssue(warnIssues, err.Error())
-		err = unmarshal(yamlContent, &mtaStr)
-		if err != nil {
-			errIssues = appendIssue(errIssues, err.Error())
-			return errIssues, nil
-		}
+		warnIssues = append(warnIssues, convertError(err)...)
 	}
+
+	root := getMtaNode(yamlContent)
 
 	if validateSchema {
 		validations, schemaValidationLog := buildValidationsFromSchemaText(schemaDef)
@@ -75,11 +74,48 @@ func validate(yamlContent []byte, projectPath string,
 			errIssues = append(errIssues, schemaValidationLog...)
 			return errIssues, warnIssues
 		}
-		errIssues = append(errIssues, runSchemaValidations(yamlContent, validations...)...)
+		errIssues = append(errIssues, runSchemaValidations(root, validations...)...)
 	}
 
 	if validateSemantic {
-		errIssues = append(errIssues, runSemanticValidations(&mtaStr, projectPath, exclude)...)
+		errIssues = append(errIssues, runSemanticValidations(mtaStr, root, projectPath, exclude)...)
 	}
 	return errIssues, warnIssues
+}
+
+// convertError - converts unmarshalling errors to the YamlValidationIssue format
+// extracting line number to issue Line property
+func convertError(err error) []YamlValidationIssue {
+	var issues []YamlValidationIssue
+
+	if err != nil {
+		reLineNumber := regexp.MustCompile("(.)*line [0-9]+: ")
+		reNumber := regexp.MustCompile("[0-9]+")
+
+		errType, ok := err.(*yaml.TypeError)
+		var errorsList []string
+		if !ok {
+			// single error can be received in errString format
+			errorsList = append(errorsList, err.Error())
+		} else {
+			// multiple errors come in TypeError format
+			errorsList = errType.Errors
+		}
+		for _, e := range errorsList {
+			// find substring ... line <number>:
+			lineNumberStr := reLineNumber.FindString(e)
+			// remove this substring from error message
+			e = strings.Replace(e, lineNumberStr, "", 1)
+			// extract line number from the substring
+			lineStr := reNumber.FindString(lineNumberStr)
+			line, err := strconv.Atoi(lineStr)
+			if err != nil {
+				line = 1
+			}
+
+			// add converted issue to the issues list
+			issues = appendIssue(issues, e, line)
+		}
+	}
+	return issues
 }

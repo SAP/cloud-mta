@@ -37,7 +37,7 @@ resources:
    type: org.cloudfoundry.managed-service
 `)
 		mta, _ := mta.Unmarshal(mtaContent)
-		issues := isNameUnique(mta, "")
+		issues := isNameUnique(mta, getMtaNode(mtaContent), "")
 		Ω(len(issues)).Should(Equal(0))
 	})
 
@@ -57,8 +57,9 @@ modules:
    type: html5
 `)
 		mta, _ := mta.Unmarshal(mtaContent)
-		issues := isNameUnique(mta, "")
-		Ω(issues[0].Msg).Should(Equal(`the "ui5app" module name is not unique; another module was found with the same name`))
+		issues := isNameUnique(mta, getMtaNode(mtaContent), "")
+		Ω(issues[0].Msg).Should(Equal(`the "ui5app" module name is already in use; another module was found with the same name on line 7`))
+		Ω(issues[0].Line).Should(Equal(12))
 	})
 	It("module and provides have the same name", func() {
 		mtaContent := []byte(`
@@ -76,8 +77,9 @@ modules:
    type: html5
 `)
 		mta, _ := mta.Unmarshal(mtaContent)
-		issues := isNameUnique(mta, "")
-		Ω(issues[0].Msg).Should(Equal(`the "ui5app2" module name is not unique; a provided property set was found with the same name`))
+		issues := isNameUnique(mta, getMtaNode(mtaContent), "")
+		Ω(issues[0].Msg).Should(Equal(`the "ui5app2" module name is already in use; a provided property set was found with the same name on line 10`))
+		Ω(issues[0].Line).Should(Equal(12))
 	})
 	It("resource and provides have the same name", func() {
 		mtaContent := []byte(`
@@ -95,14 +97,15 @@ modules:
    type: html5
 
 resources:
- - name: test
-   parameters:
+ - parameters:
       path: ./xs-security.json
       service-plan: application
+   name: test
    type: com.company.xs.uaa
 `)
 		mta, _ := mta.Unmarshal(mtaContent)
-		issues := isNameUnique(mta, "")
-		Ω(issues[0].Msg).Should(Equal(`the "test" resource name is not unique; a provided property set was found with the same name`))
+		issues := isNameUnique(mta, getMtaNode(mtaContent), "")
+		Ω(issues[0].Msg).Should(Equal(`the "test" resource name is already in use; a provided property set was found with the same name on line 10`))
+		Ω(issues[0].Line).Should(Equal(19))
 	})
 })

@@ -2,6 +2,7 @@ package validate
 
 import (
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"reflect"
 	"regexp"
 	"strings"
@@ -10,7 +11,7 @@ import (
 )
 
 // ifRequiredDefined - validates that required property sets are defined in modules, provided sections or resources
-func ifRequiredDefined(mta *mta.MTA, source string) []YamlValidationIssue {
+func ifRequiredDefined(mta *mta.MTA, mtaNode *yaml.Node, source string) []YamlValidationIssue {
 	var issues []YamlValidationIssue
 
 	// init set of all provided property sets
@@ -30,15 +31,18 @@ func ifRequiredDefined(mta *mta.MTA, source string) []YamlValidationIssue {
 		provided[resource.Name] = resource.Properties
 	}
 
-	for _, module := range mta.Modules {
-		issues = append(issues, checkComponent(provided, module, "module")...)
-		for _, moduleProvides := range module.Provides {
-			issues = append(issues, checkComponent(provided, &moduleProvides, "provided property set of the "+module.Name+" module")...)
+	modulesNode := getPropContent(mtaNode, modulesYamlField)
+	for i, module := range mta.Modules {
+		issues = append(issues, checkComponent(provided, module, modulesNode[i], "module")...)
+		for j, moduleProvides := range module.Provides {
+			providesNode := getPropValueByName(modulesNode[i], providesYamlField)
+			issues = append(issues, checkComponent(provided, &moduleProvides, providesNode.Content[j], "provided property set of the "+module.Name+" module")...)
 		}
 	}
 
-	for _, resource := range mta.Resources {
-		issues = append(issues, checkComponent(provided, resource, "resource")...)
+	resourcesNode := getPropContent(mtaNode, resourcesYamlField)
+	for i, resource := range mta.Resources {
+		issues = append(issues, checkComponent(provided, resource, resourcesNode[i], "resource")...)
 	}
 	return issues
 }
@@ -54,7 +58,6 @@ func structFieldToMap(str interface{}, field string) map[string]interface{} {
 	return nil
 }
 
-//
 func structFieldToRequires(str interface{}) []mta.Requires {
 	v := reflect.ValueOf(str).Elem().FieldByName("Requires")
 	if v.IsValid() {
@@ -67,70 +70,79 @@ func structFieldToRequires(str interface{}) []mta.Requires {
 }
 
 func structFieldToString(str interface{}) string {
-	v := reflect.ValueOf(str).Elem().FieldByName("Name")
+	v := reflect.ValueOf(str).Elem().FieldByName(nameMtaField)
 	strValue := v.Addr().Interface().(*string)
 	return *strValue
 }
 
-func checkComponent(provided map[string]map[string]interface{}, component interface{}, compDesc string) []YamlValidationIssue {
+func checkComponent(provided map[string]map[string]interface{}, component interface{}, compNode *yaml.Node, compDesc string) []YamlValidationIssue {
 	var issues []YamlValidationIssue
 
 	compName := structFieldToString(component)
+	propsNode := getPropValueByName(compNode, propertiesYamlField)
 	issues = append(issues,
-		checkRequiredProperties(provided, "", structFieldToMap(component, "Properties"),
-			fmt.Sprintf(`"%s" %s`, compName, compDesc), "property")...)
+		checkRequiredProperties(provided, "", structFieldToMap(component, propertiesMtaField),
+			fmt.Sprintf(`"%s" %s`, compName, compDesc), propsNode, propertyEntityKind)...)
+	paramsNode := getPropValueByName(compNode, parametersYamlField)
 	issues = append(issues,
-		checkRequiredProperties(provided, "", structFieldToMap(component, "Parameters"),
-			fmt.Sprintf(`"%s" %s`, compName, compDesc), "parameter")...)
+		checkRequiredProperties(provided, "", structFieldToMap(component, parametersMtaField),
+			fmt.Sprintf(`"%s" %s`, compName, compDesc), paramsNode, parameterEntityKind)...)
+	buildParamsNode := getPropValueByName(compNode, buildParametersYamlField)
 	issues = append(issues,
-		checkRequiredProperties(provided, "", structFieldToMap(component, "BuildParams"),
-			fmt.Sprintf(`"%s" %s`, compName, compDesc), "build parameter")...)
+		checkRequiredProperties(provided, "", structFieldToMap(component, buildParametersMtaField),
+			fmt.Sprintf(`"%s" %s`, compName, compDesc),  buildParamsNode,buildParamEntityKind)...)
 	// check that each required by resource property set was provided in mta.yaml
-	for _, requires := range structFieldToRequires(component) {
+	requiresNode := getPropValueByName(compNode, requiresYamlField)
+	for i, requires := range structFieldToRequires(component) {
 		if _, contains := provided[requires.Name]; !contains {
+			line := getPropValueByName(requiresNode.Content[i], nameYamlField).Line
 			issues = appendIssue(issues,
 				fmt.Sprintf(`the "%s" property set required by the "%s" %s is not defined`,
-					requires.Name, compName, compDesc))
+					requires.Name, compName, compDesc), line)
 		}
 		// check that each property of resource is resolved
+		reqPropsNode := getPropValueByName(requiresNode.Content[i], propertiesYamlField)
 		issues = append(issues,
 			checkRequiredProperties(provided, requires.Name, requires.Properties,
-				fmt.Sprintf(`"%s" %s`, compName, compDesc), "property")...)
+				fmt.Sprintf(`"%s" %s`, compName, compDesc),  reqPropsNode,propertyEntityKind)...)
 		// check that each parameter of resource is resolved
+		reqParamsNode := getPropValueByName(requiresNode.Content[i], parametersYamlField)
 		issues = append(issues,
 			checkRequiredProperties(provided, requires.Name, requires.Parameters,
-				fmt.Sprintf(`"%s" %s`, compName, compDesc), "parameter")...)
+				fmt.Sprintf(`"%s" %s`, compName, compDesc),  reqParamsNode,parameterEntityKind)...)
 	}
 	return issues
 }
 
 func checkRequiredProperties(providedProps map[string]map[string]interface{}, requiredPropSet string,
-	requiredEntities map[string]interface{}, requiringObject, entityKind string) []YamlValidationIssue {
+	requiredEntities map[string]interface{}, requiringObject string, node *yaml.Node, entityKind string) []YamlValidationIssue {
 
 	var issues []YamlValidationIssue
 	if requiredEntities == nil {
 		return nil
 	}
 	for entityName, entityValue := range requiredEntities {
-		issues = append(issues, checkValue(providedProps, entityName, entityKind, requiredPropSet, requiringObject, entityValue)...)
+		entityNode := getPropValueByName(node, entityName)
+		issues = append(issues, checkValue(providedProps, entityName, entityKind, requiredPropSet, requiringObject, entityValue, entityNode)...)
 	}
 	return issues
 }
 
 func checkValue(providedProps map[string]map[string]interface{},
-	entityName, entityKind, propSet, requiringObject string, entityValue interface{}) []YamlValidationIssue {
+	entityName, entityKind, propSet, requiringObject string, entityValue interface{}, node *yaml.Node) []YamlValidationIssue {
 	var issues []YamlValidationIssue
 	propValueStr, ok := entityValue.(string)
 	if ok {
 		// property is simple - check if it can be resolved
-		issues = checkStringEntityValue(providedProps, entityName, propValueStr, entityKind, propSet, requiringObject)
+		issues = checkStringEntityValue(providedProps, entityName, propValueStr, entityKind, propSet, requiringObject, node)
 	} else {
-		propValueMap, ok := entityValue.(map[interface{}]interface{})
+		propValueMap, ok := entityValue.(map[string]interface{})
 		if ok {
 			// property is a map
 			for key, value := range propValueMap {
+				childNode := getPropValueByName(node, key)
 				// check every sub property
-				issues = append(issues, checkValue(providedProps, entityName+"."+key.(string), entityKind, propSet, requiringObject, value)...)
+				issues = append(issues, checkValue(providedProps, entityName+"."+key, entityKind, propSet, requiringObject, value, childNode)...)
 			}
 		}
 	}
@@ -138,7 +150,7 @@ func checkValue(providedProps map[string]map[string]interface{},
 }
 
 func checkStringEntityValue(providedProps map[string]map[string]interface{},
-	entityName, entityValue, entityKind, propSet, requiringObject string) []YamlValidationIssue {
+	entityName, entityValue, entityKind, propSet, requiringObject string, entityNode *yaml.Node) []YamlValidationIssue {
 	var issues []YamlValidationIssue
 	r := regexp.MustCompile(`~{[^{}]+}`)
 	// find all placeholders
@@ -154,16 +166,16 @@ func checkStringEntityValue(providedProps map[string]map[string]interface{},
 				// no property set provided
 				issues = appendIssue(issues,
 					fmt.Sprintf(`the "%s" %s of the %s is unresolved; the "%s" property is not provided`,
-						entityName, entityKind, requiringObject, requiredProp))
+						entityName, entityKind, requiringObject, requiredProp), entityNode.Line)
 			} else {
 				// check existence of property if property set
 				issues = appendIssue(issues,
-					checkRequiredProperty(providedProps, entityName, entityKind, requiredPropArr[0], requiredPropArr[1], requiringObject))
+					checkRequiredProperty(providedProps, entityName, entityKind, requiredPropArr[0], requiredPropArr[1], requiringObject), entityNode.Line)
 			}
 		} else {
 			// check existence of property if property set
 			issues = appendIssue(issues,
-				checkRequiredProperty(providedProps, entityName, entityKind, propSet, requiredProp, requiringObject))
+				checkRequiredProperty(providedProps, entityName, entityKind, propSet, requiredProp, requiringObject), entityNode.Line)
 		}
 
 	}
@@ -171,7 +183,7 @@ func checkStringEntityValue(providedProps map[string]map[string]interface{},
 }
 
 func checkRequiredProperty(providedProps map[string]map[string]interface{}, entityName, entityKind,
-	requiredSet, requiredProp, requiringObject string) string {
+requiredSet, requiredProp, requiringObject string) string {
 	providedSet, ok := providedProps[requiredSet]
 	if ok {
 		_, ok = providedSet[requiredProp]

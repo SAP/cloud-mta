@@ -88,7 +88,7 @@ enums:
 		func(schema, input string) {
 			schemaValidations, schemaIssues := buildValidationsFromSchemaText([]byte(schema))
 			assertNoSchemaIssues(schemaIssues)
-			validateIssues := runSchemaValidations([]byte(input), schemaValidations...)
+			validateIssues := runSchemaValidations(getMtaNode([]byte(input)), schemaValidations...)
 			assertNoValidationErrors(validateIssues)
 		},
 		Entry("required", `
@@ -144,11 +144,11 @@ isHappy: false
 	)
 
 	var _ = DescribeTable("Invalid input",
-		func(schema, input, message string) {
+		func(schema, input, message string, line int) {
 			schemaValidations, schemaIssues := buildValidationsFromSchemaText([]byte(schema))
 			assertNoSchemaIssues(schemaIssues)
-			validateIssues := runSchemaValidations([]byte(input), schemaValidations...)
-			expectSingleValidationError(validateIssues, message)
+			validateIssues := runSchemaValidations(getMtaNode([]byte(input)), schemaValidations...)
+			expectSingleValidationError(validateIssues, message, line)
 		},
 		Entry("required", `
 type: map
@@ -157,7 +157,7 @@ mapping:
 `, `
 firstName: Donald
 lastName: duck
-`, `missing the "age" required property in the root .yaml node`),
+`, `missing the "age" required property in the root .yaml node`, 2),
 
 		Entry("Enum", `
 type: enum
@@ -167,7 +167,7 @@ enums:
    - cat
    - mouse
    - elephant
-`, `bird`, `the "bird" value of the "root" enum property is invalid; expected one of the following: duck,dog,cat,mouse`),
+`, `bird`, `the "bird" value of the "root" enum property is invalid; expected one of the following: duck,dog,cat,mouse`, 1),
 
 		Entry("sequence", `
 type: seq
@@ -181,7 +181,7 @@ sequence:
 
 - age: 80
   lastName: Bunny
-`, `missing the "name" required property in the root[1] .yaml node`),
+`, `missing the "name" required property in the root[1] .yaml node`, 5),
 
 		Entry("Pattern", `
 type: map
@@ -190,7 +190,7 @@ mapping:
 `, `
 name: Bamba
 age: NaN
-`, `the "NaN" value of the "root.age" property does not match the "^[0-9]+$" pattern`),
+`, `the "NaN" value of the "root.age" property does not match the "^[0-9]+$" pattern`, 3),
 
 		Entry("optional With Pattern", `
 type: map
@@ -199,7 +199,7 @@ mapping:
 `, `
 firstName: Donald123
 lastName: duck
-`, `the "Donald123" value of the "root.firstName" property does not match the "^[a-zA-Z]+$" pattern`),
+`, `the "Donald123" value of the "root.firstName" property does not match the "^[a-zA-Z]+$" pattern`, 2),
 
 		Entry("Type Is Bool", `
 type: map
@@ -208,6 +208,6 @@ mapping:
 `, `
 firstName: John
 isHappy: 123
-`, `the "root.isHappy" property must be a boolean`),
+`, `the "root.isHappy" property must be a boolean`, 3),
 	)
 })

@@ -1,7 +1,7 @@
 package validate
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -9,7 +9,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 
 	"github.com/SAP/cloud-mta/mta"
 )
@@ -110,8 +110,9 @@ var _ = Describe("MTA tests", func() {
 				warn, err := MtaYaml(getTestPath("mtahtml5"), "mtaNotStrict.yaml",
 					true, true, true, "")
 				Ω(warn).Should(Equal(""))
+				fmt.Println(err.Error())
 				Ω(err.Error()).Should(ContainSubstring("line 8: field abc not found in type mta.Module"))
-				Ω(err.Error()).Should(ContainSubstring(`line 20: key "url" already set in map`))
+				Ω(err.Error()).Should(ContainSubstring(`line 20: mapping key "url" already defined at line 19`))
 				Ω(err.Error()).Should(ContainSubstring(`the "srv_api1" property set required by the "ui" module is not defined`))
 				Ω(err.Error()).Should(ContainSubstring(`the "srv" path of the "srv" module does not exist`))
 			})
@@ -119,7 +120,7 @@ var _ = Describe("MTA tests", func() {
 				warn, err := MtaYaml(getTestPath("mtahtml5"), "mtaNotStrict.yaml",
 					true, true, false, "")
 				Ω(warn).Should(ContainSubstring("line 8: field abc not found in type mta.Module"))
-				Ω(warn).Should(ContainSubstring(`line 20: key "url" already set in map`))
+				Ω(warn).Should(ContainSubstring(`line 20: mapping key "url" already defined at line 19`))
 				Ω(err.Error()).ShouldNot(ContainSubstring("line 8: field abc not found in type mta.Module"))
 				Ω(err.Error()).ShouldNot(ContainSubstring(`line 20: key "url" already set in map`))
 				Ω(err.Error()).Should(ContainSubstring(`the "srv_api1" property set required by the "ui" module is not defined`))
@@ -131,13 +132,11 @@ var _ = Describe("MTA tests", func() {
 		var _ = Describe("validate - unmarshalling fails", func() {
 			It("Sanity", func() {
 				err, warn := validate([]byte("bad Yaml"), getTestPath("mtahtml5"),
-					true, false, false, "", func(mtaContent []byte, mtaStr interface{}) error {
-						return errors.New("err")
-					})
+					true, false, true, "")
 				Ω(warn).Should(BeNil())
 				Ω(err).ShouldNot(BeNil())
-				Ω(len(err)).Should(Equal(1))
-				Ω(err[0].Msg).Should(ContainSubstring("err"))
+				Ω(len(err)).Should(Equal(5))
+				Ω(err[0].Msg).Should(ContainSubstring("cannot unmarshal"))
 			})
 
 			It("invalid schema", func() {
@@ -153,5 +152,9 @@ desc: MTA DESCRIPTOR SCHEMA
 				schemaDef = originalSchema
 			})
 		})
+	})
+
+	It("convertError", func() {
+		Ω(convertError(fmt.Errorf("line 999999999999999999999999999: aaa"))).Should(BeEquivalentTo([]YamlValidationIssue{{Msg:"aaa", Line:1}}))
 	})
 })

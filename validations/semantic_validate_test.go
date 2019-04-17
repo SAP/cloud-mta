@@ -1,10 +1,12 @@
 package validate
 
 import (
-	"github.com/SAP/cloud-mta/mta"
+	"gopkg.in/yaml.v3"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"gopkg.in/yaml.v2"
+
+	"github.com/SAP/cloud-mta/mta"
 )
 
 var _ = Describe("isNameUnique", func() {
@@ -38,13 +40,14 @@ resources:
 `)
 		mtaStr := mta.MTA{}
 		yaml.Unmarshal(mtaContent, &mtaStr)
-		issues := runSemanticValidations(&mtaStr, getTestPath("testproject"), "")
+		root := getMtaNode(mtaContent)
+		issues := runSemanticValidations(&mtaStr, root, getTestPath("testproject"), "")
 		Ω(len(issues)).Should(Equal(2))
-		Ω(issues[0].Msg).Should(
-			Equal(`the "ui5app2" path of the "ui5app2" module does not exist`))
-		Ω(issues[1].Msg).
-			Should(Equal(`the "test" resource name is not unique; a provided property set was found with the same name`))
-		issues = runSemanticValidations(&mtaStr, getTestPath("testproject"), "paths,names")
+		Ω(issues[0].Msg).Should(Equal(`the "ui5app2" path of the "ui5app2" module does not exist`))
+		Ω(issues[0].Line).Should(Equal(12))
+		Ω(issues[1].Msg).Should(Equal(`the "test" resource name is already in use; a provided property set was found with the same name on line 10`))
+		Ω(issues[1].Line).Should(Equal(16))
+		issues = runSemanticValidations(&mtaStr, root, getTestPath("testproject"), "paths,names")
 		Ω(len(issues)).Should(Equal(0))
 	})
 

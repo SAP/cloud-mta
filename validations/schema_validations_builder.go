@@ -20,7 +20,7 @@ func buildValidationsFromSchemaText(yaml []byte) ([]YamlCheck, []YamlValidationI
 
 	y, parseError := simpleyaml.NewYaml(yaml)
 	if parseError != nil {
-		schemaIssues = appendIssue(schemaIssues, "validation failed when parsing the MTA file: "+parseError.Error())
+		schemaIssues = appendIssue(schemaIssues, "validation failed when parsing the MTA file: "+parseError.Error(), 0)
 		return validations, schemaIssues
 	}
 
@@ -44,7 +44,7 @@ func buildValidationsFromSchema(schema *simpleyaml.Yaml) ([]YamlCheck, []YamlVal
 		case "map":
 			mappingNode := schema.Get("mapping")
 			if !mappingNode.IsMap() {
-				schemaIssues = appendIssue(schemaIssues, "invalid .yaml file schema: the mapping node must be a map")
+				schemaIssues = appendIssue(schemaIssues, "invalid .yaml file schema: the mapping node must be a map", 0)
 				return validations, schemaIssues
 			}
 			newValidations, newSchemaIssues := buildValidationsFromMap(mappingNode)
@@ -59,13 +59,13 @@ func buildValidationsFromSchema(schema *simpleyaml.Yaml) ([]YamlCheck, []YamlVal
 		case "seq":
 			sequenceNode := schema.Get("sequence")
 			if !sequenceNode.IsArray() {
-				schemaIssues = appendIssue(schemaIssues, "invalid .yaml file schema: the sequence node must be an array")
+				schemaIssues = appendIssue(schemaIssues, "invalid .yaml file schema: the sequence node must be an array", 0)
 				return validations, schemaIssues
 			}
 
 			seqSize, _ := sequenceNode.GetArraySize()
 			if seqSize > 1 {
-				schemaIssues = appendIssue(schemaIssues, "invalid .yaml file schema: the sequence node can have only one item")
+				schemaIssues = appendIssue(schemaIssues, "invalid .yaml file schema: the sequence node can have only one item", 0)
 				return validations, schemaIssues
 			}
 
@@ -138,7 +138,7 @@ func buildOptionalOrRequiredValidation(y *simpleyaml.Yaml, validations []YamlChe
 		requiredValue := getLiteralStringValue(requiredNode)
 		if requiredValue != "true" && requiredValue != "false" {
 			schemaIssues = appendIssue(schemaIssues,
-				fmt.Sprint("invalid .yaml file schema: the required node must be a boolean "))
+				fmt.Sprint("invalid .yaml file schema: the required node must be a boolean "), 0)
 			return validations, schemaIssues
 		}
 
@@ -166,7 +166,7 @@ func buildTypeValidation(y *simpleyaml.Yaml) ([]YamlCheck, []YamlValidationIssue
 	if typeNode.IsFound() {
 		typeValue, stringErr := typeNode.String()
 		if stringErr != nil {
-			schemaIssues = appendIssue(schemaIssues, "invalid .yaml file schema: the type node must be a string")
+			schemaIssues = appendIssue(schemaIssues, "invalid .yaml file schema: the type node must be a string", 0)
 			return validations, schemaIssues
 		}
 		if typeValue == "bool" {
@@ -183,10 +183,10 @@ func buildTypeValidation(y *simpleyaml.Yaml) ([]YamlCheck, []YamlValidationIssue
 func buildEnumValidation(y *simpleyaml.Yaml) ([]YamlCheck, []YamlValidationIssue) {
 	enumsNode := y.Get("enums")
 	if !enumsNode.IsFound() {
-		return []YamlCheck{}, []YamlValidationIssue{{"invalid .yaml file schema: enums values must be listed"}}
+		return []YamlCheck{}, []YamlValidationIssue{{"invalid .yaml file schema: enums values must be listed", 0}}
 	}
 	if !enumsNode.IsArray() {
-		return []YamlCheck{}, []YamlValidationIssue{{"invalid .yaml file schema: enums values must be listed as an array"}}
+		return []YamlCheck{}, []YamlValidationIssue{{"invalid .yaml file schema: enums values must be listed as an array", 0}}
 	}
 
 	enumsNumber, _ := enumsNode.GetArraySize()
@@ -195,7 +195,7 @@ func buildEnumValidation(y *simpleyaml.Yaml) ([]YamlCheck, []YamlValidationIssue
 	for i := 0; i < enumsNumber; i++ {
 		enumNode := enumsNode.GetIndex(i)
 		if enumNode.IsArray() || enumNode.IsMap() {
-			return []YamlCheck{}, []YamlValidationIssue{{"invalid .yaml file schema: enum values must be simple"}}
+			return []YamlCheck{}, []YamlValidationIssue{{"invalid .yaml file schema: enum values must be simple", 0}}
 		}
 		enumValue := getLiteralStringValue(enumNode)
 		enumValues = append(enumValues, enumValue)
@@ -212,14 +212,17 @@ func buildPatternValidation(y *simpleyaml.Yaml) ([]YamlCheck, []YamlValidationIs
 	if patternNode.IsFound() {
 		patternValue, err := patternNode.String()
 		if err != nil {
-			schemaIssues = appendIssue(schemaIssues, "invalid .yaml file schema: the pattern node must be a string")
+			schemaIssues = appendIssue(schemaIssues, "invalid .yaml file schema: the pattern node must be a string", 0)
 			return validations, schemaIssues
 		}
 		// TODO: we must validate: NOT MAP/SEQ
 		patternWithoutSlashes := strings.TrimSuffix(strings.TrimPrefix(patternValue, "/"), "/")
 		_, err = regexp.Compile(patternWithoutSlashes)
 		if err != nil {
-			schemaIssues = append(schemaIssues, YamlValidationIssue{"invalid .yaml file schema: the pattern node is invalid because: " + err.Error()})
+			schemaIssues = append(schemaIssues,
+				YamlValidationIssue{
+					Msg:  "invalid .yaml file schema: the pattern node is invalid because: " + err.Error(),
+					Line: 0})
 		} else {
 			validations = append(validations, matchesRegExp(patternWithoutSlashes))
 		}
@@ -237,9 +240,9 @@ func invokeLeafValidation(y *simpleyaml.Yaml, validations []YamlCheck, schemaIss
 	return validations, schemaIsssues
 }
 
-func appendIssue(issues []YamlValidationIssue, issue string) []YamlValidationIssue {
+func appendIssue(issues []YamlValidationIssue, issue string, line int) []YamlValidationIssue {
 	if issue == "" {
 		return issues
 	}
-	return append(issues, []YamlValidationIssue{{issue}}...)
+	return append(issues, []YamlValidationIssue{{Msg: issue, Line: line}}...)
 }

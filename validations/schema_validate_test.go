@@ -13,7 +13,7 @@ import (
 var _ = Describe("runSchemaValidations Validation", func() {
 
 	DescribeTable("Valid runSchemaValidations", func(data string, validations ...YamlCheck) {
-		validateIssues := runSchemaValidations([]byte(data), validations...)
+		validateIssues := runSchemaValidations(getMtaNode([]byte(data)), validations...)
 
 		assertNoValidationErrors(validateIssues)
 	},
@@ -87,36 +87,36 @@ lastName: duck
 `, property("firstName", optional(typeIsNotMapArray()))),
 	)
 
-	DescribeTable("Invalid runSchemaValidations", func(data, message string, validations ...YamlCheck) {
-		validateIssues := runSchemaValidations([]byte(data), validations...)
+	DescribeTable("Invalid runSchemaValidations", func(data, message string, line int, validations ...YamlCheck) {
+		validateIssues := runSchemaValidations(getMtaNode([]byte(data)), validations...)
 
-		expectSingleValidationError(validateIssues, message)
+		expectSingleValidationError(validateIssues, message, line)
 	},
 		Entry("matchesRegExp", `
 firstName: Donald
 lastName: duck
-`, `the "Donald" value of the "root.firstName" property does not match the "^[0-9_\-\.]+$" pattern`,
+`, `the "Donald" value of the "root.firstName" property does not match the "^[0-9_\-\.]+$" pattern`, 2,
 			property("firstName", matchesRegExp("^[0-9_\\-\\.]+$"))),
 
 		Entry("required", `
 firstName: Donald
 lastName: duck
-`, `missing the "age" required property in the root .yaml node`,
+`, `missing the "age" required property in the root .yaml node`, 2,
 			property("age", required())),
 
-		Entry("required", `
+		Entry("TypeIsString", `
 firstName:
    - 1
    - 2
    - 3
 lastName: duck
-`, `the "root.firstName" property must be a string`,
+`, `the "root.firstName" property must be a string`, 3,
 			property("firstName", typeIsNotMapArray())),
 
 		Entry("TypeIsBool", `
 name: bamba
 registered: 123
-`, `the "root.registered" property must be a boolean`,
+`, `the "root.registered" property must be a boolean`, 3,
 			property("registered", typeIsBoolean())),
 
 		Entry("typeIsArray", `
@@ -125,7 +125,7 @@ firstName:
    - 2
    - 3
 lastName: duck
-`, `the "root.lastName" property must be an array`,
+`, `the "root.lastName" property must be an array`, 6,
 			property("lastName", typeIsArray())),
 
 		Entry("typeIsMap", `
@@ -136,13 +136,13 @@ firstName:
 lastName:
    a : 1
    b : 2
-`, `the "root.firstName" property must be a map`,
+`, `the "root.firstName" property must be a map`, 3,
 			property("firstName", typeIsMap())),
 
 		Entry("sequenceFailFast", `
 firstName: Hello
 lastName: World
-`, `missing the "missing" required property in the root .yaml node`,
+`, `missing the "missing" required property in the root .yaml node`, 2,
 			property("missing", sequenceFailFast(
 				required(),
 				// This second validation should not be executed as sequence breaks early.
@@ -153,7 +153,7 @@ firstName:
   - 1
   - 2
 lastName: duck
-`, `the "root.firstName" property must be a string`,
+`, `the "root.firstName" property must be a string`, 3,
 			property("firstName", optional(typeIsNotMapArray()))),
 	)
 
@@ -162,7 +162,7 @@ lastName: duck
 firstName: Donald
   lastName: duck # invalid indentation
 		`)
-		issues := runSchemaValidations(data, property("lastName", required()))
+		issues := runSchemaValidations(getMtaNode([]byte(data)), property("lastName", required()))
 		Ω(len(issues)).Should(Equal(1))
 	})
 
@@ -184,7 +184,7 @@ classes:
 				property("name", required()),
 				property("room", matchesRegExp("^[0-9]+$")))))
 
-		validateIssues := runSchemaValidations(data, validations)
+		validateIssues := runSchemaValidations(getMtaNode([]byte(data)), validations)
 
 		expectMultipleValidationError(validateIssues,
 			[]string{
