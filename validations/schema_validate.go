@@ -1,7 +1,9 @@
 package validate
 
 import (
+	"bytes"
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"regexp"
 	"strings"
 
@@ -10,7 +12,10 @@ import (
 
 // YamlValidationIssue - specific issue
 type YamlValidationIssue struct {
+	// Msg - message content
 	Msg string
+	// Line - line number indicating issue
+	Line int
 }
 
 // YamlValidationIssues - list of issue's
@@ -19,29 +24,62 @@ type YamlValidationIssues []YamlValidationIssue
 func (issues YamlValidationIssues) String() string {
 	var messages []string
 	for _, issue := range issues {
-		messages = append(messages, issue.Msg)
+		messages = append(messages, fmt.Sprintf("line %d: %s", issue.Line, issue.Msg))
 	}
 	return strings.Join(messages, "\n")
 }
 
 // YamlCheck - validation check function type
-type YamlCheck func(y *simpleyaml.Yaml, path []string) YamlValidationIssues
+type YamlCheck func(yNode, yParentNode *yaml.Node, path []string) YamlValidationIssues
 
 // DSL method to execute validations on a sub node(property) of a YAML tree.
 // Can be nested to check properties farther and farther down the tree.
 func property(propName string, checks ...YamlCheck) YamlCheck {
-	return func(y *simpleyaml.Yaml, path []string) YamlValidationIssues {
+	return func(yNode, yParentNode *yaml.Node, path []string) YamlValidationIssues {
 		var issues YamlValidationIssues
-		yProp := y.Get(propName)
+		yPropNode := getPropValueByName(yNode, propName)
 
 		// Will perform all the validations without stopping
 		for _, check := range checks {
-			newIssues := check(yProp, append(path, propName))
+			newIssues := check(yPropNode, yNode, append(path, propName))
 			issues = append(issues, newIssues...)
 		}
 
 		return issues
 	}
+}
+
+func getPropValueByName(node *yaml.Node, name string) *yaml.Node {
+	if node == nil || node.Content == nil {
+		return nil
+	}
+
+	// we start from some key and searched key is still not found
+	key := true
+	keyFound := false
+
+	// properties are listed in the Content of node as slice of key, value, key, value,...
+	for _, propNode := range node.Content {
+		if keyFound {
+			// previous node one is found key, current is its value
+			return propNode
+		}
+		// current is key and its value equals to searched name => key found
+		if key && propNode.Value == name {
+			keyFound = true
+		}
+		// key ->value, value->key
+		key = !key
+	}
+	return nil
+}
+
+func getPropContent(node *yaml.Node, name string) []*yaml.Node {
+	propNode := getPropValueByName(node, name)
+	if propNode != nil {
+		return propNode.Content
+	}
+	return nil
 }
 
 // DSL method to execute validations in order and break early as soon as the first one fails
@@ -65,11 +103,11 @@ func sequenceFailFast(
 func sequenceInternal(failfast bool,
 	checks ...YamlCheck) YamlCheck {
 
-	return func(y *simpleyaml.Yaml, path []string) YamlValidationIssues {
+	return func(yNode, yParentNode *yaml.Node, path []string) YamlValidationIssues {
 		var issues YamlValidationIssues
 
 		for _, check := range checks {
-			newIssues := check(y, path)
+			newIssues := check(yNode, yParentNode, path)
 			// Only perform the next validation, if the previous one succeeded
 			if len(newIssues) > 0 {
 				issues = append(issues, newIssues...)
@@ -86,16 +124,20 @@ func sequenceInternal(failfast bool,
 // DSL method to iterate over a YAML array items
 func forEach(checks ...YamlCheck) YamlCheck {
 
-	return func(yProp *simpleyaml.Yaml, path []string) YamlValidationIssues {
-		arrSize, _ := yProp.GetArraySize()
-
+	return func(yPropNode, yParentNode *yaml.Node, path []string) YamlValidationIssues {
 		var issues YamlValidationIssues
+
+		if yPropNode == nil {
+			return issues
+		}
+
+		arrSize := len(yPropNode.Content)
 
 		validation := sequence(checks...)
 
 		for i := 0; i < arrSize; i++ {
-			yElem := yProp.GetIndex(i)
-			elemErrors := validation(yElem, append(path, fmt.Sprintf("[%d]", i)))
+			child := yPropNode.Content[i]
+			elemErrors := validation(child, yPropNode, append(path, fmt.Sprintf("[%d]", i)))
 			issues = append(issues, elemErrors...)
 		}
 
@@ -107,11 +149,13 @@ func forEach(checks ...YamlCheck) YamlCheck {
 // Note that this has no context, the property being checked is provided externally
 // via the "property" DSL method.
 func required() YamlCheck {
-	return func(yProp *simpleyaml.Yaml, path []string) YamlValidationIssues {
-		if !yProp.IsFound() {
-			return []YamlValidationIssue{{Msg: fmt.Sprintf(`missing the "%s" required property in the %s .yaml node`,
-				last(path),
-				buildPathString(dropRight(path)))}}
+	return func(yNode, yParentNode *yaml.Node, path []string) YamlValidationIssues {
+		if yNode == nil {
+			return []YamlValidationIssue{
+				{
+					Msg: fmt.Sprintf(`missing the "%s" required property in the %s .yaml node`,
+						last(path), buildPathString(dropRight(path))),
+					Line: yParentNode.Line}}
 		}
 
 		return []YamlValidationIssue{}
@@ -121,17 +165,17 @@ func required() YamlCheck {
 // DSL method that will only perform validations if the property exists
 // Useful to avoid executing validations on none mandatory properties which are not present.
 func optional(checks ...YamlCheck) YamlCheck {
-	return func(y *simpleyaml.Yaml, path []string) YamlValidationIssues {
+	return func(yNode, yParentNode *yaml.Node, path []string) YamlValidationIssues {
 		var issues YamlValidationIssues
 
 		// If an optional property is not found
 		// no sense in executing the validations.
-		if !y.IsFound() {
+		if yNode == nil {
 			return issues
 		}
 
 		for _, check := range checks {
-			newIssues := check(y, path)
+			newIssues := check(yNode, yParentNode, path)
 			issues = append(issues, newIssues...)
 		}
 
@@ -140,10 +184,15 @@ func optional(checks ...YamlCheck) YamlCheck {
 }
 
 func typeIsNotMapArray() YamlCheck {
-	return func(yProp *simpleyaml.Yaml, path []string) YamlValidationIssues {
+	return func(yNode, yParentNode *yaml.Node, path []string) YamlValidationIssues {
 
-		if yProp.IsMap() || yProp.IsArray() {
-			return []YamlValidationIssue{{Msg: fmt.Sprintf(`the "%s" property must be a string`, buildPathString(path))}}
+		if yNode.Kind == yaml.SequenceNode || yNode.Kind == yaml.MappingNode {
+			return []YamlValidationIssue{
+				{
+					Msg:  fmt.Sprintf(`the "%s" property must be a string`, buildPathString(path)),
+					Line: yNode.Line,
+				},
+			}
 		}
 
 		return []YamlValidationIssue{}
@@ -151,13 +200,16 @@ func typeIsNotMapArray() YamlCheck {
 }
 
 func typeIsArray() YamlCheck {
-	return func(yProp *simpleyaml.Yaml, path []string) YamlValidationIssues {
+	return func(yNode, yParentNode *yaml.Node, path []string) YamlValidationIssues {
 
-		if yProp.IsFound() {
-			_, err := yProp.Array()
-
-			if err != nil {
-				return []YamlValidationIssue{{Msg: fmt.Sprintf(`the "%s" property must be an array`, buildPathString(path))}}
+		if yNode != nil {
+			if yNode.Kind != yaml.SequenceNode {
+				return []YamlValidationIssue{
+					{
+						Msg:  fmt.Sprintf(`the "%s" property must be an array`, buildPathString(path)),
+						Line: yNode.Line,
+					},
+				}
 			}
 		}
 
@@ -166,13 +218,15 @@ func typeIsArray() YamlCheck {
 }
 
 func typeIsMap() YamlCheck {
-	return func(yProp *simpleyaml.Yaml, path []string) YamlValidationIssues {
-
-		if yProp.IsFound() {
-			_, err := yProp.Map()
-
-			if err != nil {
-				return []YamlValidationIssue{{Msg: fmt.Sprintf(`the "%s" property must be a map`, buildPathString(path))}}
+	return func(yNode, yParentNode *yaml.Node, path []string) YamlValidationIssues {
+		if yNode != nil {
+			if yNode.Kind != yaml.MappingNode {
+				return []YamlValidationIssue{
+					{
+						Msg:  fmt.Sprintf(`the "%s" property must be a map`, buildPathString(path)),
+						Line: yNode.Line,
+					},
+				}
 			}
 		}
 
@@ -181,12 +235,15 @@ func typeIsMap() YamlCheck {
 }
 
 func typeIsBoolean() YamlCheck {
-	return func(yProp *simpleyaml.Yaml, path []string) YamlValidationIssues {
-		if yProp.IsFound() {
-			_, err := yProp.Bool()
+	return func(yNode, yParentNode *yaml.Node, path []string) YamlValidationIssues {
+		if yNode != nil {
+			if yNode.Tag != "!!bool" {
+				return []YamlValidationIssue{
 
-			if err != nil {
-				return []YamlValidationIssue{{Msg: fmt.Sprintf(`the "%s" property must be a boolean`, buildPathString(path))}}
+					{Msg: fmt.Sprintf(`the "%s" property must be a boolean`, buildPathString(path)),
+						Line: yNode.Line,
+					},
+				}
 			}
 		}
 
@@ -197,12 +254,17 @@ func typeIsBoolean() YamlCheck {
 func matchesRegExp(pattern string) YamlCheck {
 	regExp, _ := regexp.Compile(pattern)
 
-	return func(yProp *simpleyaml.Yaml, path []string) YamlValidationIssues {
-		strValue := getLiteralStringValue(yProp)
+	return func(yNode, yParentNode *yaml.Node, path []string) YamlValidationIssues {
+		strValue := yNode.Value
 
 		if !regExp.MatchString(strValue) {
 			return []YamlValidationIssue{
-				{Msg: fmt.Sprintf(`the "%s" value of the "%s" property does not match the "%s" pattern`, strValue, buildPathString(path), pattern)}}
+				{
+					Msg: fmt.Sprintf(`the "%s" value of the "%s" property does not match the "%s" pattern`,
+						strValue, buildPathString(path), pattern),
+					Line: yNode.Line,
+				},
+			}
 		}
 
 		return []YamlValidationIssue{}
@@ -224,8 +286,8 @@ func matchesEnumValues(enumValues []string) YamlCheck {
 		expectedSubset = expectedSubset + enumValue
 	}
 
-	return func(yProp *simpleyaml.Yaml, path []string) YamlValidationIssues {
-		value := getLiteralStringValue(yProp)
+	return func(yNode, yParentNode *yaml.Node, path []string) YamlValidationIssues {
+		value := yNode.Value
 		found := false
 		for _, enumValue := range enumValues {
 			if enumValue == value {
@@ -234,8 +296,14 @@ func matchesEnumValues(enumValues []string) YamlCheck {
 			}
 		}
 		if !found {
-			return []YamlValidationIssue{{Msg: fmt.Sprintf(`the "%s" value of the "%s" enum property is invalid; expected one of the following: %s`,
-				value, buildPathString(path), expectedSubset)}}
+			return []YamlValidationIssue{
+				{
+					Msg: fmt.Sprintf(
+						`the "%s" value of the "%s" enum property is invalid; expected one of the following: %s`,
+						value, buildPathString(path), expectedSubset),
+					Line: yNode.Line,
+				},
+			}
 		}
 
 		return []YamlValidationIssue{}
@@ -296,18 +364,30 @@ func getLiteralStringValue(y *simpleyaml.Yaml) string {
 	return ""
 }
 
-// runSchemaValidations - Given a YAML text and a set of validations will execute them and will return relevant issue slice
-func runSchemaValidations(yaml []byte, validations ...YamlCheck) []YamlValidationIssue {
-	var issues []YamlValidationIssue
+func getMtaNode(yamlContent []byte) (*yaml.Node, error) {
 
-	y, parseError := simpleyaml.NewYaml(yaml)
-	if parseError != nil {
-		issues = appendIssue(issues, parseError.Error())
-		return issues
+	dec := yaml.NewDecoder(bytes.NewReader(yamlContent))
+	dec.KnownFields(false)
+
+	var document yaml.Node
+	err := dec.Decode(&document)
+	if err != nil {
+		return &document, err
 	}
 
+	var mtaNode yaml.Node
+	if document.Content != nil {
+		mtaNode = *document.Content[0]
+	}
+	return &mtaNode, nil
+}
+
+// runSchemaValidations - Given a YAML text and a set of validations will execute them and will return relevant issue slice
+func runSchemaValidations(mtaNode *yaml.Node, validations ...YamlCheck) []YamlValidationIssue {
+	var issues []YamlValidationIssue
+
 	for _, validation := range validations {
-		issues = append(issues, validation(y, []string{})...)
+		issues = append(issues, validation(mtaNode, nil, []string{})...)
 	}
 
 	return issues

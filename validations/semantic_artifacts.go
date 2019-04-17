@@ -2,6 +2,7 @@ package validate
 
 import (
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"os"
 	"path/filepath"
 
@@ -9,9 +10,11 @@ import (
 )
 
 // ifModulePathExists - validates the existence of modules paths used in the MTA descriptor
-func ifModulePathExists(mta *mta.MTA, source string) []YamlValidationIssue {
+func ifModulePathExists(mta *mta.MTA, mtaNode *yaml.Node, source string) []YamlValidationIssue {
 	var issues []YamlValidationIssue
-	for _, module := range mta.Modules {
+
+	modulesNode := getPropValueByName(mtaNode, modulesYamlField)
+	for index, module := range mta.Modules {
 		modulePath := module.Path
 		// "path" property not defined -> use module name as a path
 		if modulePath == "" {
@@ -22,9 +25,13 @@ func ifModulePathExists(mta *mta.MTA, source string) []YamlValidationIssue {
 		// check existence of file/folder
 		_, err := os.Stat(fullPath)
 		if err != nil {
+			line := getIndexedNodePropLine(modulesNode, index, pathYamlField)
+			if line == 0 {
+				line = getIndexedNodePropLine(modulesNode, index, nameYamlField)
+			}
 			// path not exists -> add an issue
 			issues = appendIssue(issues, fmt.Sprintf(`the "%s" path of the "%s" module does not exist`,
-				modulePath, module.Name))
+				modulePath, module.Name), line)
 		}
 	}
 

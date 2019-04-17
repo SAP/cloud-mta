@@ -57,7 +57,8 @@ modules:
       supported-platforms: []
 
 `)
-		validateIssues := runSchemaValidations(input, schemaValidations...)
-		expectSingleValidationError(validateIssues, `missing the "type" required property in the modules[1] .yaml node`)
+		node, _ := getMtaNode(input)
+		validateIssues := runSchemaValidations(node, schemaValidations...)
+		expectSingleValidationError(validateIssues, `missing the "type" required property in the modules[1] .yaml node`, 22)
 	})
 })

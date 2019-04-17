@@ -45,10 +45,13 @@ resources:
    type: org.cloudfoundry.managed-service
 `)
 		mta, _ := mta.Unmarshal(mtaContent)
-		issues := ifRequiredDefined(mta, "")
+		node, _ := getMtaNode(mtaContent)
+		issues := ifRequiredDefined(mta, node, "")
 		Ω(len(issues)).Should(Equal(2))
 		Ω(issues[0].Msg).Should(Equal(`the "test1" property set required by the "ui5app2" module is not defined`))
+		Ω(issues[0].Line).Should(Equal(16))
 		Ω(issues[1].Msg).Should(Equal(`the "test1" property set required by the "uaa_mtahtml5" resource is not defined`))
+		Ω(issues[1].Line).Should(Equal(28))
 	})
 
 	It("check required properties (placeholders usage)", func() {
@@ -64,10 +67,13 @@ modules:
    - name: price_opt 
      properties:
        conn_string: "~{protocol}://~{uri}/odata/" 
-       conn_string1: "~{protocol1}://~{uri}/odata/" 
+       conn_string1: "~{protocol1}://~{uri}/odata/"
+       x: 
+         xa: "~{protocol}://~{uri}/odata/"
    - name: unknown
      properties:
-       conn_string2: "~{protocol}://~{uri}/odata/" 
+       conn_string2: "~{protocol}://~{uri}/odata/"
+
    properties: 
      conn_string3: "~{protocol}://~{uri}/odata/" 
      a: "~{price_opt/protocol}://~{price_opt/uri}/odata/"
@@ -92,14 +98,15 @@ modules:
          protocolX: http
          uriX: myhost.mydomain
 
- - name: unnamed
+ - name1: unnamed
    type: html5
    properties: 
      conn_string: "~{price_opt/protocol}://~{price_opt/uri}/odata/" 
 `)
 		mta, err := mta.Unmarshal(mtaContent)
-		Ω(err).Should(Succeed())
-		issues := ifRequiredDefined(mta, "")
-		Ω(len(issues)).Should(Equal(11))
+		Ω(err).Should(HaveOccurred())
+		node, _ := getMtaNode(mtaContent)
+		issues := ifRequiredDefined(mta, node, "")
+		Ω(len(issues)).Should(Equal(13))
 	})
 })

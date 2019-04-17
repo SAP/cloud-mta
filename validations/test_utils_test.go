@@ -10,12 +10,13 @@ func assertNoValidationErrors(errors []YamlValidationIssue) {
 	Ω(len(errors)).Should(Equal(0), "Validation issues detected: %v")
 }
 
-func expectSingleValidationError(actual []YamlValidationIssue, expectedMsg string) {
+func expectSingleValidationError(actual []YamlValidationIssue, expectedMsg string, expectedLine int) {
 	numOfErrors := len(actual)
 	Ω(numOfErrors).Should(Equal(1), "A single validation issue expected but found: <%d>", numOfErrors)
 
 	actualMsg := actual[0].Msg
-	Ω(actual[0].Msg).Should(Equal(expectedMsg), "Expecting <%s>.\n\t But found <%s>.", expectedMsg, actualMsg)
+	Ω(actualMsg).Should(Equal(expectedMsg), "Expecting <%s>.\n\t But found <%s>.", expectedMsg, actualMsg)
+	Ω(actual[0].Line).Should(Equal(expectedLine))
 }
 
 func expectMultipleValidationError(actualIssues []YamlValidationIssue, expectedMsgs []string) {
