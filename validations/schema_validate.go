@@ -12,7 +12,9 @@ import (
 
 // YamlValidationIssue - specific issue
 type YamlValidationIssue struct {
-	Msg  string
+	// Msg - message content
+	Msg string
+	// Line - line number indicating issue
 	Line int
 }
 

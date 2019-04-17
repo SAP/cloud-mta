@@ -155,6 +155,6 @@ desc: MTA DESCRIPTOR SCHEMA
 	})
 
 	It("convertError", func() {
-		Ω(convertError(fmt.Errorf("line 999999999999999999999999999: aaa"))).Should(BeEquivalentTo([]YamlValidationIssue{{Msg:"aaa", Line:1}}))
+		Ω(convertError(fmt.Errorf("line 999999999999999999999999999: aaa"))).Should(BeEquivalentTo([]YamlValidationIssue{{Msg: "aaa", Line: 1}}))
 	})
 })

@@ -90,7 +90,7 @@ func checkComponent(provided map[string]map[string]interface{}, component interf
 	buildParamsNode := getPropValueByName(compNode, buildParametersYamlField)
 	issues = append(issues,
 		checkRequiredProperties(provided, "", structFieldToMap(component, buildParametersMtaField),
-			fmt.Sprintf(`"%s" %s`, compName, compDesc),  buildParamsNode,buildParamEntityKind)...)
+			fmt.Sprintf(`"%s" %s`, compName, compDesc), buildParamsNode, buildParamEntityKind)...)
 	// check that each required by resource property set was provided in mta.yaml
 	requiresNode := getPropValueByName(compNode, requiresYamlField)
 	for i, requires := range structFieldToRequires(component) {
@@ -104,12 +104,12 @@ func checkComponent(provided map[string]map[string]interface{}, component interf
 		reqPropsNode := getPropValueByName(requiresNode.Content[i], propertiesYamlField)
 		issues = append(issues,
 			checkRequiredProperties(provided, requires.Name, requires.Properties,
-				fmt.Sprintf(`"%s" %s`, compName, compDesc),  reqPropsNode,propertyEntityKind)...)
+				fmt.Sprintf(`"%s" %s`, compName, compDesc), reqPropsNode, propertyEntityKind)...)
 		// check that each parameter of resource is resolved
 		reqParamsNode := getPropValueByName(requiresNode.Content[i], parametersYamlField)
 		issues = append(issues,
 			checkRequiredProperties(provided, requires.Name, requires.Parameters,
-				fmt.Sprintf(`"%s" %s`, compName, compDesc),  reqParamsNode,parameterEntityKind)...)
+				fmt.Sprintf(`"%s" %s`, compName, compDesc), reqParamsNode, parameterEntityKind)...)
 	}
 	return issues
 }
