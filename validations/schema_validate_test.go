@@ -13,7 +13,8 @@ import (
 var _ = Describe("runSchemaValidations Validation", func() {
 
 	DescribeTable("Valid runSchemaValidations", func(data string, validations ...YamlCheck) {
-		validateIssues := runSchemaValidations(getMtaNode([]byte(data)), validations...)
+		node, _ := getMtaNode([]byte(data))
+		validateIssues := runSchemaValidations(node, validations...)
 
 		assertNoValidationErrors(validateIssues)
 	},
@@ -88,7 +89,8 @@ lastName: duck
 	)
 
 	DescribeTable("Invalid runSchemaValidations", func(data, message string, line int, validations ...YamlCheck) {
-		validateIssues := runSchemaValidations(getMtaNode([]byte(data)), validations...)
+		node, _ := getMtaNode([]byte(data))
+		validateIssues := runSchemaValidations(node, validations...)
 
 		expectSingleValidationError(validateIssues, message, line)
 	},
@@ -162,7 +164,8 @@ lastName: duck
 firstName: Donald
   lastName: duck # invalid indentation
 		`)
-		issues := runSchemaValidations(getMtaNode([]byte(data)), property("lastName", required()))
+		node, _ := getMtaNode([]byte(data))
+		issues := runSchemaValidations(node, property("lastName", required()))
 		Ω(len(issues)).Should(Equal(1))
 	})
 
@@ -184,7 +187,8 @@ classes:
 				property("name", required()),
 				property("room", matchesRegExp("^[0-9]+$")))))
 
-		validateIssues := runSchemaValidations(getMtaNode([]byte(data)), validations)
+		node, _ := getMtaNode([]byte(data))
+		validateIssues := runSchemaValidations(node, validations)
 
 		expectMultipleValidationError(validateIssues,
 			[]string{

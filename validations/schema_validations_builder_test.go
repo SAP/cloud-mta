@@ -88,7 +88,8 @@ enums:
 		func(schema, input string) {
 			schemaValidations, schemaIssues := buildValidationsFromSchemaText([]byte(schema))
 			assertNoSchemaIssues(schemaIssues)
-			validateIssues := runSchemaValidations(getMtaNode([]byte(input)), schemaValidations...)
+			node, _ := getMtaNode([]byte(input))
+			validateIssues := runSchemaValidations(node, schemaValidations...)
 			assertNoValidationErrors(validateIssues)
 		},
 		Entry("required", `
@@ -147,7 +148,8 @@ isHappy: false
 		func(schema, input, message string, line int) {
 			schemaValidations, schemaIssues := buildValidationsFromSchemaText([]byte(schema))
 			assertNoSchemaIssues(schemaIssues)
-			validateIssues := runSchemaValidations(getMtaNode([]byte(input)), schemaValidations...)
+			node, _ := getMtaNode([]byte(input))
+			validateIssues := runSchemaValidations(node, schemaValidations...)
 			expectSingleValidationError(validateIssues, message, line)
 		},
 		Entry("required", `

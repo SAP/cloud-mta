@@ -66,7 +66,10 @@ func validate(yamlContent []byte, projectPath string,
 		warnIssues = append(warnIssues, convertError(err)...)
 	}
 
-	root := getMtaNode(yamlContent)
+	root, err := getMtaNode(yamlContent)
+	if err != nil {
+		errIssues = convertError(err)
+	}
 
 	if validateSchema {
 		validations, schemaValidationLog := buildValidationsFromSchemaText(schemaDef)

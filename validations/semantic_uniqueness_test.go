@@ -37,7 +37,8 @@ resources:
    type: org.cloudfoundry.managed-service
 `)
 		mta, _ := mta.Unmarshal(mtaContent)
-		issues := isNameUnique(mta, getMtaNode(mtaContent), "")
+		node, _ := getMtaNode(mtaContent)
+		issues := isNameUnique(mta, node, "")
 		Ω(len(issues)).Should(Equal(0))
 	})
 
@@ -57,7 +58,8 @@ modules:
    type: html5
 `)
 		mta, _ := mta.Unmarshal(mtaContent)
-		issues := isNameUnique(mta, getMtaNode(mtaContent), "")
+		node, _ := getMtaNode(mtaContent)
+		issues := isNameUnique(mta, node, "")
 		Ω(issues[0].Msg).Should(Equal(`the "ui5app" module name is already in use; another module was found with the same name on line 7`))
 		Ω(issues[0].Line).Should(Equal(12))
 	})
@@ -77,7 +79,8 @@ modules:
    type: html5
 `)
 		mta, _ := mta.Unmarshal(mtaContent)
-		issues := isNameUnique(mta, getMtaNode(mtaContent), "")
+		node, _ := getMtaNode(mtaContent)
+		issues := isNameUnique(mta, node, "")
 		Ω(issues[0].Msg).Should(Equal(`the "ui5app2" module name is already in use; a provided property set was found with the same name on line 10`))
 		Ω(issues[0].Line).Should(Equal(12))
 	})
@@ -104,7 +107,8 @@ resources:
    type: com.company.xs.uaa
 `)
 		mta, _ := mta.Unmarshal(mtaContent)
-		issues := isNameUnique(mta, getMtaNode(mtaContent), "")
+		node, _ := getMtaNode(mtaContent)
+		issues := isNameUnique(mta, node, "")
 		Ω(issues[0].Msg).Should(Equal(`the "test" resource name is already in use; a provided property set was found with the same name on line 10`))
 		Ω(issues[0].Line).Should(Equal(19))
 	})

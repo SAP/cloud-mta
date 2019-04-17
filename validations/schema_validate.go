@@ -364,24 +364,22 @@ func getLiteralStringValue(y *simpleyaml.Yaml) string {
 	return ""
 }
 
-func getMtaNode(yamlContent []byte) *yaml.Node {
+func getMtaNode(yamlContent []byte) (*yaml.Node, error) {
 
 	dec := yaml.NewDecoder(bytes.NewReader(yamlContent))
-	dec.KnownFields(true)
+	dec.KnownFields(false)
 
 	var document yaml.Node
 	err := dec.Decode(&document)
-
-	// errors of strict decoding are provided by decoding to MTA object
 	if err != nil {
-		err = nil
+		return &document, err
 	}
 
 	var mtaNode yaml.Node
 	if document.Content != nil {
 		mtaNode = *document.Content[0]
 	}
-	return &mtaNode
+	return &mtaNode, nil
 }
 
 // runSchemaValidations - Given a YAML text and a set of validations will execute them and will return relevant issue slice

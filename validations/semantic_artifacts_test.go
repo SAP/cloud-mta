@@ -53,7 +53,7 @@ resources:
    type: org.cloudfoundry.managed-service
 `)
 		mta, _ := mta.Unmarshal(mtaContent)
-		root := getMtaNode(mtaContent)
+		root, _ := getMtaNode(mtaContent)
 		issues := ifModulePathExists(mta, root, filepath.Join(wd, "testdata", "testproject"))
 		Ω(issues[0].Msg).Should(
 			Equal(`the "ui5app2" path of the "ui5app2" module does not exist`))

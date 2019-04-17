@@ -40,7 +40,7 @@ resources:
 `)
 		mtaStr := mta.MTA{}
 		yaml.Unmarshal(mtaContent, &mtaStr)
-		root := getMtaNode(mtaContent)
+		root, _ := getMtaNode(mtaContent)
 		issues := runSemanticValidations(&mtaStr, root, getTestPath("testproject"), "")
 		Ω(len(issues)).Should(Equal(2))
 		Ω(issues[0].Msg).Should(Equal(`the "ui5app2" path of the "ui5app2" module does not exist`))
