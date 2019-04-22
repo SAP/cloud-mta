@@ -12,33 +12,33 @@
   ],
   "properties": {
     "_schema-version": {
-      "description": "Used to indicate to an MTA processing tool (e.g. a deployer), which schema version was taken as the base when authoring a descriptor. Schema versions have to follow the semantic versioning standard with the exception that trailing numbers (<minor>.<patch> or <patch>) can be omitted. A tool (e.g. a deployer) shall then insert the highest numbers it supports.",
+      "description": "The schema version that is being used for authoring a descriptor. The schema version should comply with the semantic versioning standard.",
       "type": "string"
     },
     "ID": {
-      "description": "A globally unique ID of this MTA. Unlimited string of unicode characters.",
+      "description": "An application ID, that should be unique in the target runtime environment and may contain any number of unicode characters.",
       "type": "string",
       "pattern": "^[A-Za-z0-9_\\-\\.]+$"
     },
     "description": {
-      "description": "A non-translatable description of this MTA. This is not a text for application users.",
+      "description": "A free text describing this application.",
       "type": "string"
     },
     "version": {
-      "description": "Application version. Shall follow the semantic versioning standard.",
+      "description": "The application version that should comply with the semantic versioning standard.",
       "type": "string",
       "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(-(0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(\\.(0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\\+[0-9a-zA-Z-]+(\\.[0-9a-zA-Z-]+)*)?$"
     },
     "provider": {
-      "description": "The provider or vendor of this software",
+      "description": "The provider or vendor of this application.",
       "type": "string"
     },
     "copyright": {
-      "description": "A copyright statement from the provider",
+      "description": "A copyright statement from the provider.",
       "type": "string"
     },
     "modules": {
-      "description": "list of modules",
+      "description": "A list of modules.",
       "type": "array",
       "items": {
         "type": "object",
@@ -48,38 +48,38 @@
         ],
         "properties": {
           "name": {
-            "description": "An MTA internal module name. Names need to be unique within the MTA scope",
+            "description": "The MTA module name which should be unique within the application.",
             "type": "string",
             "pattern": "^[A-Za-z0-9_\\-\\.]+$"
           },
           "type": {
-            "description": "a globally unique type ID. Deployment tools will interpret this type ID",
+            "description": "The module type that defines the design-time tools for the module.",
             "type": "string"
           },
           "description": {
-            "description": "a non-translatable description of this module. This is not a text for application users",
+            "description": "A free text describing this module.",
             "type": "string"
           },
           "path": {
-            "description": " A (file) path which identifies the location of module artifacts. The path schema may depend on the tool which interprets this descriptor. Path may not be limited to a file system path",
+            "description": "The path to a folder that contains the module artifacts.",
             "type": "string"
           },
           "properties": {
-            "description": "Properties shall be made available to the module at runtime. Provided property values can be accessed by \"~{<name-of-provides-section>/<provided-property-name>}\". Such expressions can be part of an arbitrary string",
+            "description": "A collection of key-value pairs that are available to the module at runtime.",
             "$ref": "#/definitions/properties"
           },
           "properties-metadata": {
             "$ref": "#/definitions/properties-metadata"
           },
           "parameters": {
-            "description": "Parameters can be used to steer the behavior of tools which interpret this descriptor. Parameters are not made available to the module at runtime",
+            "description": "Configuration parameters that are used for deploying the module to the target runtime environment.",
             "$ref": "#/definitions/parameters"
           },
           "parameters-metadata": {
             "$ref": "#/definitions/parameters-metadata"
           },
           "build-parameters": {
-            "description": "Build-parameters are specifically steering the behavior of build tools. Build-parameters ARE ONLY RELEVANT FOR DEVELOPMENT DESCRIPTORS (PRIO TO BUILD), NOT FOR DEPLOYMENT DESCRIPTORS! ",
+            "description": "The build parameters define how the module is built by the corresponding tool.",
             "type": "object"
           },
           "includes": {
