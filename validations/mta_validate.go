@@ -57,7 +57,7 @@ func MtaYaml(projectPath, mtaFilename string,
 	return "", nil
 }
 
-func readFile(file string) ([]byte, error){
+func readFile(file string) ([]byte, error) {
 	content, err := ioutil.ReadFile(file)
 	if err != nil {
 		return nil, errors.Wrapf(err, `failed to read the "%v" file`, file)
