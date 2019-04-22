@@ -2,7 +2,6 @@ package validate
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -67,7 +66,7 @@ var _ = Describe("MTA tests", func() {
 				Parameters:  map[string]interface{}{"disk-quota": "256M", "memory": "256M"},
 			}
 			var modules = []*mta.Module{&moduleSrv, &moduleUI}
-			mtaFile, _ := ioutil.ReadFile("./testdata/mta.yaml")
+			mtaFile, _ := readFile("./testdata/mta.yaml")
 			// Unmarshal file
 			oMta := &mta.MTA{}
 			Ω(yaml.Unmarshal(mtaFile, oMta)).Should(Succeed())

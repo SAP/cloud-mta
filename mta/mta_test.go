@@ -8,6 +8,8 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/pkg/errors"
+	"strings"
 )
 
 var _ = Describe("Mta", func() {
@@ -272,7 +274,7 @@ var _ = Describe("Mta", func() {
 		It("Sanity", func() {
 			wd, err := os.Getwd()
 			Ω(err).Should(Succeed())
-			content, err := ioutil.ReadFile(filepath.Join(wd, "testdata", "mta.yaml"))
+			content, err := readFile(filepath.Join(wd, "testdata", "mta.yaml"))
 			Ω(err).Should(Succeed())
 			m, err := Unmarshal(content)
 			Ω(err).Should(Succeed())
@@ -283,3 +285,14 @@ var _ = Describe("Mta", func() {
 	})
 
 })
+
+func readFile(file string) ([]byte, error){
+	content, err := ioutil.ReadFile(file)
+	if err != nil {
+		return nil, errors.Wrapf(err, `failed to read the "%v" file`, file)
+	}
+	s := string(content)
+	s = strings.Replace(s, "\r\n", "\r", -1)
+	content = []byte(s)
+	return content, nil
+}
