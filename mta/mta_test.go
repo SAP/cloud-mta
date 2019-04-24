@@ -110,12 +110,12 @@ var _ = Describe("Mta", func() {
 		},
 	}
 
-	buildersBefore := Builders{
+	buildersBefore := []ProjectBuilder{
 		{
 			Builder: "mybuilder",
 		},
 	}
-	buildersAfter := Builders{
+	buildersAfter := []ProjectBuilder{
 		{
 			Builder: "otherbuilder",
 		},
@@ -123,12 +123,12 @@ var _ = Describe("Mta", func() {
 
 	buildParams := &ProjectBuild{
 		BeforeAll: struct {
-			Builders Builders `yaml:"builders,omitempty"`
+			Builders []ProjectBuilder `yaml:"builders,omitempty"`
 		}{
 			Builders: buildersBefore,
 		},
 		AfterAll: struct {
-			Builders Builders `yaml:"builders,omitempty"`
+			Builders []ProjectBuilder `yaml:"builders,omitempty"`
 		}{
 			Builders: buildersAfter,
 		},
