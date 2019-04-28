@@ -122,16 +122,8 @@ var _ = Describe("Mta", func() {
 	}
 
 	buildParams := &ProjectBuild{
-		BeforeAll: struct {
-			Builders []ProjectBuilder `yaml:"builders,omitempty"`
-		}{
-			Builders: buildersBefore,
-		},
-		AfterAll: struct {
-			Builders []ProjectBuilder `yaml:"builders,omitempty"`
-		}{
-			Builders: buildersAfter,
-		},
+		BeforeAll: buildersBefore,
+		AfterAll:  buildersAfter,
 	}
 
 	schemaVersion := "3.2"
