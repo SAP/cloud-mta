@@ -147,24 +147,13 @@ type Includes struct {
 
 // ProjectBuild - experimental use for pre/post build hook
 type ProjectBuild struct {
-	BeforeAll struct {
-		Builders []ProjectBuilder `yaml:"builders,omitempty"`
-	} `yaml:"before-all,omitempty"`
-	AfterAll struct {
-		Builders []ProjectBuilder `yaml:"builders,omitempty"`
-	} `yaml:"after-all,omitempty"`
-}
-
-// ProjectBuilderOptions - options of project builder
-type ProjectBuilderOptions struct {
-	Execute []string `yaml:"execute,omitempty"`
+	BeforeAll []ProjectBuilder `yaml:"before-all,omitempty"`
+	AfterAll  []ProjectBuilder `yaml:"after-all,omitempty"`
 }
 
 // ProjectBuilder - project builder descriptor
 type ProjectBuilder struct {
-	Builder           string                 `yaml:"builder,omitempty"`
-	Timeout           string                 `yaml:"timeout,omitempty"`
-	BuildArtifactName string                 `yaml:"build-artifact-name,omitempty"`
-	Options           ProjectBuilderOptions  `yaml:"options,omitempty"`
-	BuildParams       map[string]interface{} `yaml:"build-parameters,omitempty"`
+	Builder  string   `yaml:"builder,omitempty"`
+	Timeout  string   `yaml:"timeout,omitempty"`
+	Commands []string `yaml:"commands,omitempty"`
 }
