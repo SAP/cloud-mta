@@ -48,7 +48,7 @@
         ],
         "properties": {
           "name": {
-            "description": "The MTA module name which should be unique within the application.",
+            "description": "The MTA module name which must be unique and cannot be the same as any provided property set or resource name.",
             "type": "string",
             "pattern": "^[A-Za-z0-9_\\-\\.]+$"
           },
@@ -72,7 +72,7 @@
             "$ref": "#/definitions/properties-metadata"
           },
           "parameters": {
-            "description": "Configuration parameters that are used for deploying the module to the target runtime environment.",
+            "description": "Configuration parameters that are used when deploying the module to the target runtime environment.",
             "$ref": "#/definitions/parameters"
           },
           "parameters-metadata": {
@@ -130,26 +130,26 @@
                   "pattern": "^[A-Za-z0-9_\\-\\.]+$"
                 },
                 "group": {
-                  "description": "A \"group\" can be used to combine properties from multiple providers into one runtime lookup object (such as an environment variable). As of schema version 2.1, this property is DEPRECATED.",
+                  "description": "A \"group\" can be used to combine properties from multiple providers into one runtime lookup object, such as an environment variable. As of schema version 2.1, this property is DEPRECATED.",
                   "type": "string"
                 },
                 "list": {
-                  "description": "Defines the name of an array of required properties (TBD) that is used to declare that this property set may potentially contain multiple data sets. All required and found configuration data sets will be assembled into a JSON array and provided to the module by the lookup name as specified by the value of 'list'.",
+                  "description": "Defines a name for a runtime lookup object, such as an environment variable, if the required property set contains multiple values, for example, if used to consume configuration data from outside this MTA project.",
                   "type": "string"
                 },
                 "properties": {
-                  "description": "Module properties whose values are determined by the provided properties, which can be referenced by the tilde notation: \"~{<provided-property-name>}\" ",
+                  "description": "Module properties whose values are determined by the provided properties. These properties can be referenced by the tilde notation: \"~{<provided-property-name>}\" ",
                   "$ref": "#/definitions/properties"
                 },
                 "parameters": {
-                  "description": "Parameters can be used to influence the behavior of tools which interpret this descriptor. Parameters are not made available to the module at runtime. Provided property values can be accessed by \"~{<provided-property-name>}\". Such expressions can be part of an arbitrary string",
+                  "description": "Configuration parameters that are used when deploying the module to the target runtime environment.",
                   "$ref": "#/definitions/parameters"
                 },
                 "parameters-metadata": {
                   "$ref": "#/definitions/parameters-metadata"
                 },
                 "includes": {
-                  "description": "THE 'includes' ELEMENT IS ONLY RELEVANT FOR DEVELOPMENT DESCRIPTORS (PRIO TO BUILD), NOT FOR DEPLOYMENT DESCRIPTORS!",
+                  "description": "It is possible to define the module parameters in external files. Use the \"includes\" keyword to point to those files.",
                   "$ref": "#/definitions/includes"
                 }
               }
@@ -159,7 +159,7 @@
       }
     },
     "resources": {
-      "description": "Resource declarations. Resources can be anything required to run the application which is not provided by the application itself.",
+      "description": "A list of resources that are required by the modules of this MTA project.",
       "type": "array",
       "items": {
         "type": "object",
@@ -168,19 +168,20 @@
         ],
         "properties": {
           "name": {
+            "description": "The resource name which must be unique and cannot be the same as any provided property set or module name.",
             "type": "string",
             "pattern": "^[A-Za-z0-9_\\-\\.]+$"
           },
           "type": {
-            "description": "A type of a resource. This type is interpreted by and must be known to the deployer. Resources can be untyped",
+            "description": "A type of resource supported by deployment tools in the target environment.",
             "type": "string"
           },
           "description": {
-            "description": "a non-translatable description of this resource. This is not a text for application users",
+            "description": "A free text describing this resource.",
             "type": "string"
           },
           "properties": {
-            "description": "property names and values make up the configuration data which is to be provided to requiring modules at runtime",
+            "description": "A collection of key-value pairs that can be required by modules and/or other resources as configuration data at runtime.",
             "$ref": "#/definitions/properties"
           },
           "properties-metadata": {
@@ -194,7 +195,7 @@
             "$ref": "#/definitions/parameters-metadata"
           },
           "includes": {
-            "description": "THE 'includes' ELEMENT IS ONLY RELEVANT FOR DEVELOPMENT DESCRIPTORS (PRIO TO BUILD), NOT FOR DEPLOYMENT DESCRIPTORS!",
+            "description": "It is possible to define the module parameters in external files. Use the \"includes\" keyword to point to those files.",
             "$ref": "#/definitions/includes"
           },
           "optional": {
@@ -234,7 +235,7 @@
                   "$ref": "#/definitions/parameters-metadata"
                 },
                 "includes": {
-                  "description": "THE 'includes' ELEMENT IS ONLY RELEVANT FOR DEVELOPMENT DESCRIPTORS (PRIOR TO BUILD), NOT FOR DEPLOYMENT DESCRIPTORS!",
+                  "description": "It is possible to define the module parameters in external files. Use the \"includes\" keyword to point to those files.",
                   "$ref": "#/definitions/includes"
                 }
               }
@@ -251,7 +252,7 @@
       "$ref": "#/definitions/parameters-metadata"
     },
     "includes": {
-      "description": "THE 'includes' ELEMENT IS ONLY RELEVANT FOR DEVELOPMENT DESCRIPTORS (PRIO TO BUILD), NOT FOR DEPLOYMENT DESCRIPTORS!",
+      "description": "It is possible to define the module parameters in external files. Use the \"includes\" keyword to point to those files.",
       "$ref": "#/definitions/includes"
     }
   },
