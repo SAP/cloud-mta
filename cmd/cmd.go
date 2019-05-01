@@ -6,6 +6,7 @@ import (
 
 func init() {
 	rootCmd.AddCommand(addCmd)
+	rootCmd.AddCommand(createMtaCmd)
 	addCmd.AddCommand(AddModule, AddResources)
 }
 
