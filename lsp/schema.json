@@ -188,7 +188,7 @@
             "$ref": "#/definitions/properties-metadata"
           },
           "parameters": {
-            "description": "Parameters can be used to influence the behavior of tools which interpret this descriptor. Parameters are not made available to requiring modules at runtime Untyped resources cannot have parameters.",
+            "description": "Configuration parameters that are used when provisioning the resource in the target runtime environment.",
             "$ref": "#/definitions/parameters"
           },
           "parameters-metadata": {
@@ -199,17 +199,17 @@
             "$ref": "#/definitions/includes"
           },
           "optional": {
-            "description": "A resource can be declared to be optional, if the MTA can compensate for its non-existence",
+            "description": "If the resource is set to optional and the deployment tools are unable to allocate it, then the tools will issue a warning and continue the deployment process.",
             "type": "boolean",
             "default": false
           },
           "active": {
-            "description": "If a resource is declared to be active, it is allocated and bound according to declared requirements",
+            "description": "If a resource is declared to be inactive, the resource will not be allocated during the deployment process.",
             "type": "boolean",
             "default": true
           },
           "requires": {
-            "description": "list of names either matching a resource name or a name provided by another module within the same MTA",
+            "description": "A list of property sets provided by other modules and/or resources (providers) that this resource requires.",
             "type": "array",
             "items": {
               "type": "object",
@@ -218,17 +218,19 @@
               ],
               "properties": {
                 "name": {
-                  "description": "an MTA internal name which must match either a provided name, or a resource name within the same MTA",
+                  "description": "The name of a provided property set or resource (provider) that this resource requires.",
                   "type": "string",
                   "pattern": "^[A-Za-z0-9_\\-\\.]+$"
                 },
                 "properties": {
+                  "description": "Resource properties whose values are determined by the provided properties. These properties can be referenced by the tilde notation: \"~{<provided-property-name>}\" ",
                   "$ref": "#/definitions/properties"
                 },
                 "properties-metadata": {
                   "$ref": "#/definitions/properties-metadata"
                 },
                 "parameters": {
+                  "description": "Configuration parameters that are used when provisioning the resource in the target runtime environment.",
                   "$ref": "#/definitions/parameters"
                 },
                 "parameters-metadata": {
