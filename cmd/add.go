@@ -1,8 +1,9 @@
 package commands
 
 import (
-	"github.com/SAP/cloud-mta/internal/logs"
 	"github.com/spf13/cobra"
+
+	"github.com/SAP/cloud-mta/internal/logs"
 	"github.com/SAP/cloud-mta/mta"
 )
 
@@ -19,7 +20,7 @@ func init() {
 
 }
 
-// AddModule Add new module
+// createMtaCmd Create new MTA project
 var createMtaCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create new MTA project",
@@ -28,7 +29,7 @@ var createMtaCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logs.Logger.Info("Create MTA project")
 		err := mta.CreateMta(createMtaCmdPath, createMtaCmdData)
-		if err != nil{
+		if err != nil {
 			logs.Logger.Error(err)
 		}
 		return err

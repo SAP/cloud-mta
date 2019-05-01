@@ -25,8 +25,8 @@ func createMtaYamlFile(path string) (err error) {
 }
 
 // CreateMta - create MTA project
-func CreateMta(path string, mtaDataJson string) error {
-	mtaDataYaml, err := yaml.JSONToYAML([]byte(mtaDataJson))
+func CreateMta(path string, mtaDataJSON string) error {
+	mtaDataYaml, err := yaml.JSONToYAML([]byte(mtaDataJSON))
 	if err != nil {
 		return err
 	}
