@@ -69,5 +69,5 @@ func CreateMtaYamlFile (path string) (*os.File, error) {
 func (mta *MTA) AddMta(path string, data []byte) (*MTA, error) {
 	_, err := CreateMtaYamlFile(path)
 
-	return _, err
+	return nil, err
 }
