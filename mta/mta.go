@@ -5,7 +5,9 @@ package mta
 import (
 	"bytes"
 	"fmt"
+	"os"
 
+	"github.com/SAP/cloud-mta/internal/fs"
 	"gopkg.in/yaml.v3"
 )
 
@@ -56,4 +58,16 @@ func Unmarshal(content []byte) (*MTA, error) {
 	mtaStr := MTA{}
 	err := dec.Decode(&mtaStr)
 	return &mtaStr, err
+}
+
+/**********************************************************************************************************************/
+
+func CreateMtaYamlFile (path string) (*os.File, error) {
+	return fs.CreateFile(path)
+}
+
+func (mta *MTA) AddMta(path string, data []byte) (*MTA, error) {
+	_, err := CreateMtaYamlFile(path)
+
+	return _, err
 }
