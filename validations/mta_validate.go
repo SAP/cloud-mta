@@ -36,11 +36,14 @@ func MtaYaml(projectPath, mtaFilename string,
 
 		mtaPath := filepath.Join(projectPath, mtaFilename)
 		// ParseFile contains MTA yaml content.
-		yamlContent, e := ioutil.ReadFile(mtaPath)
+		yamlContent, e := readFile(mtaPath)
 
 		if e != nil {
 			return "", errors.Wrapf(e, `could not read the "%v" file; the validation failed`, mtaPath)
 		}
+		s := string(yamlContent)
+		s = strings.Replace(s, "\r\n", "\r", -1)
+		yamlContent = []byte(s)
 		// Validates MTA content.
 		errIssues, warnIssues := validate(yamlContent, projectPath,
 			validateSchema, validateSemantic, strict, exclude)
@@ -52,6 +55,17 @@ func MtaYaml(projectPath, mtaFilename string,
 	}
 
 	return "", nil
+}
+
+func readFile(file string) ([]byte, error) {
+	content, err := ioutil.ReadFile(file)
+	if err != nil {
+		return nil, errors.Wrapf(err, `failed to read the "%v" file`, file)
+	}
+	s := string(content)
+	s = strings.Replace(s, "\r\n", "\r", -1)
+	content = []byte(s)
+	return content, nil
 }
 
 // validate - validates the MTA descriptor

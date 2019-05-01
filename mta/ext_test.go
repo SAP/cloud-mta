@@ -1,7 +1,6 @@
 package mta
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -15,7 +14,7 @@ var _ = Describe("Mta", func() {
 		It("Sanity", func() {
 			wd, err := os.Getwd()
 			Ω(err).Should(Succeed())
-			content, err := ioutil.ReadFile(filepath.Join(wd, "testdata", "mta.yaml"))
+			content, err := readFile(filepath.Join(wd, "testdata", "mta.yaml"))
 			Ω(err).Should(Succeed())
 			m, err := UnmarshalExt(content)
 			Ω(err).Should(Succeed())
