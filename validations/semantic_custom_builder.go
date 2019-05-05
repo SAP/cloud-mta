@@ -1,10 +1,11 @@
 package validate
 
 import (
+	"fmt"
+
 	"gopkg.in/yaml.v3"
 
 	"github.com/SAP/cloud-mta/mta"
-	"fmt"
 )
 
 func checkProjectBuilders(builders []mta.ProjectBuilder, mtaNode *yaml.Node, fieldName string) []YamlValidationIssue {
