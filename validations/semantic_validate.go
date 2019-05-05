@@ -7,7 +7,7 @@ import (
 	"github.com/SAP/cloud-mta/mta"
 )
 
-type checkSemantic func(mta *mta.MTA, root *yaml.Node, source string) []YamlValidationIssue
+type checkSemantic func(mta *mta.MTA, root *yaml.Node, source string, strict bool) (errors []YamlValidationIssue, warnings  []YamlValidationIssue)
 
 const (
 	pathYamlField            = "path"
@@ -19,10 +19,15 @@ const (
 	propertiesYamlField      = "properties"
 	parametersYamlField      = "parameters"
 	buildParametersYamlField = "build-parameters"
+	builderYamlField         = "builder"
+	commandsYamlField        = "commands"
+	beforeAllYamlField       = "before-all"
+	afterAllYamlField        = "after-all"
 
 	pathsValidation    = "paths"
 	namesValidation    = "names"
 	requiredValidation = "required"
+	buildersValidation = "builders"
 
 	propertiesMtaField      = "Properties"
 	parametersMtaField      = "Parameters"
@@ -37,16 +42,18 @@ const (
 )
 
 // runSemanticValidations - runs semantic validations
-func runSemanticValidations(mtaStr *mta.MTA, root *yaml.Node, source string, exclude string) []YamlValidationIssue {
-	var issues []YamlValidationIssue
+func runSemanticValidations(mtaStr *mta.MTA, root *yaml.Node, source string, exclude string, strict bool) ([]YamlValidationIssue, []YamlValidationIssue) {
+	var errors []YamlValidationIssue
+	var warnings []YamlValidationIssue
 
 	validations := getSemanticValidations(exclude)
 	for _, validation := range validations {
-		validationIssues := validation(mtaStr, root, source)
-		issues = append(issues, validationIssues...)
+		validationErrors, validationWarnings := validation(mtaStr, root, source, strict)
+		errors = append(errors, validationErrors...)
+		warnings = append(warnings, validationWarnings...)
 
 	}
-	return issues
+	return errors, warnings
 }
 
 // getSemanticValidations - gets list of all semantic validations minus excludes validations
@@ -60,6 +67,9 @@ func getSemanticValidations(exclude string) []checkSemantic {
 	}
 	if !strings.Contains(exclude, requiredValidation) {
 		validations = append(validations, ifRequiredDefined)
+	}
+	if !strings.Contains(exclude, buildersValidation) {
+		validations = append(validations, checkBuildersSemantic)
 	}
 	return validations
 }

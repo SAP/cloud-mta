@@ -54,7 +54,7 @@ resources:
 `)
 		mta, _ := mta.Unmarshal(mtaContent)
 		root, _ := getMtaNode(mtaContent)
-		issues := ifModulePathExists(mta, root, filepath.Join(wd, "testdata", "testproject"))
+		issues, _ := ifModulePathExists(mta, root, filepath.Join(wd, "testdata", "testproject"), true)
 		Ω(issues[0].Msg).Should(
 			Equal(`the "ui5app2" path of the "ui5app2" module does not exist`))
 	})

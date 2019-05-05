@@ -80,7 +80,7 @@ func validate(yamlContent []byte, projectPath string,
 		warnIssues = append(warnIssues, convertError(err)...)
 	}
 
-	root, err := getMtaNode(yamlContent)
+	mtaNode, err := getMtaNode(yamlContent)
 	if err != nil {
 		errIssues = convertError(err)
 	}
@@ -91,11 +91,20 @@ func validate(yamlContent []byte, projectPath string,
 			errIssues = append(errIssues, schemaValidationLog...)
 			return errIssues, warnIssues
 		}
-		errIssues = append(errIssues, runSchemaValidations(root, validations...)...)
+		errIssues = append(errIssues, runSchemaValidations(mtaNode, validations...)...)
+
+		issues := checkBuilderSchema(mtaStr, mtaNode, "")
+		if strict {
+			errIssues = append(errIssues, issues...)
+		} else {
+			warnIssues = append(warnIssues, issues...)
+		}
 	}
 
 	if validateSemantic {
-		errIssues = append(errIssues, runSemanticValidations(mtaStr, root, projectPath, exclude)...)
+		errs, warns := runSemanticValidations(mtaStr, mtaNode, projectPath, exclude, strict)
+		errIssues = append(errIssues, errs...)
+		warnIssues = append(warnIssues, warns...)
 	}
 	return errIssues, warnIssues
 }
