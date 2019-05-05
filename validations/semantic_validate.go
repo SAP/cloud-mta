@@ -7,7 +7,7 @@ import (
 	"github.com/SAP/cloud-mta/mta"
 )
 
-type checkSemantic func(mta *mta.MTA, root *yaml.Node, source string, strict bool) (errors []YamlValidationIssue, warnings  []YamlValidationIssue)
+type checkSemantic func(mta *mta.MTA, root *yaml.Node, source string, strict bool) (errors []YamlValidationIssue, warnings []YamlValidationIssue)
 
 const (
 	pathYamlField            = "path"

@@ -22,7 +22,7 @@ func checkProjectBuilders(builders []mta.ProjectBuilder, mtaNode *yaml.Node, fie
 		commandsNode := getPropValueByName(buildersNodes[i], commandsYamlField)
 		issues = append(issues, checkCustomBuilder(builder, commandsDefined, buildersNodes[i], commandsNode)...)
 	}
-	 return issues
+	return issues
 }
 
 func checkCustomBuilder(builder string, commandsDefined bool, builderNode *yaml.Node, commandsNode *yaml.Node) []YamlValidationIssue {
@@ -37,10 +37,9 @@ func checkCustomBuilder(builder string, commandsDefined bool, builderNode *yaml.
 func checkBuildersSemantic(mta *mta.MTA, mtaNode *yaml.Node, source string, strict bool) ([]YamlValidationIssue, []YamlValidationIssue) {
 	var issues []YamlValidationIssue
 
-
 	if mta.BuildParams != nil {
-		issues = append(issues, checkProjectBuilders( mta.BuildParams.BeforeAll, mtaNode, beforeAllYamlField)...)
-		issues = append(issues, checkProjectBuilders( mta.BuildParams.AfterAll, mtaNode, afterAllYamlField)...)
+		issues = append(issues, checkProjectBuilders(mta.BuildParams.BeforeAll, mtaNode, beforeAllYamlField)...)
+		issues = append(issues, checkProjectBuilders(mta.BuildParams.AfterAll, mtaNode, afterAllYamlField)...)
 	}
 
 	modulesNode := getPropContent(mtaNode, modulesYamlField)
@@ -62,8 +61,6 @@ func checkBuildersSemantic(mta *mta.MTA, mtaNode *yaml.Node, source string, stri
 
 	if strict {
 		return issues, nil
-	} else {
-		return nil, issues
 	}
-
+	return nil, issues
 }
