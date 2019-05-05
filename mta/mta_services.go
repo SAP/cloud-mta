@@ -1,6 +1,7 @@
 package mta
 
 import (
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -35,4 +36,34 @@ func CreateMta(path string, mtaDataJSON string) error {
 		return err
 	}
 	return ioutil.WriteFile(path, mtaDataYaml, 0644)
+}
+
+// Copy - copy from source path to target path
+func CopyFile(src, dst string) (rerr error) {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		rerr = in.Close()
+	}()
+
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		rerr = out.Close()
+	}()
+
+	_, err = io.Copy(out, in)
+	if err != nil {
+		return err
+	}
+	return err
+}
+
+// DeleteFile - delete file
+func DeleteFile(path string) error {
+	return fs.DeleteFile(path)
 }

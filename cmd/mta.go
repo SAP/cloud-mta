@@ -9,6 +9,9 @@ import (
 
 var createMtaCmdPath string
 var createMtaCmdData string
+var sourceCmdPath string
+var targetCmdPath string
+var deleteFileCmdPath string
 
 func init() {
 
@@ -17,7 +20,12 @@ func init() {
 		"the path to the yaml file")
 	createMtaCmd.Flags().StringVarP(&createMtaCmdData, "data", "d",
 		"", "data in JSON format")
-
+	copyCmd.Flags().StringVarP(&sourceCmdPath, "source", "s", "",
+		"the path to the source file")
+	copyCmd.Flags().StringVarP(&targetCmdPath, "target", "t", "",
+		"the path to the target file")
+	deleteFileCmd.Flags().StringVarP(&deleteFileCmdPath, "path", "p", "",
+		"the path to the file")
 }
 
 // createMtaCmd Create new MTA project
@@ -39,30 +47,38 @@ var createMtaCmd = &cobra.Command{
 	SilenceErrors: true,
 }
 
-// AddModule Add new module
-var AddModule = &cobra.Command{
-	Use:   "modules",
-	Short: "Add new module",
-	Long:  "Add new module",
+// copyCmd copy from source path to target path
+var copyCmd = &cobra.Command{
+	Use:   "copy",
+	Short: "Copy from source path to target path",
+	Long:  "Copy from source path to target path",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		logs.Logger.Info("Adding new module...")
-		return nil
+		logs.Logger.Info("Copy from source path to target path")
+		err := mta.CopyFile(sourceCmdPath, targetCmdPath)
+		if err != nil {
+			logs.Logger.Error(err)
+		}
+		return err
 	},
 	Hidden:        true,
 	SilenceUsage:  true,
 	SilenceErrors: true,
 }
 
-// AddResources - Add new resource
-var AddResources = &cobra.Command{
-	Use:   "resource",
-	Short: "Add new resources",
-	Long:  "Add new resources",
+// deleteFileCmd delete file in given path
+var deleteFileCmd = &cobra.Command{
+	Use:   "deleteFile",
+	Short: "Delete file",
+	Long:  "Delete file",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		logs.Logger.Info("Adding new Resource...")
-		return nil
+		logs.Logger.Info("Delete file")
+		err := mta.DeleteFile(deleteFileCmdPath)
+		if err != nil {
+			logs.Logger.Error(err)
+		}
+		return err
 	},
 	Hidden:        true,
 	SilenceUsage:  true,

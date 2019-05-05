@@ -7,7 +7,10 @@ import (
 func init() {
 	rootCmd.AddCommand(addCmd)
 	rootCmd.AddCommand(createMtaCmd)
+	rootCmd.AddCommand(copyCmd)
+	rootCmd.AddCommand(deleteFileCmd)
 	addCmd.AddCommand(AddModule, AddResources)
+
 }
 
 // Parent command add any artifacts
