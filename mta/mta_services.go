@@ -38,7 +38,7 @@ func CreateMta(path string, mtaDataJSON string) error {
 	return ioutil.WriteFile(path, mtaDataYaml, 0644)
 }
 
-// Copy - copy from source path to target path
+// CopyFile - copy from source path to target path
 func CopyFile(src, dst string) (rerr error) {
 	in, err := os.Open(src)
 	if err != nil {
