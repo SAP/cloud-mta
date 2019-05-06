@@ -10,7 +10,7 @@ import (
 )
 
 // ifModulePathExists - validates the existence of modules paths used in the MTA descriptor
-func ifModulePathExists(mta *mta.MTA, mtaNode *yaml.Node, source string) []YamlValidationIssue {
+func ifModulePathExists(mta *mta.MTA, mtaNode *yaml.Node, source string, strict bool) ([]YamlValidationIssue, []YamlValidationIssue) {
 	var issues []YamlValidationIssue
 
 	modulesNode := getPropValueByName(mtaNode, modulesYamlField)
@@ -35,5 +35,5 @@ func ifModulePathExists(mta *mta.MTA, mtaNode *yaml.Node, source string) []YamlV
 		}
 	}
 
-	return issues
+	return issues, nil
 }

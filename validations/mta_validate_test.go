@@ -138,6 +138,14 @@ var _ = Describe("MTA tests", func() {
 				Ω(err[0].Msg).Should(ContainSubstring("cannot unmarshal"))
 			})
 
+			It("Empty mta content", func() {
+				err, warn := validate([]byte(""), getTestPath("mtahtml5"),
+					true, false, true, "")
+				Ω(warn).Should(BeNil())
+				Ω(err).ShouldNot(BeNil())
+				Ω(err[0].Msg).Should(Equal("EOF"))
+			})
+
 			It("invalid schema", func() {
 				originalSchema := schemaDef
 				schemaDef = []byte(`

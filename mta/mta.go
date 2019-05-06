@@ -5,7 +5,6 @@ package mta
 import (
 	"bytes"
 	"fmt"
-
 	"gopkg.in/yaml.v3"
 )
 

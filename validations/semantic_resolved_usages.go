@@ -11,7 +11,7 @@ import (
 )
 
 // ifRequiredDefined - validates that required property sets are defined in modules, provided sections or resources
-func ifRequiredDefined(mta *mta.MTA, mtaNode *yaml.Node, source string) []YamlValidationIssue {
+func ifRequiredDefined(mta *mta.MTA, mtaNode *yaml.Node, source string, strict bool) ([]YamlValidationIssue, []YamlValidationIssue) {
 	var issues []YamlValidationIssue
 
 	// init set of all provided property sets
@@ -44,7 +44,7 @@ func ifRequiredDefined(mta *mta.MTA, mtaNode *yaml.Node, source string) []YamlVa
 	for i, resource := range mta.Resources {
 		issues = append(issues, checkComponent(provided, resource, resourcesNode[i], "resource")...)
 	}
-	return issues
+	return issues, nil
 }
 
 func structFieldToMap(str interface{}, field string) map[string]interface{} {
