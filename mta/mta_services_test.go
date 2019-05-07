@@ -36,9 +36,9 @@ var _ = Describe("MtaServices", func() {
 		})
 
 		It("Create MTA with wrong json format", func() {
-			wrongJson := "{Name:fff"
+			wrongJSON := "{Name:fff"
 			mtaPath := getTestPath("result", "temp.mta.yaml")
-			Ω(CreateMta(mtaPath, wrongJson)).ShouldNot(Succeed())
+			Ω(CreateMta(mtaPath, wrongJSON)).ShouldNot(Succeed())
 		})
 	})
 
@@ -110,7 +110,7 @@ var _ = Describe("MtaServices", func() {
 		})
 
 		It("Add Module to wrong mta.yaml format", func() {
-			wrongJson := "{TEST:fff}"
+			wrongJSON := "{TEST:fff}"
 			oModule := Module{
 				Name: "testModule",
 				Type: "testType",
@@ -118,7 +118,7 @@ var _ = Describe("MtaServices", func() {
 			}
 
 			mtaPath := getTestPath("result", "mta.yaml")
-			Ω(CreateMta(mtaPath, wrongJson)).Should(Succeed())
+			Ω(CreateMta(mtaPath, wrongJSON)).Should(Succeed())
 
 			jsonModuleData, err := json.Marshal(oModule)
 			Ω(err).Should(Succeed())
@@ -126,14 +126,14 @@ var _ = Describe("MtaServices", func() {
 		})
 
 		It("Add Module with wrong json format", func() {
-			wrongJson := "{name:fff"
+			wrongJSON := "{name:fff"
 
 			mtaPath := getTestPath("result", "temp.mta.yaml")
 			jsonRootData, err := json.Marshal(oMtaInput)
 			Ω(err).Should(Succeed())
 			Ω(CreateMta(mtaPath, string(jsonRootData))).Should(Succeed())
 
-			Ω(AddModule(mtaPath, wrongJson)).ShouldNot(Succeed())
+			Ω(AddModule(mtaPath, wrongJSON)).ShouldNot(Succeed())
 		})
 	})
 
@@ -170,14 +170,14 @@ var _ = Describe("MtaServices", func() {
 		})
 
 		It("Add Resource to wrong mta.yaml format", func() {
-			wrongJson := "{TEST:fff}"
+			wrongJSON := "{TEST:fff}"
 			oResource := Resource{
 				Name: "testResource",
 				Type: "testType",
 			}
 
 			mtaPath := getTestPath("result", "mta.yaml")
-			Ω(CreateMta(mtaPath, wrongJson)).Should(Succeed())
+			Ω(CreateMta(mtaPath, wrongJSON)).Should(Succeed())
 
 			jsonResourceData, err := json.Marshal(oResource)
 			Ω(err).Should(Succeed())
@@ -185,14 +185,14 @@ var _ = Describe("MtaServices", func() {
 		})
 
 		It("Add Resource with wrong json format", func() {
-			wrongJson := "{name:fff"
+			wrongJSON := "{name:fff"
 
 			mtaPath := getTestPath("result", "temp.mta.yaml")
 			jsonRootData, err := json.Marshal(oMtaInput)
 			Ω(err).Should(Succeed())
 			Ω(CreateMta(mtaPath, string(jsonRootData))).Should(Succeed())
 
-			Ω(AddResource(mtaPath, wrongJson)).ShouldNot(Succeed())
+			Ω(AddResource(mtaPath, wrongJSON)).ShouldNot(Succeed())
 		})
 	})
 })
