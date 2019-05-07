@@ -15,11 +15,11 @@ var deleteFileCmdPath string
 
 func init() {
 
-	// set flags of mtad command
+	// set flags of commands
 	createMtaCmd.Flags().StringVarP(&createMtaCmdPath, "path", "p", "",
 		"the path to the yaml file")
-	createMtaCmd.Flags().StringVarP(&createMtaCmdData, "data", "d",
-		"", "data in JSON format")
+	createMtaCmd.Flags().StringVarP(&createMtaCmdData, "data", "d", "",
+		"data in JSON format")
 	copyCmd.Flags().StringVarP(&sourceCmdPath, "source", "s", "",
 		"the path to the source file")
 	copyCmd.Flags().StringVarP(&targetCmdPath, "target", "t", "",

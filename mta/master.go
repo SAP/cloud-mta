@@ -7,7 +7,7 @@ type MTA struct {
 	// indicates MTA schema version, using semver.
 	SchemaVersion *string `yaml:"_schema-version" json:"_schema-version"`
 	// A globally unique ID of this MTA. Unlimited string of unicode characters.
-	ID string `yaml:"ID"`
+	ID string `yaml:"ID" json:"ID"`
 	// A non-translatable description of this MTA. This is not a text for application users
 	Description string `yaml:"description,omitempty" json:"description,omitempty"`
 	// Application version, using semantic versioning standard
@@ -33,9 +33,9 @@ type MTA struct {
 // Module - modules section.
 type Module struct {
 	// An MTA internal module name. Names need to be unique within the MTA scope
-	Name string `yaml:"name" yaml:"name"`
+	Name string `yaml:"name" json:"name"`
 	// a globally unique type ID. Deployment tools will interpret this type ID
-	Type string `yaml:"type" yaml:"type"`
+	Type string `yaml:"type" json:"type"`
 	// a non-translatable description of this module. This is not a text for application users
 	Description string `yaml:"description,omitempty" json:"description,omitempty"`
 	// A file path which identifies the location of module artifacts.
