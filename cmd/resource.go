@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
 
 	"github.com/SAP/cloud-mta/internal/logs"
@@ -27,7 +26,7 @@ var addResourceCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logs.Logger.Info("add new resource")
-		err := mta.AddResource(addResourceMtaCmdPath, addResourceCmdData, yaml.Unmarshal)
+		err := mta.AddResource(addResourceMtaCmdPath, addResourceCmdData)
 		if err != nil {
 			logs.Logger.Error(err)
 		}

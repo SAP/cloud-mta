@@ -11,9 +11,9 @@ import (
 	"github.com/SAP/cloud-mta/internal/fs"
 )
 
-func createMtaYamlFile(path string) (err error) {
+func createMtaYamlFile(path string, mkDirs func(string, os.FileMode) error) (err error) {
 	folder := filepath.Dir(path)
-	err = os.MkdirAll(folder, os.ModePerm)
+	err = mkDirs(folder, os.ModePerm)
 	if err != nil {
 		return err
 	}
@@ -26,12 +26,12 @@ func createMtaYamlFile(path string) (err error) {
 }
 
 // CreateMta - create MTA project
-func CreateMta(path string, mtaDataJSON string) error {
+func CreateMta(path string, mtaDataJSON string, mkDirs func(string, os.FileMode) error) error {
 	mtaDataYaml, err := yaml.JSONToYAML([]byte(mtaDataJSON))
 	if err != nil {
 		return err
 	}
-	err = createMtaYamlFile(filepath.Join(path))
+	err = createMtaYamlFile(filepath.Join(path), mkDirs)
 	if err != nil {
 		return err
 	}
@@ -39,7 +39,7 @@ func CreateMta(path string, mtaDataJSON string) error {
 }
 
 //AddModule - add new module
-func AddModule(path string, moduleDataJSON string, yamlUnmarshal func(data []byte, o interface{})error) error {
+func AddModule(path string, moduleDataJSON string) error {
 	mtaContent, err := ioutil.ReadFile(filepath.Join(path))
 	if err != nil {
 		return err
@@ -56,7 +56,7 @@ func AddModule(path string, moduleDataJSON string, yamlUnmarshal func(data []byt
 	}
 
 	module := Module{}
-	err = yamlUnmarshal(moduleDataYaml, &module)
+	err = yaml.Unmarshal(moduleDataYaml, &module)
 	if err != nil {
 		return err
 	}
@@ -71,7 +71,7 @@ func AddModule(path string, moduleDataJSON string, yamlUnmarshal func(data []byt
 }
 
 //AddResource - add new resource
-func AddResource(path string, resourceDataJSON string, yamlUnmarshal func(data []byte, o interface{})error) error {
+func AddResource(path string, resourceDataJSON string) error {
 	mtaContent, err := ioutil.ReadFile(filepath.Join(path))
 	if err != nil {
 		return err
@@ -88,7 +88,7 @@ func AddResource(path string, resourceDataJSON string, yamlUnmarshal func(data [
 	}
 
 	resource := Resource{}
-	err = yamlUnmarshal(resourceDataYaml, &resource)
+	err = yaml.Unmarshal(resourceDataYaml, &resource)
 	if err != nil {
 		return err
 	}
