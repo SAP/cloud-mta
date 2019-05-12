@@ -39,7 +39,7 @@ func CreateMta(path string, mtaDataJSON string) error {
 }
 
 //AddModule - add new module
-func AddModule(path string, moduleDataJSON string) error {
+func AddModule(path string, moduleDataJSON string, yamlUnmarshal func(data []byte, o interface{})error) error {
 	mtaContent, err := ioutil.ReadFile(filepath.Join(path))
 	if err != nil {
 		return err
@@ -56,7 +56,7 @@ func AddModule(path string, moduleDataJSON string) error {
 	}
 
 	module := Module{}
-	err = yaml.Unmarshal(moduleDataYaml, &module)
+	err = yamlUnmarshal(moduleDataYaml, &module)
 	if err != nil {
 		return err
 	}
@@ -71,7 +71,7 @@ func AddModule(path string, moduleDataJSON string) error {
 }
 
 //AddResource - add new resource
-func AddResource(path string, resourceDataJSON string) error {
+func AddResource(path string, resourceDataJSON string, yamlUnmarshal func(data []byte, o interface{})error) error {
 	mtaContent, err := ioutil.ReadFile(filepath.Join(path))
 	if err != nil {
 		return err
@@ -88,7 +88,7 @@ func AddResource(path string, resourceDataJSON string) error {
 	}
 
 	resource := Resource{}
-	err = yaml.Unmarshal(resourceDataYaml, &resource)
+	err = yamlUnmarshal(resourceDataYaml, &resource)
 	if err != nil {
 		return err
 	}

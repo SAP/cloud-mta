@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
 
 	"github.com/SAP/cloud-mta/internal/logs"
@@ -26,7 +27,7 @@ var addModuleCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logs.Logger.Info("add new module")
-		err := mta.AddModule(addModuleMtaCmdPath, addModuleCmdData)
+		err := mta.AddModule(addModuleMtaCmdPath, addModuleCmdData, yaml.Unmarshal)
 		if err != nil {
 			logs.Logger.Error(err)
 		}

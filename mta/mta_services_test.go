@@ -2,6 +2,8 @@ package mta
 
 import (
 	"encoding/json"
+	"errors"
+	"github.com/ghodss/yaml"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"io/ioutil"
@@ -93,7 +95,7 @@ var _ = Describe("MtaServices", func() {
 
 			jsonModuleData, err := json.Marshal(oModule)
 			Ω(err).Should(Succeed())
-			Ω(AddModule(mtaPath, string(jsonModuleData))).Should(Succeed())
+			Ω(AddModule(mtaPath, string(jsonModuleData), yaml.Unmarshal)).Should(Succeed())
 
 			oMtaInput.Modules = append(oMtaInput.Modules, &oModule)
 
@@ -107,7 +109,7 @@ var _ = Describe("MtaServices", func() {
 		It("Add Module to non existing mta.yaml file", func() {
 			json := "{name:fff}"
 			mtaPath := getTestPath("result", "mta.yaml")
-			Ω(AddModule(mtaPath, json)).ShouldNot(Succeed())
+			Ω(AddModule(mtaPath, json, yaml.Unmarshal)).ShouldNot(Succeed())
 		})
 
 		It("Add Module to wrong mta.yaml format", func() {
@@ -123,7 +125,7 @@ var _ = Describe("MtaServices", func() {
 
 			jsonModuleData, err := json.Marshal(oModule)
 			Ω(err).Should(Succeed())
-			Ω(AddModule(mtaPath, string(jsonModuleData))).ShouldNot(Succeed())
+			Ω(AddModule(mtaPath, string(jsonModuleData), yaml.Unmarshal)).ShouldNot(Succeed())
 		})
 
 		It("Add Module with wrong json format", func() {
@@ -134,7 +136,25 @@ var _ = Describe("MtaServices", func() {
 			Ω(err).Should(Succeed())
 			Ω(CreateMta(mtaPath, string(jsonRootData))).Should(Succeed())
 
-			Ω(AddModule(mtaPath, wrongJSON)).ShouldNot(Succeed())
+			Ω(AddModule(mtaPath, wrongJSON, yaml.Unmarshal)).ShouldNot(Succeed())
+		})
+
+		It("Add Module to wrong yaml format", func() {
+			oModule := Module{
+				Name: "testModule",
+				Type: "testType",
+				Path: "test",
+			}
+
+			mtaPath := getTestPath("result", "temp.mta.yaml")
+
+			jsonRootData, err := json.Marshal(oMtaInput)
+			Ω(err).Should(Succeed())
+			Ω(CreateMta(mtaPath, string(jsonRootData))).Should(Succeed())
+
+			jsonModuleData, err := json.Marshal(oModule)
+			Ω(err).Should(Succeed())
+			Ω(AddModule(mtaPath, string(jsonModuleData), unmarshalErr)).ShouldNot(Succeed())
 		})
 	})
 
@@ -153,7 +173,7 @@ var _ = Describe("MtaServices", func() {
 
 			jsonResourceData, err := json.Marshal(oResource)
 			Ω(err).Should(Succeed())
-			Ω(AddResource(mtaPath, string(jsonResourceData))).Should(Succeed())
+			Ω(AddResource(mtaPath, string(jsonResourceData), yaml.Unmarshal)).Should(Succeed())
 
 			oMtaInput.Resources = append(oMtaInput.Resources, &oResource)
 
@@ -167,7 +187,7 @@ var _ = Describe("MtaServices", func() {
 		It("Add Resource to non existing mta.yaml file", func() {
 			json := "{name:fff}"
 			mtaPath := getTestPath("result", "mta.yaml")
-			Ω(AddResource(mtaPath, json)).ShouldNot(Succeed())
+			Ω(AddResource(mtaPath, json, yaml.Unmarshal)).ShouldNot(Succeed())
 		})
 
 		It("Add Resource to wrong mta.yaml format", func() {
@@ -182,7 +202,7 @@ var _ = Describe("MtaServices", func() {
 
 			jsonResourceData, err := json.Marshal(oResource)
 			Ω(err).Should(Succeed())
-			Ω(AddResource(mtaPath, string(jsonResourceData))).ShouldNot(Succeed())
+			Ω(AddResource(mtaPath, string(jsonResourceData), yaml.Unmarshal)).ShouldNot(Succeed())
 		})
 
 		It("Add Resource with wrong json format", func() {
@@ -193,7 +213,28 @@ var _ = Describe("MtaServices", func() {
 			Ω(err).Should(Succeed())
 			Ω(CreateMta(mtaPath, string(jsonRootData))).Should(Succeed())
 
-			Ω(AddResource(mtaPath, wrongJSON)).ShouldNot(Succeed())
+			Ω(AddResource(mtaPath, wrongJSON, yaml.Unmarshal)).ShouldNot(Succeed())
+		})
+
+		It("Add Resource to wrong yaml format", func() {
+			oResource := Resource{
+				Name: "testResource",
+				Type: "testType",
+			}
+
+			mtaPath := getTestPath("result", "temp.mta.yaml")
+
+			jsonRootData, err := json.Marshal(oMtaInput)
+			Ω(err).Should(Succeed())
+			Ω(CreateMta(mtaPath, string(jsonRootData))).Should(Succeed())
+
+			jsonResourceData, err := json.Marshal(oResource)
+			Ω(err).Should(Succeed())
+			Ω(AddResource(mtaPath, string(jsonResourceData), unmarshalErr)).ShouldNot(Succeed())
 		})
 	})
 })
+
+func unmarshalErr(data []byte, o interface{}) error {
+	return errors.New("err")
+}
