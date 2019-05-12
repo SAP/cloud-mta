@@ -50,6 +50,7 @@ var _ = Describe("MtaServices", func() {
 			targetFilePath := getTestPath("result", "temp2.mta.yaml")
 			Ω(CreateMta(sourceFilePath, string(jsonData))).Should(Succeed())
 			Ω(CopyFile(sourceFilePath, targetFilePath)).Should(Succeed())
+			Ω(targetFilePath).Should(BeAnExistingFile())
 			yamlData, err := ioutil.ReadFile(targetFilePath)
 			Ω(err).Should(Succeed())
 			oOutput, err := Unmarshal(yamlData)

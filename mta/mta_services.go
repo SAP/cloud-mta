@@ -61,9 +61,12 @@ func AddModule(path string, moduleDataJSON string) error {
 		return err
 	}
 
-	mtaObjModules := append(mtaObj.Modules, &module)
-	mtaObj.Modules = mtaObjModules
-	mtaBytes, _ := yaml.Marshal(mtaObj)
+	mtaObj.Modules = append(mtaObj.Modules, &module)
+
+	mtaBytes, err := yaml.Marshal(mtaObj)
+	if err != nil {
+		return err
+	}
 	return ioutil.WriteFile(path, mtaBytes, 0644)
 }
 
@@ -90,9 +93,12 @@ func AddResource(path string, resourceDataJSON string) error {
 		return err
 	}
 
-	mtaObjResources := append(mtaObj.Resources, &resource)
-	mtaObj.Resources = mtaObjResources
-	mtaBytes, _ := yaml.Marshal(mtaObj)
+	mtaObj.Resources = append(mtaObj.Resources, &resource)
+
+	mtaBytes, err := yaml.Marshal(mtaObj)
+	if err != nil {
+		return err
+	}
 	return ioutil.WriteFile(path, mtaBytes, 0644)
 }
 
@@ -115,9 +121,6 @@ func CopyFile(src, dst string) (rerr error) {
 	}()
 
 	_, err = io.Copy(out, in)
-	if err != nil {
-		return err
-	}
 	return err
 }
 

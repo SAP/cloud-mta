@@ -35,7 +35,7 @@ var createMtaCmd = &cobra.Command{
 	Long:  "Create new MTA project",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		logs.Logger.Info("Create MTA project")
+		logs.Logger.Info("create MTA project")
 		err := mta.CreateMta(createMtaCmdPath, createMtaCmdData)
 		if err != nil {
 			logs.Logger.Error(err)
@@ -54,7 +54,7 @@ var copyCmd = &cobra.Command{
 	Long:  "Copy from source path to target path",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		logs.Logger.Info("Copy from source path to target path")
+		logs.Logger.Info("copy from source path to target path")
 		err := mta.CopyFile(sourceCmdPath, targetCmdPath)
 		if err != nil {
 			logs.Logger.Error(err)
@@ -73,7 +73,7 @@ var deleteFileCmd = &cobra.Command{
 	Long:  "Delete file",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		logs.Logger.Info("Delete file")
+		logs.Logger.Info("delete file in path: " + deleteFileCmdPath)
 		err := mta.DeleteFile(deleteFileCmdPath)
 		if err != nil {
 			logs.Logger.Error(err)

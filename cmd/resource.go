@@ -1,9 +1,10 @@
 package commands
 
 import (
+	"github.com/spf13/cobra"
+
 	"github.com/SAP/cloud-mta/internal/logs"
 	"github.com/SAP/cloud-mta/mta"
-	"github.com/spf13/cobra"
 )
 
 var addResourceMtaCmdPath string
@@ -24,7 +25,7 @@ var addResourceCmd = &cobra.Command{
 	Long:  "Add new resources",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		logs.Logger.Info("Adding new resource")
+		logs.Logger.Info("add new resource")
 		err := mta.AddResource(addResourceMtaCmdPath, addResourceCmdData)
 		if err != nil {
 			logs.Logger.Error(err)

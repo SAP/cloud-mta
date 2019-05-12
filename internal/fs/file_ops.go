@@ -18,9 +18,5 @@ func CreateFile(path string) (file *os.File, err error) {
 
 // DeleteFile - delete file
 func DeleteFile(path string) (err error) {
-	err = os.Remove(path)
-	if err != nil {
-		return err
-	}
-	return
+	return os.Remove(path)
 }
