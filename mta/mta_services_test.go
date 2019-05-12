@@ -46,7 +46,7 @@ var _ = Describe("MtaServices", func() {
 			jsonData, err := json.Marshal(oMtaInput)
 			Ω(err).Should(Succeed())
 			mtaPath := getTestPath("result", "temp.mta.yaml")
-			Ω(CreateMta(mtaPath, string(jsonData), mkDirs)).ShouldNot(Succeed())
+			Ω(CreateMta(mtaPath, string(jsonData), mkDirsErr)).ShouldNot(Succeed())
 		})
 	})
 
@@ -57,7 +57,7 @@ var _ = Describe("MtaServices", func() {
 			sourceFilePath := getTestPath("result", "temp.mta.yaml")
 			targetFilePath := getTestPath("result", "temp2.mta.yaml")
 			Ω(CreateMta(sourceFilePath, string(jsonData), os.MkdirAll)).Should(Succeed())
-			Ω(CopyFile(sourceFilePath, targetFilePath)).Should(Succeed())
+			Ω(CopyFile(sourceFilePath, targetFilePath, os.Create)).Should(Succeed())
 			Ω(targetFilePath).Should(BeAnExistingFile())
 			yamlData, err := ioutil.ReadFile(targetFilePath)
 			Ω(err).Should(Succeed())
@@ -69,7 +69,13 @@ var _ = Describe("MtaServices", func() {
 		It("Copy file with non existing path", func() {
 			sourceFilePath := "c:/temp/test1"
 			targetFilePath := "c:/temp/test2"
-			Ω(CopyFile(sourceFilePath, targetFilePath)).ShouldNot(Succeed())
+			Ω(CopyFile(sourceFilePath, targetFilePath, os.Create)).ShouldNot(Succeed())
+		})
+
+		It("Copy file fail to create destination file", func() {
+			sourceFilePath := "c:/temp/test1"
+			targetFilePath := "c:/temp/test2"
+			Ω(CopyFile(sourceFilePath, targetFilePath, createErr)).ShouldNot(Succeed())
 		})
 	})
 
@@ -206,6 +212,10 @@ var _ = Describe("MtaServices", func() {
 	})
 })
 
-func mkDirs(path string, perm os.FileMode) error {
+func mkDirsErr(path string, perm os.FileMode) error {
 	return errors.New("err")
+}
+
+func createErr(path string) (*os.File, error){
+	return nil, errors.New("err")
 }

@@ -103,7 +103,7 @@ func AddResource(path string, resourceDataJSON string) error {
 }
 
 // CopyFile - copy from source path to target path
-func CopyFile(src, dst string) (rerr error) {
+func CopyFile(src, dst string, create func(string) (*os.File, error)) (rerr error) {
 	in, err := os.Open(src)
 	if err != nil {
 		return err
@@ -112,7 +112,7 @@ func CopyFile(src, dst string) (rerr error) {
 		rerr = in.Close()
 	}()
 
-	out, err := os.Create(dst)
+	out, err := create(dst)
 	if err != nil {
 		return err
 	}
