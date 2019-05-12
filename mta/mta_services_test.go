@@ -73,9 +73,13 @@ var _ = Describe("MtaServices", func() {
 		})
 
 		It("Copy file fail to create destination file", func() {
-			sourceFilePath := "c:/temp/test1"
-			targetFilePath := "c:/temp/test2"
-			Ω(CopyFile(sourceFilePath, targetFilePath, createErr)).ShouldNot(Succeed())
+			jsonData, err := json.Marshal(oMtaInput)
+			Ω(err).Should(Succeed())
+			sourceFilePath := getTestPath("result", "temp.mta.yaml")
+			targetFilePath := getTestPath("result", "temp2.mta.yaml")
+			Ω(CreateMta(sourceFilePath, string(jsonData), os.MkdirAll)).Should(Succeed())
+			Ω(CopyFile(sourceFilePath, targetFilePath, createErr)).Should(Succeed())
+			Ω(targetFilePath).ShouldNot(BeAnExistingFile())
 		})
 	})
 
@@ -216,6 +220,6 @@ func mkDirsErr(path string, perm os.FileMode) error {
 	return errors.New("err")
 }
 
-func createErr(path string) (*os.File, error){
+func createErr(path string) (*os.File, error) {
 	return nil, errors.New("err")
 }
