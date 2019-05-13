@@ -27,7 +27,7 @@ var addResourceCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logs.Logger.Info("add new resource")
-		err := mta.AddResource(addResourceMtaCmdPath, addResourceCmdData, yaml.Unmarshal)
+		err := mta.AddResource(addResourceMtaCmdPath, addResourceCmdData, yaml.Marshal)
 		if err != nil {
 			logs.Logger.Error(err)
 		}

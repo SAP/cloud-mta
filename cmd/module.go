@@ -27,7 +27,7 @@ var addModuleCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logs.Logger.Info("add new module")
-		err := mta.AddModule(addModuleMtaCmdPath, addModuleCmdData, yaml.Unmarshal)
+		err := mta.AddModule(addModuleMtaCmdPath, addModuleCmdData, yaml.Marshal)
 		if err != nil {
 			logs.Logger.Error(err)
 		}

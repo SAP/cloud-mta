@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"os"
+
 	"github.com/spf13/cobra"
 
 	"github.com/SAP/cloud-mta/internal/logs"
@@ -36,7 +38,7 @@ var createMtaCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logs.Logger.Info("create MTA project")
-		err := mta.CreateMta(createMtaCmdPath, createMtaCmdData)
+		err := mta.CreateMta(createMtaCmdPath, createMtaCmdData, os.MkdirAll)
 		if err != nil {
 			logs.Logger.Error(err)
 		}
@@ -54,8 +56,8 @@ var copyCmd = &cobra.Command{
 	Long:  "Copy from source path to target path",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		logs.Logger.Info("copy from source path to target path")
-		err := mta.CopyFile(sourceCmdPath, targetCmdPath)
+		logs.Logger.Info("copy from source path: " + sourceCmdPath + " to target path: " + targetCmdPath)
+		err := mta.CopyFile(sourceCmdPath, targetCmdPath, os.Create)
 		if err != nil {
 			logs.Logger.Error(err)
 		}

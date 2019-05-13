@@ -29,7 +29,7 @@ var _ = Describe("MtaServices", func() {
 			jsonData, err := json.Marshal(oMtaInput)
 			Ω(err).Should(Succeed())
 			mtaPath := getTestPath("result", "temp.mta.yaml")
-			Ω(CreateMta(mtaPath, string(jsonData))).Should(Succeed())
+			Ω(CreateMta(mtaPath, string(jsonData), os.MkdirAll)).Should(Succeed())
 			yamlData, err := ioutil.ReadFile(mtaPath)
 			Ω(err).Should(Succeed())
 			oMtaOutput, err := Unmarshal(yamlData)
@@ -40,7 +40,14 @@ var _ = Describe("MtaServices", func() {
 		It("Create MTA with wrong json format", func() {
 			wrongJSON := "{Name:fff"
 			mtaPath := getTestPath("result", "temp.mta.yaml")
-			Ω(CreateMta(mtaPath, wrongJSON)).ShouldNot(Succeed())
+			Ω(CreateMta(mtaPath, wrongJSON, os.MkdirAll)).ShouldNot(Succeed())
+		})
+
+		It("Create MTA fail to create file", func() {
+			jsonData, err := json.Marshal(oMtaInput)
+			Ω(err).Should(Succeed())
+			mtaPath := getTestPath("result", "temp.mta.yaml")
+			Ω(CreateMta(mtaPath, string(jsonData), mkDirsErr)).ShouldNot(Succeed())
 		})
 	})
 
@@ -50,8 +57,8 @@ var _ = Describe("MtaServices", func() {
 			Ω(err).Should(Succeed())
 			sourceFilePath := getTestPath("result", "temp.mta.yaml")
 			targetFilePath := getTestPath("result", "temp2.mta.yaml")
-			Ω(CreateMta(sourceFilePath, string(jsonData))).Should(Succeed())
-			Ω(CopyFile(sourceFilePath, targetFilePath)).Should(Succeed())
+			Ω(CreateMta(sourceFilePath, string(jsonData), os.MkdirAll)).Should(Succeed())
+			Ω(CopyFile(sourceFilePath, targetFilePath, os.Create)).Should(Succeed())
 			Ω(targetFilePath).Should(BeAnExistingFile())
 			yamlData, err := ioutil.ReadFile(targetFilePath)
 			Ω(err).Should(Succeed())
@@ -63,7 +70,17 @@ var _ = Describe("MtaServices", func() {
 		It("Copy file with non existing path", func() {
 			sourceFilePath := "c:/temp/test1"
 			targetFilePath := "c:/temp/test2"
-			Ω(CopyFile(sourceFilePath, targetFilePath)).ShouldNot(Succeed())
+			Ω(CopyFile(sourceFilePath, targetFilePath, os.Create)).ShouldNot(Succeed())
+		})
+
+		It("Copy file fail to create destination file", func() {
+			jsonData, err := json.Marshal(oMtaInput)
+			Ω(err).Should(Succeed())
+			sourceFilePath := getTestPath("result", "temp.mta.yaml")
+			targetFilePath := getTestPath("result", "temp2.mta.yaml")
+			Ω(CreateMta(sourceFilePath, string(jsonData), os.MkdirAll)).Should(Succeed())
+			Ω(CopyFile(sourceFilePath, targetFilePath, createErr)).Should(Succeed())
+			Ω(targetFilePath).ShouldNot(BeAnExistingFile())
 		})
 	})
 
@@ -72,7 +89,7 @@ var _ = Describe("MtaServices", func() {
 			jsonData, err := json.Marshal(oMtaInput)
 			Ω(err).Should(Succeed())
 			mtaPath := getTestPath("result", "temp.mta.yaml")
-			Ω(CreateMta(mtaPath, string(jsonData))).Should(Succeed())
+			Ω(CreateMta(mtaPath, string(jsonData), os.MkdirAll)).Should(Succeed())
 			Ω(mtaPath).Should(BeAnExistingFile())
 			Ω(DeleteFile(mtaPath)).Should(Succeed())
 			Ω(mtaPath).ShouldNot(BeAnExistingFile())
@@ -91,11 +108,11 @@ var _ = Describe("MtaServices", func() {
 
 			jsonRootData, err := json.Marshal(oMtaInput)
 			Ω(err).Should(Succeed())
-			Ω(CreateMta(mtaPath, string(jsonRootData))).Should(Succeed())
+			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
 
 			jsonModuleData, err := json.Marshal(oModule)
 			Ω(err).Should(Succeed())
-			Ω(AddModule(mtaPath, string(jsonModuleData), yaml.Unmarshal)).Should(Succeed())
+			Ω(AddModule(mtaPath, string(jsonModuleData), yaml.Marshal)).Should(Succeed())
 
 			oMtaInput.Modules = append(oMtaInput.Modules, &oModule)
 
@@ -106,13 +123,13 @@ var _ = Describe("MtaServices", func() {
 			Ω(reflect.DeepEqual(oMtaInput, *oMtaOutput)).Should(BeTrue())
 		})
 
-		It("Add Module to non existing mta.yaml file", func() {
+		It("Add module to non existing mta.yaml file", func() {
 			json := "{name:fff}"
 			mtaPath := getTestPath("result", "mta.yaml")
-			Ω(AddModule(mtaPath, json, yaml.Unmarshal)).ShouldNot(Succeed())
+			Ω(AddModule(mtaPath, json, yaml.Marshal)).ShouldNot(Succeed())
 		})
 
-		It("Add Module to wrong mta.yaml format", func() {
+		It("Add module to wrong mta.yaml format", func() {
 			wrongJSON := "{TEST:fff}"
 			oModule := Module{
 				Name: "testModule",
@@ -121,25 +138,25 @@ var _ = Describe("MtaServices", func() {
 			}
 
 			mtaPath := getTestPath("result", "mta.yaml")
-			Ω(CreateMta(mtaPath, wrongJSON)).Should(Succeed())
+			Ω(CreateMta(mtaPath, wrongJSON, os.MkdirAll)).Should(Succeed())
 
 			jsonModuleData, err := json.Marshal(oModule)
 			Ω(err).Should(Succeed())
-			Ω(AddModule(mtaPath, string(jsonModuleData), yaml.Unmarshal)).ShouldNot(Succeed())
+			Ω(AddModule(mtaPath, string(jsonModuleData), yaml.Marshal)).ShouldNot(Succeed())
 		})
 
-		It("Add Module with wrong json format", func() {
+		It("Add module with wrong json format", func() {
 			wrongJSON := "{name:fff"
 
 			mtaPath := getTestPath("result", "temp.mta.yaml")
 			jsonRootData, err := json.Marshal(oMtaInput)
 			Ω(err).Should(Succeed())
-			Ω(CreateMta(mtaPath, string(jsonRootData))).Should(Succeed())
+			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
 
-			Ω(AddModule(mtaPath, wrongJSON, yaml.Unmarshal)).ShouldNot(Succeed())
+			Ω(AddModule(mtaPath, wrongJSON, yaml.Marshal)).ShouldNot(Succeed())
 		})
 
-		It("Add Module to wrong yaml format", func() {
+		It("Add module fails to marshal", func() {
 			oModule := Module{
 				Name: "testModule",
 				Type: "testType",
@@ -150,11 +167,11 @@ var _ = Describe("MtaServices", func() {
 
 			jsonRootData, err := json.Marshal(oMtaInput)
 			Ω(err).Should(Succeed())
-			Ω(CreateMta(mtaPath, string(jsonRootData))).Should(Succeed())
+			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
 
 			jsonModuleData, err := json.Marshal(oModule)
 			Ω(err).Should(Succeed())
-			Ω(AddModule(mtaPath, string(jsonModuleData), unmarshalErr)).ShouldNot(Succeed())
+			Ω(AddModule(mtaPath, string(jsonModuleData), marshalErr)).ShouldNot(Succeed())
 		})
 	})
 
@@ -169,11 +186,11 @@ var _ = Describe("MtaServices", func() {
 
 			jsonRootData, err := json.Marshal(oMtaInput)
 			Ω(err).Should(Succeed())
-			Ω(CreateMta(mtaPath, string(jsonRootData))).Should(Succeed())
+			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
 
 			jsonResourceData, err := json.Marshal(oResource)
 			Ω(err).Should(Succeed())
-			Ω(AddResource(mtaPath, string(jsonResourceData), yaml.Unmarshal)).Should(Succeed())
+			Ω(AddResource(mtaPath, string(jsonResourceData), yaml.Marshal)).Should(Succeed())
 
 			oMtaInput.Resources = append(oMtaInput.Resources, &oResource)
 
@@ -184,13 +201,13 @@ var _ = Describe("MtaServices", func() {
 			Ω(reflect.DeepEqual(oMtaInput, *oMtaOutput)).Should(BeTrue())
 		})
 
-		It("Add Resource to non existing mta.yaml file", func() {
+		It("Add resource to non existing mta.yaml file", func() {
 			json := "{name:fff}"
 			mtaPath := getTestPath("result", "mta.yaml")
-			Ω(AddResource(mtaPath, json, yaml.Unmarshal)).ShouldNot(Succeed())
+			Ω(AddResource(mtaPath, json, yaml.Marshal)).ShouldNot(Succeed())
 		})
 
-		It("Add Resource to wrong mta.yaml format", func() {
+		It("Add resource to wrong mta.yaml format", func() {
 			wrongJSON := "{TEST:fff}"
 			oResource := Resource{
 				Name: "testResource",
@@ -198,25 +215,25 @@ var _ = Describe("MtaServices", func() {
 			}
 
 			mtaPath := getTestPath("result", "mta.yaml")
-			Ω(CreateMta(mtaPath, wrongJSON)).Should(Succeed())
+			Ω(CreateMta(mtaPath, wrongJSON, os.MkdirAll)).Should(Succeed())
 
 			jsonResourceData, err := json.Marshal(oResource)
 			Ω(err).Should(Succeed())
-			Ω(AddResource(mtaPath, string(jsonResourceData), yaml.Unmarshal)).ShouldNot(Succeed())
+			Ω(AddResource(mtaPath, string(jsonResourceData), yaml.Marshal)).ShouldNot(Succeed())
 		})
 
-		It("Add Resource with wrong json format", func() {
+		It("Add resource with wrong json format", func() {
 			wrongJSON := "{name:fff"
 
 			mtaPath := getTestPath("result", "temp.mta.yaml")
 			jsonRootData, err := json.Marshal(oMtaInput)
 			Ω(err).Should(Succeed())
-			Ω(CreateMta(mtaPath, string(jsonRootData))).Should(Succeed())
+			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
 
-			Ω(AddResource(mtaPath, wrongJSON, yaml.Unmarshal)).ShouldNot(Succeed())
+			Ω(AddResource(mtaPath, wrongJSON, yaml.Marshal)).ShouldNot(Succeed())
 		})
 
-		It("Add Resource to wrong yaml format", func() {
+		It("Add resource fails to marshal", func() {
 			oResource := Resource{
 				Name: "testResource",
 				Type: "testType",
@@ -226,15 +243,23 @@ var _ = Describe("MtaServices", func() {
 
 			jsonRootData, err := json.Marshal(oMtaInput)
 			Ω(err).Should(Succeed())
-			Ω(CreateMta(mtaPath, string(jsonRootData))).Should(Succeed())
+			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
 
 			jsonResourceData, err := json.Marshal(oResource)
 			Ω(err).Should(Succeed())
-			Ω(AddResource(mtaPath, string(jsonResourceData), unmarshalErr)).ShouldNot(Succeed())
+			Ω(AddResource(mtaPath, string(jsonResourceData), marshalErr)).ShouldNot(Succeed())
 		})
 	})
 })
 
-func unmarshalErr(data []byte, o interface{}) error {
+func mkDirsErr(path string, perm os.FileMode) error {
 	return errors.New("err")
+}
+
+func createErr(path string) (*os.File, error) {
+	return nil, errors.New("err")
+}
+
+func marshalErr(o interface{}) ([]byte, error) {
+	return nil, errors.New("err")
 }
