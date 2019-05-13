@@ -13,7 +13,7 @@ type nameInfo struct {
 }
 
 // isNameUnique - validates the global uniqueness of the names of modules, provided services and resources
-func isNameUnique(mta *mta.MTA, mtaNode *yaml.Node, source string) []YamlValidationIssue {
+func isNameUnique(mta *mta.MTA, mtaNode *yaml.Node, source string, strict bool) ([]YamlValidationIssue, []YamlValidationIssue) {
 	var issues []YamlValidationIssue
 	// map: name -> object kind (module, provided services or resource)
 	names := make(map[string]nameInfo)
@@ -32,7 +32,7 @@ func isNameUnique(mta *mta.MTA, mtaNode *yaml.Node, source string) []YamlValidat
 		// validate resource name
 		issues = validateNameUniqueness(names, resource.Name, "resource", issues, line)
 	}
-	return issues
+	return issues, nil
 }
 
 func getModuleLineByIndex(mtaNode *yaml.Node, index int) int {
