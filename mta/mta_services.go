@@ -39,7 +39,7 @@ func CreateMta(path string, mtaDataJSON string, mkDirs func(string, os.FileMode)
 }
 
 //AddModule - add new module
-func AddModule(path string, moduleDataJSON string) error {
+func AddModule(path string, moduleDataJSON string, marshal func(interface{}) ([]byte, error)) error {
 	mtaContent, err := ioutil.ReadFile(filepath.Join(path))
 	if err != nil {
 		return err
@@ -63,7 +63,7 @@ func AddModule(path string, moduleDataJSON string) error {
 
 	mtaObj.Modules = append(mtaObj.Modules, &module)
 
-	mtaBytes, err := yaml.Marshal(mtaObj)
+	mtaBytes, err := marshal(mtaObj)
 	if err != nil {
 		return err
 	}
@@ -71,7 +71,7 @@ func AddModule(path string, moduleDataJSON string) error {
 }
 
 //AddResource - add new resource
-func AddResource(path string, resourceDataJSON string) error {
+func AddResource(path string, resourceDataJSON string, marshal func(interface{}) ([]byte, error)) error {
 	mtaContent, err := ioutil.ReadFile(filepath.Join(path))
 	if err != nil {
 		return err
@@ -95,7 +95,7 @@ func AddResource(path string, resourceDataJSON string) error {
 
 	mtaObj.Resources = append(mtaObj.Resources, &resource)
 
-	mtaBytes, err := yaml.Marshal(mtaObj)
+	mtaBytes, err := marshal(mtaObj)
 	if err != nil {
 		return err
 	}

@@ -56,7 +56,7 @@ var copyCmd = &cobra.Command{
 	Long:  "Copy from source path to target path",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		logs.Logger.Info("copy from source path to target path")
+		logs.Logger.Info("copy from source path: " + sourceCmdPath + " to target path: " + targetCmdPath)
 		err := mta.CopyFile(sourceCmdPath, targetCmdPath, os.Create)
 		if err != nil {
 			logs.Logger.Error(err)
