@@ -15,3 +15,8 @@ func CreateFile(path string) (file *os.File, err error) {
 	// The caller needs to use defer.close
 	return file, err
 }
+
+// DeleteFile - delete file
+func DeleteFile(path string) (err error) {
+	return os.Remove(path)
+}
