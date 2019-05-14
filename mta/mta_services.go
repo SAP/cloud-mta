@@ -1,26 +1,36 @@
 package mta
 
 import (
+	"crypto/sha1"
 	"io"
 	"io/ioutil"
+	"fmt"
 	"os"
 	"path/filepath"
 
-	"github.com/ghodss/yaml"
+	"github.com/gofrs/flock"
 	"github.com/pkg/errors"
 
 	"github.com/SAP/cloud-mta/internal/fs"
+	ghodss "github.com/ghodss/yaml"
+	"gopkg.in/yaml.v3"
+	"strings"
 )
 
-func createMtaYamlFile(path string, mkDirs func(string, os.FileMode) error) (err error) {
+func createMtaYamlFile(path string, mkDirs func(string, os.FileMode) error) (rerr error) {
 	folder := filepath.Dir(path)
-	err = mkDirs(folder, os.ModePerm)
-	if err != nil {
-		return err
+	rerr = mkDirs(folder, os.ModePerm)
+	if rerr != nil {
+		return
 	}
-	file, err := fs.CreateFile(path)
+	file, rerr := fs.CreateFile(path)
 	defer func() {
-		err = file.Close()
+		if file != nil {
+			e := file.Close()
+			if rerr == nil {
+				rerr = e
+			}
+		}
 	}()
 
 	return
@@ -31,15 +41,18 @@ func getMtaFromFile(path string) (*MTA, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, `failed when reading %s file`, path)
 	}
+	s := string(mtaContent)
+	s = strings.Replace(s, "\r\n", "\r", -1)
+	mtaContent = []byte(s)
 	return Unmarshal(mtaContent)
 }
 
-func unmarshalData(dataJSON string, mta *MTA, o interface{}) error {
-	dataYaml, err := yaml.JSONToYAML([]byte(dataJSON))
+func unmarshalData(dataJSON string, o interface{}) error {
+	dataYaml, err := ghodss.JSONToYAML([]byte(dataJSON))
 	if err != nil {
 		return err
 	}
-	return yaml.Unmarshal(dataYaml, &o)
+	return yaml.Unmarshal(dataYaml, o)
 }
 
 func saveMTA(path string, mta *MTA, marshal func(interface{}) ([]byte, error)) error {
@@ -52,7 +65,7 @@ func saveMTA(path string, mta *MTA, marshal func(interface{}) ([]byte, error)) e
 
 // CreateMta - create MTA project
 func CreateMta(path string, mtaDataJSON string, mkDirs func(string, os.FileMode) error) error {
-	mtaDataYaml, err := yaml.JSONToYAML([]byte(mtaDataJSON))
+	mtaDataYaml, err := ghodss.JSONToYAML([]byte(mtaDataJSON))
 	if err != nil {
 		return err
 	}
@@ -65,13 +78,13 @@ func CreateMta(path string, mtaDataJSON string, mkDirs func(string, os.FileMode)
 
 //AddModule - add new module
 func AddModule(path string, moduleDataJSON string, marshal func(interface{}) ([]byte, error)) error {
-	mta, err := getMtaFromFile(path)
+	mta, err := getMtaFromFile(filepath.Join(path))
 	if err != nil {
 		return err
 	}
 
 	module := Module{}
-	err = unmarshalData(moduleDataJSON, mta, &module)
+	err = unmarshalData(moduleDataJSON, &module)
 	if err != nil {
 		return err
 	}
@@ -88,7 +101,7 @@ func AddResource(path string, resourceDataJSON string, marshal func(interface{})
 	}
 
 	resource := Resource{}
-	err = unmarshalData(resourceDataJSON, mta, &resource)
+	err = unmarshalData(resourceDataJSON, &resource)
 	if err != nil {
 		return err
 	}
@@ -128,4 +141,60 @@ func CopyFile(src, dst string, create func(string) (*os.File, error)) (rerr erro
 // DeleteFile - delete file
 func DeleteFile(path string) error {
 	return fs.DeleteFile(path)
+}
+
+func GetMtaHash(path string) (int, error) {
+	mtaContent, err := ioutil.ReadFile(filepath.Join(path))
+	if err != nil {
+		return 0, err
+	}
+	h := sha1.New()
+	return h.Write(mtaContent)
+}
+
+// ModifyMta - lock and modify mta.yaml file
+func ModifyMta(path string, modify func() error, hashcode int) (rerr error) {
+	// create lock file
+	lockFilePath := filepath.Join(filepath.Dir(path), "mta-lock.lock")
+	lock := flock.New(lockFilePath)
+	if lock.Locked(){
+		return 
+	}
+	locked, err := lock.TryLock()
+	if err != nil {
+		return err
+	}
+	//// unlock and remove lock file at the end of modification
+	//defer func() {
+	//	e := lock.Close()
+	//	var errClose error
+	//	if locked {
+	//		errClose = os.Remove(lockFilePath)
+	//	}
+	//	if rerr == nil {
+	//		if e != nil {
+	//			rerr = e
+	//		} else if errClose != nil {
+	//			rerr = e
+	//		}
+	//	}
+	//}()
+	// another process locked mta.yaml file
+	if !locked {
+		lock.Close()
+		return fmt.Errorf(`failed to lock the "%s" file for modification`, path)
+	}
+
+	currentHash, err := GetMtaHash(path)
+	if err == nil && hashcode != currentHash {
+		err = errors.New(fmt.Sprintf(`the "%s" file changed`, path))
+	} else if err == nil {
+		err = modify()
+	}
+	unlockErr := lock.Unlock()
+	if err != nil {
+		return err
+	} else {
+		return unlockErr
+	}
 }

@@ -3,13 +3,16 @@ package mta
 import (
 	"encoding/json"
 	"errors"
+	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"reflect"
 
-	"github.com/ghodss/yaml"
+	ghodss "github.com/ghodss/yaml"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/gofrs/flock"
 )
 
 var _ = Describe("MtaServices", func() {
@@ -23,7 +26,8 @@ var _ = Describe("MtaServices", func() {
 	}
 
 	AfterEach(func() {
-		os.RemoveAll(getTestPath("result"))
+		err := os.RemoveAll(getTestPath("result"))
+		Ω(err).Should(Succeed())
 	})
 	var _ = Describe("CreateMta", func() {
 		It("Create MTA", func() {
@@ -114,7 +118,7 @@ var _ = Describe("MtaServices", func() {
 
 			jsonModuleData, err := json.Marshal(oModule)
 			Ω(err).Should(Succeed())
-			Ω(AddModule(mtaPath, string(jsonModuleData), yaml.Marshal)).Should(Succeed())
+			Ω(AddModule(mtaPath, string(jsonModuleData), ghodss.Marshal)).Should(Succeed())
 
 			oMtaInput.Modules = append(oMtaInput.Modules, &oModule)
 			Ω(mtaPath).Should(BeAnExistingFile())
@@ -128,7 +132,7 @@ var _ = Describe("MtaServices", func() {
 		It("Add module to non existing mta.yaml file", func() {
 			json := "{name:fff}"
 			mtaPath := getTestPath("result", "mta.yaml")
-			Ω(AddModule(mtaPath, json, yaml.Marshal)).Should(HaveOccurred())
+			Ω(AddModule(mtaPath, json, ghodss.Marshal)).Should(HaveOccurred())
 		})
 
 		It("Add module to wrong mta.yaml format", func() {
@@ -144,7 +148,7 @@ var _ = Describe("MtaServices", func() {
 
 			jsonModuleData, err := json.Marshal(oModule)
 			Ω(err).Should(Succeed())
-			Ω(AddModule(mtaPath, string(jsonModuleData), yaml.Marshal)).Should(HaveOccurred())
+			Ω(AddModule(mtaPath, string(jsonModuleData), ghodss.Marshal)).Should(HaveOccurred())
 		})
 
 		It("Add module with wrong json format", func() {
@@ -155,7 +159,7 @@ var _ = Describe("MtaServices", func() {
 			Ω(err).Should(Succeed())
 			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
 
-			Ω(AddModule(mtaPath, wrongJSON, yaml.Marshal)).Should(HaveOccurred())
+			Ω(AddModule(mtaPath, wrongJSON, ghodss.Marshal)).Should(HaveOccurred())
 		})
 
 		It("Add module fails to marshal", func() {
@@ -192,7 +196,7 @@ var _ = Describe("MtaServices", func() {
 
 			jsonResourceData, err := json.Marshal(oResource)
 			Ω(err).Should(Succeed())
-			Ω(AddResource(mtaPath, string(jsonResourceData), yaml.Marshal)).Should(Succeed())
+			Ω(AddResource(mtaPath, string(jsonResourceData), ghodss.Marshal)).Should(Succeed())
 
 			oMtaInput.Resources = append(oMtaInput.Resources, &oResource)
 			Ω(mtaPath).Should(BeAnExistingFile())
@@ -206,7 +210,7 @@ var _ = Describe("MtaServices", func() {
 		It("Add resource to non existing mta.yaml file", func() {
 			json := "{name:fff}"
 			mtaPath := getTestPath("result", "mta.yaml")
-			Ω(AddResource(mtaPath, json, yaml.Marshal)).Should(HaveOccurred())
+			Ω(AddResource(mtaPath, json, ghodss.Marshal)).Should(HaveOccurred())
 		})
 
 		It("Add resource to wrong mta.yaml format", func() {
@@ -221,7 +225,7 @@ var _ = Describe("MtaServices", func() {
 
 			jsonResourceData, err := json.Marshal(oResource)
 			Ω(err).Should(Succeed())
-			Ω(AddResource(mtaPath, string(jsonResourceData), yaml.Marshal)).Should(HaveOccurred())
+			Ω(AddResource(mtaPath, string(jsonResourceData), ghodss.Marshal)).Should(HaveOccurred())
 		})
 
 		It("Add resource with wrong json format", func() {
@@ -232,7 +236,7 @@ var _ = Describe("MtaServices", func() {
 			Ω(err).Should(Succeed())
 			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
 
-			Ω(AddResource(mtaPath, wrongJSON, yaml.Marshal)).Should(HaveOccurred())
+			Ω(AddResource(mtaPath, wrongJSON, ghodss.Marshal)).Should(HaveOccurred())
 		})
 
 		It("Add resource fails to marshal", func() {
@@ -251,6 +255,76 @@ var _ = Describe("MtaServices", func() {
 			Ω(err).Should(Succeed())
 			Ω(AddResource(mtaPath, string(jsonResourceData), marshalErr)).Should(HaveOccurred())
 		})
+	})
+})
+
+var _ = Describe("Module", func() {
+	AfterEach(func() {
+		err := os.RemoveAll(getTestPath("result"))
+		Ω(err).Should(Succeed())
+	})
+
+	It("Sanity", func() {
+		os.MkdirAll(getTestPath("result"), os.ModePerm)
+		mtaPath := getTestPath("result", "mta.yaml")
+		Ω(CopyFile(getTestPath("mta.yaml"), mtaPath, os.Create)).Should(Succeed())
+
+		var err error
+		mtaHashCode, err := GetMtaHash(mtaPath)
+		Ω(err).Should(Succeed())
+		oModule := Module{
+			Name: "testModule",
+			Type: "testType",
+			Path: "test",
+		}
+
+		jsonData, err := json.Marshal(oModule)
+		moduleJSON := string(jsonData)
+		err = ModifyMta(mtaPath, func() error {
+			return AddModule(mtaPath, moduleJSON, yaml.Marshal)
+		}, mtaHashCode)
+		Ω(err).Should(Succeed())
+		oModule.Name = "test1"
+		jsonData, err = json.Marshal(oModule)
+		moduleJSON = string(jsonData)
+		// hashcode of the mta.yaml is wrong now
+		err = ModifyMta(mtaPath, func() error {
+			return AddModule(mtaPath, moduleJSON, ghodss.Marshal)
+		}, mtaHashCode)
+		Ω(err).Should(HaveOccurred())
+	})
+	It("Locking fails", func() {
+		os.MkdirAll(getTestPath("result"), os.ModePerm)
+		mtaPath := getTestPath("result", "mta.yaml")
+		lockFilePath := filepath.Join(filepath.Dir(mtaPath), "mta-lock.lock")
+		lock := flock.New(lockFilePath)
+		Ω(lock.TryLock()).Should(BeTrue())
+		Ω(CopyFile(getTestPath("mta.yaml"), mtaPath, os.Create)).Should(Succeed())
+
+		var err error
+		mtaHashCode, err := GetMtaHash(mtaPath)
+		Ω(err).Should(Succeed())
+		oModule := Module{
+			Name: "testModule",
+			Type: "testType",
+			Path: "test",
+		}
+
+		jsonData, err := json.Marshal(oModule)
+		moduleJSON := string(jsonData)
+		err = ModifyMta(mtaPath, func() error {
+			return AddModule(mtaPath, moduleJSON, yaml.Marshal)
+		}, mtaHashCode)
+		Ω(err).Should(HaveOccurred())
+		Ω(err.Error()).Should(Equal(`failed to lock the "C:\Users\i019379\go\src\github.com\SAP\cloud-mta\mta\testdata\result\mta.yaml" file for modification`))
+		err = lock.Close()
+		Ω(err).Should(Succeed())
+		err = os.Remove(lockFilePath)
+		//Ω(err).Should(Succeed())
+		err = ModifyMta(mtaPath, func() error {
+			return AddModule(mtaPath, moduleJSON, yaml.Marshal)
+		}, mtaHashCode)
+		Ω(err).Should(Succeed())
 	})
 })
 
