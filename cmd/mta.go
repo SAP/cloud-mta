@@ -11,8 +11,8 @@ import (
 
 var createMtaCmdPath string
 var createMtaCmdData string
-var sourceCmdPath string
-var targetCmdPath string
+var copyCmdSourcePath string
+var copyCmdTargetPath string
 var deleteFileCmdPath string
 
 func init() {
@@ -22,9 +22,9 @@ func init() {
 		"the path to the yaml file")
 	createMtaCmd.Flags().StringVarP(&createMtaCmdData, "data", "d", "",
 		"data in JSON format")
-	copyCmd.Flags().StringVarP(&sourceCmdPath, "source", "s", "",
+	copyCmd.Flags().StringVarP(&copyCmdSourcePath, "source", "s", "",
 		"the path to the source file")
-	copyCmd.Flags().StringVarP(&targetCmdPath, "target", "t", "",
+	copyCmd.Flags().StringVarP(&copyCmdTargetPath, "target", "t", "",
 		"the path to the target file")
 	deleteFileCmd.Flags().StringVarP(&deleteFileCmdPath, "path", "p", "",
 		"the path to the file")
@@ -56,8 +56,8 @@ var copyCmd = &cobra.Command{
 	Long:  "Copy from source path to target path",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		logs.Logger.Info("copy from source path: " + sourceCmdPath + " to target path: " + targetCmdPath)
-		err := mta.CopyFile(sourceCmdPath, targetCmdPath, os.Create)
+		logs.Logger.Info("copy from source path: " + copyCmdSourcePath + " to target path: " + copyCmdTargetPath)
+		err := mta.CopyFile(copyCmdSourcePath, copyCmdTargetPath, os.Create)
 		if err != nil {
 			logs.Logger.Error(err)
 		}
