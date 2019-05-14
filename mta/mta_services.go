@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/ghodss/yaml"
+	"github.com/pkg/errors"
 
 	"github.com/SAP/cloud-mta/internal/fs"
 )
@@ -25,6 +26,30 @@ func createMtaYamlFile(path string, mkDirs func(string, os.FileMode) error) (err
 	return
 }
 
+func getMtaFromFile(path string) (*MTA, error) {
+	mtaContent, err := ioutil.ReadFile(filepath.Join(path))
+	if err != nil {
+		return nil, errors.Wrapf(err, `failed when reading %s file`, path)
+	}
+	return Unmarshal(mtaContent)
+}
+
+func unmarshalData(dataJSON string, mta *MTA, o interface{}) error {
+	dataYaml, err := yaml.JSONToYAML([]byte(dataJSON))
+	if err != nil {
+		return err
+	}
+	return yaml.Unmarshal(dataYaml, &o)
+}
+
+func saveMTA(path string, mta *MTA, marshal func(interface{}) ([]byte, error)) error {
+	mtaBytes, err := marshal(mta)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(path, mtaBytes, 0644)
+}
+
 // CreateMta - create MTA project
 func CreateMta(path string, mtaDataJSON string, mkDirs func(string, os.FileMode) error) error {
 	mtaDataYaml, err := yaml.JSONToYAML([]byte(mtaDataJSON))
@@ -40,66 +65,36 @@ func CreateMta(path string, mtaDataJSON string, mkDirs func(string, os.FileMode)
 
 //AddModule - add new module
 func AddModule(path string, moduleDataJSON string, marshal func(interface{}) ([]byte, error)) error {
-	mtaContent, err := ioutil.ReadFile(filepath.Join(path))
-	if err != nil {
-		return err
-	}
-
-	mtaObj, err := Unmarshal(mtaContent)
-	if err != nil {
-		return err
-	}
-
-	moduleDataYaml, err := yaml.JSONToYAML([]byte(moduleDataJSON))
+	mta, err := getMtaFromFile(path)
 	if err != nil {
 		return err
 	}
 
 	module := Module{}
-	err = yaml.Unmarshal(moduleDataYaml, &module)
+	err = unmarshalData(moduleDataJSON, mta, &module)
 	if err != nil {
 		return err
 	}
 
-	mtaObj.Modules = append(mtaObj.Modules, &module)
-
-	mtaBytes, err := marshal(mtaObj)
-	if err != nil {
-		return err
-	}
-	return ioutil.WriteFile(path, mtaBytes, 0644)
+	mta.Modules = append(mta.Modules, &module)
+	return saveMTA(path, mta, marshal)
 }
 
 //AddResource - add new resource
 func AddResource(path string, resourceDataJSON string, marshal func(interface{}) ([]byte, error)) error {
-	mtaContent, err := ioutil.ReadFile(filepath.Join(path))
-	if err != nil {
-		return err
-	}
-
-	mtaObj, err := Unmarshal(mtaContent)
-	if err != nil {
-		return err
-	}
-
-	resourceDataYaml, err := yaml.JSONToYAML([]byte(resourceDataJSON))
+	mta, err := getMtaFromFile(path)
 	if err != nil {
 		return err
 	}
 
 	resource := Resource{}
-	err = yaml.Unmarshal(resourceDataYaml, &resource)
+	err = unmarshalData(resourceDataJSON, mta, &resource)
 	if err != nil {
 		return err
 	}
 
-	mtaObj.Resources = append(mtaObj.Resources, &resource)
-
-	mtaBytes, err := marshal(mtaObj)
-	if err != nil {
-		return err
-	}
-	return ioutil.WriteFile(path, mtaBytes, 0644)
+	mta.Resources = append(mta.Resources, &resource)
+	return saveMTA(path, mta, marshal)
 }
 
 // CopyFile - copy from source path to target path
@@ -109,7 +104,10 @@ func CopyFile(src, dst string, create func(string) (*os.File, error)) (rerr erro
 		return err
 	}
 	defer func() {
-		rerr = in.Close()
+		e := in.Close()
+		if rerr == nil {
+			rerr = e
+		}
 	}()
 
 	out, err := create(dst)
@@ -117,7 +115,10 @@ func CopyFile(src, dst string, create func(string) (*os.File, error)) (rerr erro
 		return err
 	}
 	defer func() {
-		rerr = out.Close()
+		e := out.Close()
+		if rerr == nil {
+			rerr = e
+		}
 	}()
 
 	_, err = io.Copy(out, in)
