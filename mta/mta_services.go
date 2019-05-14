@@ -29,7 +29,7 @@ func createMtaYamlFile(path string, mkDirs func(string, os.FileMode) error) (err
 func getMtaFromFile(path string) (*MTA, error) {
 	mtaContent, err := ioutil.ReadFile(filepath.Join(path))
 	if err != nil {
-		return nil, errors.Wrapf(err, `addition failed when reading %s file`, path)
+		return nil, errors.Wrapf(err, `failed when reading %s file`, path)
 	}
 	return Unmarshal(mtaContent)
 }
