@@ -5,15 +5,15 @@ import (
 	"io"
 	"io/ioutil"
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"os"
 	"path/filepath"
+	"strings"
 
+	ghodss "github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 
 	"github.com/SAP/cloud-mta/internal/fs"
-	ghodss "github.com/ghodss/yaml"
-	"gopkg.in/yaml.v3"
-	"strings"
 )
 
 func createMtaYamlFile(path string, mkDirs func(string, os.FileMode) error) (rerr error) {
@@ -160,7 +160,7 @@ func ModifyMta(path string, modify func() error, hashcode int, isNew bool) (rerr
 	lockFilePath := filepath.Join(filepath.Dir(path), "mta-lock.lock")
 	file, err := os.OpenFile(lockFilePath, os.O_RDONLY|os.O_CREATE|os.O_EXCL, 0666)
 	if err != nil {
-		return errors.New(fmt.Sprintf(`failed to lock the "%s" file for modification`, path))
+		return fmt.Errorf(`failed to lock the "%s" file for modification`, path)
 	}
 	// unlock and remove lock file at the end of modification
 	defer func() {

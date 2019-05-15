@@ -7,12 +7,12 @@ import (
 	"io/ioutil"
 	"os"
 	"reflect"
+	"time"
+	"sync"
 
 	ghodss "github.com/ghodss/yaml"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"time"
-	"sync"
 )
 
 var _ = Describe("MtaServices", func() {
