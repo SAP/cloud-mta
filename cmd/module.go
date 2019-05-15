@@ -32,7 +32,7 @@ var addModuleCmd = &cobra.Command{
 		logs.Logger.Info("add new module")
 		err := mta.ModifyMta(addModuleMtaCmdPath, func() error {
 			return mta.AddModule(addModuleMtaCmdPath, addModuleCmdData, yaml.Marshal)
-		}, addModuleCmdHashcode)
+		}, addModuleCmdHashcode, false)
 		if err != nil {
 			logs.Logger.Error(err)
 		}

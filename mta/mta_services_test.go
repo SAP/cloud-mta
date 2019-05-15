@@ -6,13 +6,14 @@ import (
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"reflect"
 
 	ghodss "github.com/ghodss/yaml"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/gofrs/flock"
+	"time"
+	"sync"
+	"fmt"
 )
 
 var _ = Describe("MtaServices", func() {
@@ -270,8 +271,9 @@ var _ = Describe("Module", func() {
 		Ω(CopyFile(getTestPath("mta.yaml"), mtaPath, os.Create)).Should(Succeed())
 
 		var err error
-		mtaHashCode, err := GetMtaHash(mtaPath)
+		mtaHashCode, exists, err := GetMtaHash(mtaPath)
 		Ω(err).Should(Succeed())
+		Ω(exists).Should(BeTrue())
 		oModule := Module{
 			Name: "testModule",
 			Type: "testType",
@@ -282,49 +284,51 @@ var _ = Describe("Module", func() {
 		moduleJSON := string(jsonData)
 		err = ModifyMta(mtaPath, func() error {
 			return AddModule(mtaPath, moduleJSON, yaml.Marshal)
-		}, mtaHashCode)
+		}, mtaHashCode, false)
 		Ω(err).Should(Succeed())
+		// wrong yaml
+		err = ModifyMta(getTestPath("result", "mtaX.yaml"), func() error {
+			return AddModule(getTestPath("result", "mtaX.yaml"), moduleJSON, yaml.Marshal)
+		}, mtaHashCode, false)
+		Ω(err).Should(HaveOccurred())
+		Ω(err.Error()).Should(ContainSubstring("file is not found"))
 		oModule.Name = "test1"
 		jsonData, err = json.Marshal(oModule)
 		moduleJSON = string(jsonData)
 		// hashcode of the mta.yaml is wrong now
 		err = ModifyMta(mtaPath, func() error {
 			return AddModule(mtaPath, moduleJSON, ghodss.Marshal)
-		}, mtaHashCode)
+		}, mtaHashCode, false)
 		Ω(err).Should(HaveOccurred())
 	})
-	It("Locking fails", func() {
+	It("2 parallel processes, second fails to make locking", func() {
 		os.MkdirAll(getTestPath("result"), os.ModePerm)
 		mtaPath := getTestPath("result", "mta.yaml")
-		lockFilePath := filepath.Join(filepath.Dir(mtaPath), "mta-lock.lock")
-		lock := flock.New(lockFilePath)
-		Ω(lock.TryLock()).Should(BeTrue())
 		Ω(CopyFile(getTestPath("mta.yaml"), mtaPath, os.Create)).Should(Succeed())
-
-		var err error
-		mtaHashCode, err := GetMtaHash(mtaPath)
-		Ω(err).Should(Succeed())
-		oModule := Module{
-			Name: "testModule",
-			Type: "testType",
-			Path: "test",
-		}
-
-		jsonData, err := json.Marshal(oModule)
-		moduleJSON := string(jsonData)
-		err = ModifyMta(mtaPath, func() error {
-			return AddModule(mtaPath, moduleJSON, yaml.Marshal)
-		}, mtaHashCode)
-		Ω(err).Should(HaveOccurred())
-		Ω(err.Error()).Should(Equal(`failed to lock the "C:\Users\i019379\go\src\github.com\SAP\cloud-mta\mta\testdata\result\mta.yaml" file for modification`))
-		err = lock.Close()
-		Ω(err).Should(Succeed())
-		err = os.Remove(lockFilePath)
-		//Ω(err).Should(Succeed())
-		err = ModifyMta(mtaPath, func() error {
-			return AddModule(mtaPath, moduleJSON, yaml.Marshal)
-		}, mtaHashCode)
-		Ω(err).Should(Succeed())
+		mtaHashCode, _, err := GetMtaHash(mtaPath)
+		var wg sync.WaitGroup
+		wg.Add(1)
+		go func() {
+			err = ModifyMta(mtaPath, func() error {
+				time.Sleep(time.Second)
+				return nil
+			}, mtaHashCode, false)
+			defer wg.Done()
+			Ω(err).Should(Succeed())
+		}()
+		time.Sleep(time.Millisecond * 200)
+		wg.Add(1)
+		go func() {
+			err = ModifyMta(mtaPath, func() error {
+				time.Sleep(time.Second)
+				return nil
+			}, mtaHashCode, false)
+			defer wg.Done()
+			Ω(err).Should(HaveOccurred())
+			fmt.Println(err.Error())
+			Ω(err.Error()).Should(Equal(`failed to lock the "C:\Users\i019379\go\src\github.com\SAP\cloud-mta\mta\testdata\result\mta.yaml" file for modification`))
+		}()
+		wg.Wait()
 	})
 })
 

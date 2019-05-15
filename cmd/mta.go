@@ -38,7 +38,9 @@ var createMtaCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logs.Logger.Info("create MTA project")
-		err := mta.CreateMta(createMtaCmdPath, createMtaCmdData, os.MkdirAll)
+		err := mta.ModifyMta(createMtaCmdPath, func() error {
+			return mta.CreateMta(createMtaCmdPath, createMtaCmdData, os.MkdirAll)
+		}, 0, true)
 		if err != nil {
 			logs.Logger.Error(err)
 		}

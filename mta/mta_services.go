@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/gofrs/flock"
 	"github.com/pkg/errors"
 
 	"github.com/SAP/cloud-mta/internal/fs"
@@ -143,58 +142,59 @@ func DeleteFile(path string) error {
 	return fs.DeleteFile(path)
 }
 
-func GetMtaHash(path string) (int, error) {
+// GetMtaHash - get hashcode of the mta file
+func GetMtaHash(path string) (int, bool, error) {
 	mtaContent, err := ioutil.ReadFile(filepath.Join(path))
 	if err != nil {
-		return 0, err
+		// file not exists
+		return 0, false, nil
 	}
 	h := sha1.New()
-	return h.Write(mtaContent)
+	code, err := h.Write(mtaContent)
+	return code, true, err
 }
 
 // ModifyMta - lock and modify mta.yaml file
-func ModifyMta(path string, modify func() error, hashcode int) (rerr error) {
+func ModifyMta(path string, modify func() error, hashcode int, isNew bool) (rerr error) {
 	// create lock file
 	lockFilePath := filepath.Join(filepath.Dir(path), "mta-lock.lock")
-	lock := flock.New(lockFilePath)
-	if lock.Locked(){
-		return 
-	}
-	locked, err := lock.TryLock()
+	file, err := os.OpenFile(lockFilePath, os.O_RDONLY|os.O_CREATE|os.O_EXCL, 0666)
 	if err != nil {
-		return err
+		return errors.New(fmt.Sprintf(`failed to lock the "%s" file for modification`, path))
 	}
-	//// unlock and remove lock file at the end of modification
-	//defer func() {
-	//	e := lock.Close()
-	//	var errClose error
-	//	if locked {
-	//		errClose = os.Remove(lockFilePath)
-	//	}
-	//	if rerr == nil {
-	//		if e != nil {
-	//			rerr = e
-	//		} else if errClose != nil {
-	//			rerr = e
-	//		}
-	//	}
-	//}()
-	// another process locked mta.yaml file
-	if !locked {
-		lock.Close()
-		return fmt.Errorf(`failed to lock the "%s" file for modification`, path)
-	}
+	// unlock and remove lock file at the end of modification
+	defer func() {
+		if file == nil {
+			return
+		}
+		e := file.Close()
+		if e == nil {
+			e = os.Remove(lockFilePath)
+		}
+		if rerr == nil {
+			rerr = e
+		}
+	}()
 
-	currentHash, err := GetMtaHash(path)
-	if err == nil && hashcode != currentHash {
-		err = errors.New(fmt.Sprintf(`the "%s" file changed`, path))
-	} else if err == nil {
+	currentHash, exists, err := GetMtaHash(path)
+
+	if err == nil {
+		err = ifFileChangeable(path, isNew, exists, currentHash == hashcode)
+	}
+	if err == nil {
 		err = modify()
 	}
-	unlockErr := lock.Unlock()
-	if err != nil {
-		return err
-	} else {
-		return unlockErr
+
+	return err
+}
+
+func ifFileChangeable(path string, isNew, exists, sameHash bool) error {
+	if isNew && exists {
+		return errors.New(fmt.Sprintf(`the "%s" file exists`, path))
+	} else if !isNew && !exists {
+		return errors.New(fmt.Sprintf(`the "%s" file is not found'`, path))
+	} else if !sameHash {
+		return errors.New(fmt.Sprintf(`the "%s" file changed`, path))
 	}
+	return nil
 }
