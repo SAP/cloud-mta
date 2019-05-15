@@ -326,7 +326,7 @@ var _ = Describe("Module", func() {
 			defer wg.Done()
 			Ω(err).Should(HaveOccurred())
 			fmt.Println(err.Error())
-			Ω(err.Error()).Should(Equal(`failed to lock the "C:\Users\i019379\go\src\github.com\SAP\cloud-mta\mta\testdata\result\mta.yaml" file for modification`))
+			Ω(err.Error()).Should(ContainSubstring("failed to lock"))
 		}()
 		wg.Wait()
 	})
