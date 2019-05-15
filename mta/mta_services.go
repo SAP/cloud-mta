@@ -2,10 +2,10 @@ package mta
 
 import (
 	"crypto/sha1"
-	"io"
-	"io/ioutil"
 	"fmt"
 	"gopkg.in/yaml.v3"
+	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"

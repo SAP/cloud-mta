@@ -7,8 +7,8 @@ import (
 	"io/ioutil"
 	"os"
 	"reflect"
-	"time"
 	"sync"
+	"time"
 
 	ghodss "github.com/ghodss/yaml"
 	. "github.com/onsi/ginkgo"
