@@ -327,8 +327,8 @@ var _ = Describe("Module", func() {
 			defer wg.Done()
 		}()
 		wg.Wait()
-		Ω(err1==nil && err2!=nil || err1!=nil && err2==nil).Should(BeTrue())
-		if err1==nil{
+		Ω(err1 == nil && err2 != nil || err1 != nil && err2 == nil).Should(BeTrue())
+		if err1 == nil {
 			Ω(err2.Error()).Should(ContainSubstring("failed to lock"))
 		} else {
 			Ω(err1.Error()).Should(ContainSubstring("failed to lock"))

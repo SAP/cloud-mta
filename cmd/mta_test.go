@@ -35,6 +35,7 @@ var _ = Describe("Resource", func() {
 		}
 
 		jsonData, err := json.Marshal(&oMta)
+		Ω(err).Should(Succeed())
 		createMtaCmdData = string(jsonData)
 		Ω(createMtaCmd.RunE(nil, []string{})).Should(Succeed())
 		// already exists

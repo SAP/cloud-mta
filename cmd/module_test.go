@@ -33,10 +33,12 @@ var _ = Describe("Module", func() {
 		}
 
 		jsonData, err := json.Marshal(oModule)
+		Ω(err).Should(Succeed())
 		addModuleCmdData = string(jsonData)
 		Ω(addModuleCmd.RunE(nil, []string{})).Should(Succeed())
 		oModule.Name = "test1"
 		jsonData, err = json.Marshal(oModule)
+		Ω(err).Should(Succeed())
 		addModuleCmdData = string(jsonData)
 		// hashcode of the mta.yaml is wrong now
 		Ω(addModuleCmd.RunE(nil, []string{})).Should(HaveOccurred())

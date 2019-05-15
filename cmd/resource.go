@@ -2,7 +2,7 @@ package commands
 
 import (
 	"gopkg.in/yaml.v3"
-	
+
 	"github.com/spf13/cobra"
 
 	"github.com/SAP/cloud-mta/internal/logs"

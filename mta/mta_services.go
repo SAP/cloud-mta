@@ -190,11 +190,11 @@ func ModifyMta(path string, modify func() error, hashcode int, isNew bool) (rerr
 
 func ifFileChangeable(path string, isNew, exists, sameHash bool) error {
 	if isNew && exists {
-		return errors.New(fmt.Sprintf(`the "%s" file exists`, path))
+		return fmt.Errorf(`the "%s" file exists`, path)
 	} else if !isNew && !exists {
-		return errors.New(fmt.Sprintf(`the "%s" file is not found'`, path))
+		return fmt.Errorf(`the "%s" file is not found'`, path)
 	} else if !sameHash {
-		return errors.New(fmt.Sprintf(`the "%s" file changed`, path))
+		return fmt.Errorf(`the "%s" file changed`, path)
 	}
 	return nil
 }

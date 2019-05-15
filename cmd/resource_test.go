@@ -33,10 +33,12 @@ var _ = Describe("Resource", func() {
 		}
 
 		jsonData, err := json.Marshal(&oResource)
+		Ω(err).Should(Succeed())
 		addResourceCmdData = string(jsonData)
 		Ω(addResourceCmd.RunE(nil, []string{})).Should(Succeed())
 		oResource.Name = "test1"
 		jsonData, err = json.Marshal(oResource)
+		Ω(err).Should(Succeed())
 		addResourceCmdData = string(jsonData)
 		// hashcode of the mta.yaml is wrong now
 		Ω(addResourceCmd.RunE(nil, []string{})).Should(HaveOccurred())
