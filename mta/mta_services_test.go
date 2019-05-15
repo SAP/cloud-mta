@@ -13,7 +13,6 @@ import (
 	. "github.com/onsi/gomega"
 	"time"
 	"sync"
-	"fmt"
 )
 
 var _ = Describe("MtaServices", func() {
@@ -306,29 +305,34 @@ var _ = Describe("Module", func() {
 		mtaPath := getTestPath("result", "mta.yaml")
 		Ω(CopyFile(getTestPath("mta.yaml"), mtaPath, os.Create)).Should(Succeed())
 		mtaHashCode, _, err := GetMtaHash(mtaPath)
+		Ω(err).Should(Succeed())
 		var wg sync.WaitGroup
 		wg.Add(1)
+		var err1 error
 		go func() {
-			err = ModifyMta(mtaPath, func() error {
+			err1 = ModifyMta(mtaPath, func() error {
 				time.Sleep(time.Second)
 				return nil
 			}, mtaHashCode, false)
 			defer wg.Done()
-			Ω(err).Should(Succeed())
 		}()
 		time.Sleep(time.Millisecond * 200)
 		wg.Add(1)
+		var err2 error
 		go func() {
-			err = ModifyMta(mtaPath, func() error {
+			err2 = ModifyMta(mtaPath, func() error {
 				time.Sleep(time.Second)
 				return nil
 			}, mtaHashCode, false)
 			defer wg.Done()
-			Ω(err).Should(HaveOccurred())
-			fmt.Println(err.Error())
-			Ω(err.Error()).Should(ContainSubstring("failed to lock"))
 		}()
 		wg.Wait()
+		Ω(err1==nil && err2!=nil || err1!=nil && err2==nil).Should(BeTrue())
+		if err1==nil{
+			Ω(err2.Error()).Should(ContainSubstring("failed to lock"))
+		} else {
+			Ω(err1.Error()).Should(ContainSubstring("failed to lock"))
+		}
 	})
 })
 
