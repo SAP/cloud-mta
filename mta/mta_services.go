@@ -109,6 +109,24 @@ func AddResource(path string, resourceDataJSON string, marshal func(interface{})
 	return saveMTA(path, mta, marshal)
 }
 
+//GetModules - get all modules
+func GetModules(path string) ([]*Module, error) {
+	mta, err := getMtaFromFile(path)
+	if err != nil {
+		return nil, err
+	}
+	return mta.Modules, nil
+}
+
+//GetResources - get all resources
+func GetResources(path string) ([]*Resource, error) {
+	mta, err := getMtaFromFile(path)
+	if err != nil {
+		return nil, err
+	}
+	return mta.Resources, nil
+}
+
 // CopyFile - copy from source path to target path
 func CopyFile(src, dst string, create func(string) (*os.File, error)) (rerr error) {
 	in, err := os.Open(src)

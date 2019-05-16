@@ -181,6 +181,40 @@ var _ = Describe("MtaServices", func() {
 		})
 	})
 
+	var _ = Describe("getModules", func() {
+		It("Get modules", func() {
+			oModule := Module{
+				Name: "testModule",
+				Type: "testType",
+				Path: "test",
+			}
+
+			mtaPath := getTestPath("result", "temp.mta.yaml")
+
+			jsonRootData, err := json.Marshal(oMtaInput)
+			Ω(err).Should(Succeed())
+			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
+
+			jsonModuleData, err := json.Marshal(oModule)
+			Ω(err).Should(Succeed())
+			Ω(AddModule(mtaPath, string(jsonModuleData), ghodss.Marshal)).Should(Succeed())
+
+			oMtaInput.Modules = append(oMtaInput.Modules, &oModule)
+			Ω(mtaPath).Should(BeAnExistingFile())
+
+			modules, err := GetModules(mtaPath)
+			Ω(err).Should(Succeed())
+			Ω(reflect.DeepEqual(oMtaInput.Modules, modules)).Should(BeTrue())
+		})
+
+		It("Get modules from a non existing mta.yaml file", func() {
+			mtaPath := getTestPath("result", "mta.yaml")
+			modules, err := GetModules(mtaPath)
+			Ω(err).Should(HaveOccurred())
+			Ω(modules).Should(BeNil())
+		})
+	})
+
 	var _ = Describe("addResource", func() {
 		It("Add resource", func() {
 			oResource := Resource{
@@ -254,6 +288,39 @@ var _ = Describe("MtaServices", func() {
 			jsonResourceData, err := json.Marshal(oResource)
 			Ω(err).Should(Succeed())
 			Ω(AddResource(mtaPath, string(jsonResourceData), marshalErr)).Should(HaveOccurred())
+		})
+	})
+
+	var _ = Describe("getResources", func() {
+		It("Get resources", func() {
+			oResource := Resource{
+				Name: "testResource",
+				Type: "testType",
+			}
+
+			mtaPath := getTestPath("result", "temp.mta.yaml")
+
+			jsonRootData, err := json.Marshal(oMtaInput)
+			Ω(err).Should(Succeed())
+			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
+
+			jsonResourceData, err := json.Marshal(oResource)
+			Ω(err).Should(Succeed())
+			Ω(AddResource(mtaPath, string(jsonResourceData), ghodss.Marshal)).Should(Succeed())
+
+			oMtaInput.Resources = append(oMtaInput.Resources, &oResource)
+			Ω(mtaPath).Should(BeAnExistingFile())
+
+			resources, err := GetResources(mtaPath)
+			Ω(err).Should(Succeed())
+			Ω(reflect.DeepEqual(oMtaInput.Resources, resources)).Should(BeTrue())
+		})
+
+		It("Get resources from a non existing mta.yaml file", func() {
+			mtaPath := getTestPath("result", "mta.yaml")
+			resources, err := GetResources(mtaPath)
+			Ω(err).Should(HaveOccurred())
+			Ω(resources).Should(BeNil())
 		})
 	})
 })

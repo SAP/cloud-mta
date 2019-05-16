@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"encoding/json"
+	"fmt"
 	"gopkg.in/yaml.v3"
 
 	"github.com/spf13/cobra"
@@ -12,6 +14,7 @@ import (
 var addResourceMtaCmdPath string
 var addResourceCmdData string
 var addResourceCmdHashcode int
+var getResourcesCmdPath string
 
 func init() {
 	// set flags of commands
@@ -21,6 +24,8 @@ func init() {
 		"data in JSON format")
 	addResourceCmd.Flags().IntVarP(&addResourceCmdHashcode, "hashcode", "h", 0,
 		"data hashcode")
+	getResourcesCmd.Flags().StringVarP(&getResourcesCmdPath, "path", "p", "",
+		"the path to the yaml file")
 }
 
 // addResourceCmd - Add new resource
@@ -36,6 +41,33 @@ var addResourceCmd = &cobra.Command{
 		}, addResourceCmdHashcode, false)
 		if err != nil {
 			logs.Logger.Error(err)
+		}
+		return err
+	},
+	Hidden:        true,
+	SilenceUsage:  true,
+	SilenceErrors: true,
+}
+
+// getResourcesCmd - Get all resources
+var getResourcesCmd = &cobra.Command{
+	Use:   "resources",
+	Short: "Get all resources",
+	Long:  "Get all resources",
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		logs.Logger.Info("get resources")
+		resources, err := mta.GetResources(getResourcesCmdPath)
+		if err != nil {
+			logs.Logger.Error(err)
+		}
+		if resources != nil {
+			output, rerr := json.Marshal(resources)
+			if rerr != nil {
+				logs.Logger.Error(rerr)
+				return rerr
+			}
+			fmt.Print(string(output))
 		}
 		return err
 	},
