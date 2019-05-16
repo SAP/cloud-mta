@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
@@ -55,7 +56,11 @@ var getResourcesCmd = &cobra.Command{
 			logs.Logger.Error(err)
 		}
 		if resources != nil {
-			fmt.Print(string(resources))
+			json, err := json.Marshal(resources)
+			if err != nil {
+				logs.Logger.Error(err)
+			}
+			fmt.Print(string(json))
 		}
 		return err
 	},

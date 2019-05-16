@@ -200,12 +200,7 @@ var _ = Describe("MtaServices", func() {
 
 			modules, err := GetModules(mtaPath)
 			Ω(err).Should(Succeed())
-
-			oGetModulesOutput := []*Module{}
-
-			err = yaml.Unmarshal(modules, &oGetModulesOutput)
-			Ω(err).Should(Succeed())
-			Ω(reflect.DeepEqual(oMtaInput.Modules, oGetModulesOutput)).Should(BeTrue())
+			Ω(reflect.DeepEqual(oMtaInput.Modules, modules)).Should(BeTrue())
 		})
 
 		It("Get modules from a non existing mta.yaml file", func() {
@@ -314,12 +309,7 @@ var _ = Describe("MtaServices", func() {
 
 			resources, err := GetResources(mtaPath)
 			Ω(err).Should(Succeed())
-
-			oGetResourcesOutput := []*Resource{}
-
-			err = yaml.Unmarshal(resources, &oGetResourcesOutput)
-			Ω(err).Should(Succeed())
-			Ω(reflect.DeepEqual(oMtaInput.Resources, oGetResourcesOutput)).Should(BeTrue())
+			Ω(reflect.DeepEqual(oMtaInput.Resources, resources)).Should(BeTrue())
 		})
 
 		It("Get resources from a non existing mta.yaml file", func() {
