@@ -327,7 +327,7 @@
       }
     },
     "parameters": {
-      "description": "Global parameters",
+      "description": "Global parameters that are used when building or deploying the application",
       "$ref": "#/definitions/parameters"
     },
     "parameters-metadata": {
