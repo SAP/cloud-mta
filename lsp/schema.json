@@ -161,11 +161,16 @@
                   "description": "Module properties whose values are determined by the provided properties. These properties can be referenced by the tilde notation: \"~{<provided-property-name>}\" ",
                   "$ref": "#/definitions/properties"
                 },
+                "properties-metadata": {
+                  "description": "Additional information about the modules's properties.",
+                  "$ref": "#/definitions/properties-metadata"
+                },
                 "parameters": {
                   "description": "Configuration parameters that are used when deploying the module to the target runtime environment.",
                   "$ref": "#/definitions/parameters"
                 },
                 "parameters-metadata": {
+                  "description": "Additional information about the modules's parameters.",
                   "$ref": "#/definitions/parameters-metadata"
                 },
                 "includes": {
