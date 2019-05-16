@@ -290,7 +290,7 @@ var _ = Describe("Module", func() {
 			return AddModule(getTestPath("result", "mtaX.yaml"), moduleJSON, yaml.Marshal)
 		}, mtaHashCode, false)
 		Ω(err).Should(HaveOccurred())
-		Ω(err.Error()).Should(ContainSubstring("file is not found"))
+		Ω(err.Error()).Should(ContainSubstring("file does not exist"))
 		oModule.Name = "test1"
 		jsonData, err = json.Marshal(oModule)
 		moduleJSON = string(jsonData)
@@ -329,9 +329,9 @@ var _ = Describe("Module", func() {
 		wg.Wait()
 		Ω(err1 == nil && err2 != nil || err1 != nil && err2 == nil).Should(BeTrue())
 		if err1 == nil {
-			Ω(err2.Error()).Should(ContainSubstring("failed to lock"))
+			Ω(err2.Error()).Should(ContainSubstring("is locked"))
 		} else {
-			Ω(err1.Error()).Should(ContainSubstring("failed to lock"))
+			Ω(err1.Error()).Should(ContainSubstring("is locked"))
 		}
 	})
 })
