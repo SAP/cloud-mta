@@ -59,6 +59,7 @@ var getResourcesCmd = &cobra.Command{
 			output, rerr := json.Marshal(resources)
 			if rerr != nil {
 				logs.Logger.Error(rerr)
+				return rerr
 			}
 			fmt.Print(string(output))
 		}

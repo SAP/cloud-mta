@@ -59,10 +59,10 @@ var getModulesCmd = &cobra.Command{
 			output, rerr := json.Marshal(modules)
 			if rerr != nil {
 				logs.Logger.Error(rerr)
+				return rerr
 			}
 			fmt.Print(string(output))
 		}
-
 		return err
 	},
 	Hidden:        true,
