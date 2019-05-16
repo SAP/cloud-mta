@@ -14,6 +14,8 @@ var addModuleMtaCmdPath string
 var addModuleCmdData string
 var addModuleCmdHashcode int
 var getModulesCmdPath string
+var updateModuleMtaCmdPath string
+var updateModuleCmdData string
 
 func init() {
 	// set flags of commands
@@ -25,6 +27,10 @@ func init() {
 		"data hashcode")
 	getModulesCmd.Flags().StringVarP(&getModulesCmdPath, "path", "p", "",
 		"the path to the yaml file")
+	updateModuleCmd.Flags().StringVarP(&updateModuleMtaCmdPath, "path", "p", "",
+		"the path to the yaml file")
+	updateModuleCmd.Flags().StringVarP(&updateModuleCmdData, "data", "d", "",
+		"data in JSON format")
 }
 
 // addModuleCmd Add new module
@@ -67,6 +73,25 @@ var getModulesCmd = &cobra.Command{
 				return rerr
 			}
 			fmt.Print(string(output))
+		}
+		return err
+	},
+	Hidden:        true,
+	SilenceUsage:  true,
+	SilenceErrors: true,
+}
+
+// updateModuleCmd updates an existing module
+var updateModuleCmd = &cobra.Command{
+	Use:   "module",
+	Short: "Update existing module",
+	Long:  "Update existing module",
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		logs.Logger.Info("update existing module")
+		err := mta.UpdateModule(updateModuleMtaCmdPath, updateModuleCmdData, yaml.Marshal)
+		if err != nil {
+			logs.Logger.Error(err)
 		}
 		return err
 	},

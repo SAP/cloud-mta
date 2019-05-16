@@ -127,6 +127,96 @@ func GetResources(path string) ([]*Resource, error) {
 	return mta.Resources, nil
 }
 
+// UpdateModule updates an existing module according to the module name. In case more than one module with this
+// name exists, one of the modules is updated to the existing structure.
+func UpdateModule(path string, moduleDataJSON string, marshal func(interface{}) ([]byte, error)) error {
+	mtaContent, err := ioutil.ReadFile(filepath.Join(path))
+	if err != nil {
+		return err
+	}
+
+	mtaObj, err := Unmarshal(mtaContent)
+	if err != nil {
+		return err
+	}
+
+	moduleDataYaml, err := ghodss.JSONToYAML([]byte(moduleDataJSON))
+	if err != nil {
+		return err
+	}
+
+	module := Module{}
+	err = yaml.Unmarshal(moduleDataYaml, &module)
+	if err != nil {
+		return err
+	}
+
+	// Replace the first existing module with the same name
+	found := false
+	for index, existingModule := range mtaObj.Modules {
+		if existingModule.Name == module.Name {
+			mtaObj.Modules[index] = &module
+			found = true
+			break
+		}
+	}
+	if !found {
+		err = fmt.Errorf("module with name %s does not exist", module.Name)
+		return err
+	}
+
+	mtaBytes, err := marshal(mtaObj)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(path, mtaBytes, 0644)
+}
+
+// UpdateResource updates an existing resource according to the resource name. In case more than one resource with this
+// name exists, one of the resources is updated to the existing structure.
+func UpdateResource(path string, resourceDataJSON string, marshal func(interface{}) ([]byte, error)) error {
+	mtaContent, err := ioutil.ReadFile(filepath.Join(path))
+	if err != nil {
+		return err
+	}
+
+	mtaObj, err := Unmarshal(mtaContent)
+	if err != nil {
+		return err
+	}
+
+	resourceDataYaml, err := ghodss.JSONToYAML([]byte(resourceDataJSON))
+	if err != nil {
+		return err
+	}
+
+	resource := Resource{}
+	err = yaml.Unmarshal(resourceDataYaml, &resource)
+	if err != nil {
+		return err
+	}
+
+	// Replace the first existing resource with the same name
+	found := false
+	for index, existingResource := range mtaObj.Resources {
+		if existingResource.Name == resource.Name {
+			mtaObj.Resources[index] = &resource
+			found = true
+			break
+		}
+	}
+	if !found {
+		err = fmt.Errorf("resource with name %s does not exist", resource.Name)
+		return err
+	}
+
+	mtaBytes, err := marshal(mtaObj)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(path, mtaBytes, 0644)
+}
+
 // CopyFile - copy from source path to target path
 func CopyFile(src, dst string, create func(string) (*os.File, error)) (rerr error) {
 	in, err := os.Open(src)

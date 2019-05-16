@@ -7,11 +7,13 @@ import (
 func init() {
 	rootCmd.AddCommand(addCmd)
 	rootCmd.AddCommand(getCmd)
+	rootCmd.AddCommand(updateCmd)
 	rootCmd.AddCommand(createMtaCmd)
 	rootCmd.AddCommand(copyCmd)
 	rootCmd.AddCommand(deleteFileCmd)
 	addCmd.AddCommand(addModuleCmd, addResourceCmd)
 	getCmd.AddCommand(getModulesCmd, getResourcesCmd)
+	updateCmd.AddCommand(updateModuleCmd, updateResourceCmd)
 }
 
 // Parent command add any artifacts
@@ -28,6 +30,15 @@ var getCmd = &cobra.Command{
 	Use:    "get",
 	Short:  "Get artifacts",
 	Long:   "Get artifacts",
+	Hidden: true,
+	Run:    nil,
+}
+
+// Parent command to update artifacts
+var updateCmd = &cobra.Command{
+	Use:    "update",
+	Short:  "Update artifact",
+	Long:   "Update artifact",
 	Hidden: true,
 	Run:    nil,
 }
