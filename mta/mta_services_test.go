@@ -190,7 +190,7 @@ var _ = Describe("MtaServices", func() {
 			json := "{name:fff}"
 			mtaPath := getTestPath("result", "mta.yaml")
 			err := UpdateModule(mtaPath, json, ghodss.Marshal)
-			Ω(err).Should(MatchError(MatchRegexp("cannot find the path")))
+			Ω(err).Should(HaveOccurred())
 		})
 
 		It("fails when mta has wrong format", func() {
@@ -464,7 +464,7 @@ var _ = Describe("MtaServices", func() {
 			json := "{name:fff}"
 			mtaPath := getTestPath("result", "mta.yaml")
 			err := UpdateResource(mtaPath, json, ghodss.Marshal)
-			Ω(err).Should(MatchError(MatchRegexp("cannot find the path")))
+			Ω(err).Should(HaveOccurred())
 		})
 
 		It("fails when mta has wrong format", func() {
