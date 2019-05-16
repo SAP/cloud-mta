@@ -1,26 +1,35 @@
 package mta
 
 import (
+	"crypto/sha1"
+	"fmt"
+	"gopkg.in/yaml.v3"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
-	"github.com/ghodss/yaml"
+	ghodss "github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 
 	"github.com/SAP/cloud-mta/internal/fs"
 )
 
-func createMtaYamlFile(path string, mkDirs func(string, os.FileMode) error) (err error) {
+func createMtaYamlFile(path string, mkDirs func(string, os.FileMode) error) (rerr error) {
 	folder := filepath.Dir(path)
-	err = mkDirs(folder, os.ModePerm)
-	if err != nil {
-		return err
+	rerr = mkDirs(folder, os.ModePerm)
+	if rerr != nil {
+		return
 	}
-	file, err := fs.CreateFile(path)
+	file, rerr := fs.CreateFile(path)
 	defer func() {
-		err = file.Close()
+		if file != nil {
+			e := file.Close()
+			if rerr == nil {
+				rerr = e
+			}
+		}
 	}()
 
 	return
@@ -31,15 +40,18 @@ func getMtaFromFile(path string) (*MTA, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, `failed when reading %s file`, path)
 	}
+	s := string(mtaContent)
+	s = strings.Replace(s, "\r\n", "\r", -1)
+	mtaContent = []byte(s)
 	return Unmarshal(mtaContent)
 }
 
-func unmarshalData(dataJSON string, mta *MTA, o interface{}) error {
-	dataYaml, err := yaml.JSONToYAML([]byte(dataJSON))
+func unmarshalData(dataJSON string, o interface{}) error {
+	dataYaml, err := ghodss.JSONToYAML([]byte(dataJSON))
 	if err != nil {
 		return err
 	}
-	return yaml.Unmarshal(dataYaml, &o)
+	return yaml.Unmarshal(dataYaml, o)
 }
 
 func saveMTA(path string, mta *MTA, marshal func(interface{}) ([]byte, error)) error {
@@ -52,7 +64,7 @@ func saveMTA(path string, mta *MTA, marshal func(interface{}) ([]byte, error)) e
 
 // CreateMta - create MTA project
 func CreateMta(path string, mtaDataJSON string, mkDirs func(string, os.FileMode) error) error {
-	mtaDataYaml, err := yaml.JSONToYAML([]byte(mtaDataJSON))
+	mtaDataYaml, err := ghodss.JSONToYAML([]byte(mtaDataJSON))
 	if err != nil {
 		return err
 	}
@@ -65,13 +77,13 @@ func CreateMta(path string, mtaDataJSON string, mkDirs func(string, os.FileMode)
 
 //AddModule - add new module
 func AddModule(path string, moduleDataJSON string, marshal func(interface{}) ([]byte, error)) error {
-	mta, err := getMtaFromFile(path)
+	mta, err := getMtaFromFile(filepath.Join(path))
 	if err != nil {
 		return err
 	}
 
 	module := Module{}
-	err = unmarshalData(moduleDataJSON, mta, &module)
+	err = unmarshalData(moduleDataJSON, &module)
 	if err != nil {
 		return err
 	}
@@ -88,7 +100,7 @@ func AddResource(path string, resourceDataJSON string, marshal func(interface{})
 	}
 
 	resource := Resource{}
-	err = unmarshalData(resourceDataJSON, mta, &resource)
+	err = unmarshalData(resourceDataJSON, &resource)
 	if err != nil {
 		return err
 	}
@@ -146,4 +158,61 @@ func CopyFile(src, dst string, create func(string) (*os.File, error)) (rerr erro
 // DeleteFile - delete file
 func DeleteFile(path string) error {
 	return fs.DeleteFile(path)
+}
+
+// GetMtaHash - get hashcode of the mta file
+func GetMtaHash(path string) (int, bool, error) {
+	mtaContent, err := ioutil.ReadFile(filepath.Join(path))
+	if err != nil {
+		// file not exists
+		return 0, false, nil
+	}
+	h := sha1.New()
+	code, err := h.Write(mtaContent)
+	return code, true, err
+}
+
+// ModifyMta - lock and modify mta.yaml file
+func ModifyMta(path string, modify func() error, hashcode int, isNew bool) (rerr error) {
+	// create lock file
+	lockFilePath := filepath.Join(filepath.Dir(path), "mta-lock.lock")
+	file, err := os.OpenFile(lockFilePath, os.O_RDONLY|os.O_CREATE|os.O_EXCL, 0666)
+	if err != nil {
+		return fmt.Errorf(`could not modify the "%s" file; it is locked by another process`, path)
+	}
+	// unlock and remove lock file at the end of modification
+	defer func() {
+		if file == nil {
+			return
+		}
+		e := file.Close()
+		if e == nil {
+			e = os.Remove(lockFilePath)
+		}
+		if rerr == nil {
+			rerr = e
+		}
+	}()
+
+	currentHash, exists, err := GetMtaHash(path)
+
+	if err == nil {
+		err = ifFileChangeable(path, isNew, exists, currentHash == hashcode)
+	}
+	if err == nil {
+		err = modify()
+	}
+
+	return err
+}
+
+func ifFileChangeable(path string, isNew, exists, sameHash bool) error {
+	if isNew && exists {
+		return fmt.Errorf(`could not create the "%s" file; another file with this name already exists`, path)
+	} else if !isNew && !exists {
+		return fmt.Errorf(`the "%s" file does not exist`, path)
+	} else if !sameHash {
+		return fmt.Errorf(`could not update the "%s" file; it was modified by another process`, path)
+	}
+	return nil
 }
