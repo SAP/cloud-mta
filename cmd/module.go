@@ -56,11 +56,11 @@ var getModulesCmd = &cobra.Command{
 			logs.Logger.Error(err)
 		}
 		if modules != nil {
-			json, err := json.Marshal(modules)
-			if err != nil {
-				logs.Logger.Error(err)
+			output, rerr := json.Marshal(modules)
+			if rerr != nil {
+				logs.Logger.Error(rerr)
 			}
-			fmt.Print(string(json))
+			fmt.Print(string(output))
 		}
 
 		return err
