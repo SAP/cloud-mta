@@ -212,7 +212,7 @@ func ifFileChangeable(path string, isNew, exists, sameHash bool) error {
 	} else if !isNew && !exists {
 		return fmt.Errorf(`the "%s" file does not exist`, path)
 	} else if !sameHash {
-		return fmt.Errorf(`could not update the "%s" file; it was modified by another proces`, path)
+		return fmt.Errorf(`could not update the "%s" file; it was modified by another process`, path)
 	}
 	return nil
 }
