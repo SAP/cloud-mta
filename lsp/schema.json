@@ -95,11 +95,11 @@
                 ],
                 "properties": {
                   "name": {
-                    "description": "A name of an include section. This name will be used by a builder to generate a parameter section in the deployment descriptor.",
+                    "description": "The name of an \"includes\" section. This name is used by a builder to generate a parameter section in the deployment descriptor.",
                     "type": "string"
                   },
                   "path": {
-                    "description": "A path pointing to a file which contains a map of parameters, either in JSON or in YAML format.",
+                    "description": "A path pointing to a file that contains a map of parameters, either in JSON or in YAML format.",
                     "type": "string"
                   }
                 }
@@ -154,7 +154,7 @@
                   "type": "string"
                 },
                 "list": {
-                  "description": "Defines a name for a runtime lookup object, such as an environment variable, if the required property set contains multiple values, for example, if used to consume configuration data from outside this MTA project.",
+                  "description": "Defines a name for a runtime lookup object, such as an environment variable, if the required property set contains multiple values; for example, if used to consume configuration data from outside this MTA project.",
                   "type": "string"
                 },
                 "properties": {
@@ -184,11 +184,11 @@
                     ],
                     "properties": {
                       "name": {
-                        "description": "A name of an include section. This name will be used by a builder to generate a parameter section in the deployment descriptor.",
+                        "description": "The name of an \"includes\" section. This name is used by a builder to generate a parameter section in the deployment descriptor.",
                         "type": "string"
                       },
                       "path": {
-                        "description": "A path pointing to a file which contains a map of parameters, either in JSON or in YAML format.",
+                        "description": "A path pointing to a file that contains a map of parameters, either in JSON or in YAML format.",
                         "type": "string"
                       }
                     }
@@ -249,11 +249,11 @@
                 ],
                 "properties": {
                   "name": {
-                    "description": "A name of an include section. This name will be used by a builder to generate a parameter section in the deployment descriptor.",
+                    "description": "The name of an \"includes\" section. This name is used by a builder to generate a parameter section in the deployment descriptor.",
                     "type": "string"
                   },
                   "path": {
-                    "description": "A path pointing to a file which contains a map of parameters, either in JSON or in YAML format.",
+                    "description": "A path pointing to a file that contains a map of parameters, either in JSON or in YAML format.",
                     "type": "string"
                   }
                 }
@@ -310,11 +310,11 @@
                     ],
                     "properties": {
                       "name": {
-                        "description": "A name of an include section. This name will be used by a builder to generate a parameter section in the deployment descriptor.",
+                        "description": "The name of an \"includes\" section. This name is used by a builder to generate a parameter section in the deployment descriptor.",
                         "type": "string"
                       },
                       "path": {
-                        "description": "A path pointing to a file which contains a map of parameters, either in JSON or in YAML format.",
+                        "description": "A path pointing to a file that contains a map of parameters, either in JSON or in YAML format.",
                         "type": "string"
                       }
                     }
@@ -345,11 +345,11 @@
         ],
         "properties": {
           "name": {
-            "description": "A name of an include section. This name will be used by a builder to generate a parameter section in the deployment descriptor.",
+            "description": "The name of an \"includes\" section. This name is used by a builder to generate a parameter section in the deployment descriptor.",
             "type": "string"
           },
           "path": {
-            "description": "A path pointing to a file which contains a map of parameters, either in JSON or in YAML format.",
+            "description": "A path pointing to a file that contains a map of parameters, either in JSON or in YAML format.",
             "type": "string"
           }
         }
@@ -410,11 +410,11 @@
         ],
         "properties": {
           "name": {
-            "description": "A name of an include section. This name will be used by a builder to generate a parameter section in the deployment descriptor.",
+            "description": "The name of an \"includes\" section. This name is used by a builder to generate a parameter section in the deployment descriptor.",
             "type": "string"
           },
           "path": {
-            "description": "A path pointing to a file which contains a map of parameters, either in JSON or in YAML format.",
+            "description": "A path pointing to a file that contains a map of parameters, either in JSON or in YAML format.",
             "type": "string"
           }
         }
