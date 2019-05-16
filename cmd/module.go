@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
@@ -55,7 +56,12 @@ var getModulesCmd = &cobra.Command{
 			logs.Logger.Error(err)
 		}
 		if modules != nil {
-			fmt.Print(string(modules))
+			output, rerr := json.Marshal(modules)
+			if rerr != nil {
+				logs.Logger.Error(rerr)
+				return rerr
+			}
+			fmt.Print(string(output))
 		}
 		return err
 	},

@@ -98,21 +98,21 @@ func AddResource(path string, resourceDataJSON string, marshal func(interface{})
 }
 
 //GetModules - get all modules
-func GetModules(path string) ([]byte, error) {
+func GetModules(path string) ([]*Module, error) {
 	mta, err := getMtaFromFile(path)
 	if err != nil {
 		return nil, err
 	}
-	return yaml.Marshal(mta.Modules)
+	return mta.Modules, nil
 }
 
 //GetResources - get all resources
-func GetResources(path string) ([]byte, error) {
+func GetResources(path string) ([]*Resource, error) {
 	mta, err := getMtaFromFile(path)
 	if err != nil {
 		return nil, err
 	}
-	return yaml.Marshal(mta.Resources)
+	return mta.Resources, nil
 }
 
 // CopyFile - copy from source path to target path
