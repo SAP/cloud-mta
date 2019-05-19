@@ -22,7 +22,7 @@ func init() {
 		"the path to the yaml file")
 	addResourceCmd.Flags().StringVarP(&addResourceCmdData, "data", "d", "",
 		"data in JSON format")
-	addResourceCmd.Flags().IntVarP(&addResourceCmdHashcode, "hashcode", "h", 0,
+	addResourceCmd.Flags().IntVarP(&addResourceCmdHashcode, "hashcode", "c", 0,
 		"data hashcode")
 	getResourcesCmd.Flags().StringVarP(&getResourcesCmdPath, "path", "p", "",
 		"the path to the yaml file")

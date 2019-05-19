@@ -21,7 +21,7 @@ func init() {
 		"the path to the yaml file")
 	addModuleCmd.Flags().StringVarP(&addModuleCmdData, "data", "d", "",
 		"data in JSON format")
-	addModuleCmd.Flags().IntVarP(&addModuleCmdHashcode, "hashcode", "h", 0,
+	addModuleCmd.Flags().IntVarP(&addModuleCmdHashcode, "hashcode", "c", 0,
 		"data hashcode")
 	getModulesCmd.Flags().StringVarP(&getModulesCmdPath, "path", "p", "",
 		"the path to the yaml file")
