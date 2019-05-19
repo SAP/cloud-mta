@@ -58,6 +58,7 @@ func Unmarshal(content []byte) (*MTA, error) {
 	return &mtaStr, err
 }
 
+// Marshal marshals an MTA object
 func Marshal(omta *MTA) ([]byte, error) {
 	return yamlv2.Marshal(&omta)
 }
