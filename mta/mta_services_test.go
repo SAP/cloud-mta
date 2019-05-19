@@ -3,14 +3,12 @@ package mta
 import (
 	"encoding/json"
 	"errors"
-	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"os"
 	"reflect"
 	"sync"
 	"time"
 
-	ghodss "github.com/ghodss/yaml"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -118,7 +116,7 @@ var _ = Describe("MtaServices", func() {
 
 			jsonModuleData, err := json.Marshal(oModule)
 			Ω(err).Should(Succeed())
-			Ω(AddModule(mtaPath, string(jsonModuleData), ghodss.Marshal)).Should(Succeed())
+			Ω(AddModule(mtaPath, string(jsonModuleData), Marshal)).Should(Succeed())
 
 			oMtaInput.Modules = append(oMtaInput.Modules, &oModule)
 			Ω(mtaPath).Should(BeAnExistingFile())
@@ -132,7 +130,7 @@ var _ = Describe("MtaServices", func() {
 		It("Add module to non existing mta.yaml file", func() {
 			json := "{name:fff}"
 			mtaPath := getTestPath("result", "mta.yaml")
-			Ω(AddModule(mtaPath, json, ghodss.Marshal)).Should(HaveOccurred())
+			Ω(AddModule(mtaPath, json, Marshal)).Should(HaveOccurred())
 		})
 
 		It("Add module to wrong mta.yaml format", func() {
@@ -148,7 +146,7 @@ var _ = Describe("MtaServices", func() {
 
 			jsonModuleData, err := json.Marshal(oModule)
 			Ω(err).Should(Succeed())
-			Ω(AddModule(mtaPath, string(jsonModuleData), ghodss.Marshal)).Should(HaveOccurred())
+			Ω(AddModule(mtaPath, string(jsonModuleData), Marshal)).Should(HaveOccurred())
 		})
 
 		It("Add module with wrong json format", func() {
@@ -159,7 +157,7 @@ var _ = Describe("MtaServices", func() {
 			Ω(err).Should(Succeed())
 			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
 
-			Ω(AddModule(mtaPath, wrongJSON, ghodss.Marshal)).Should(HaveOccurred())
+			Ω(AddModule(mtaPath, wrongJSON, Marshal)).Should(HaveOccurred())
 		})
 
 		It("Add module fails to marshal", func() {
@@ -197,7 +195,7 @@ var _ = Describe("MtaServices", func() {
 
 			jsonModuleData, err := json.Marshal(oModule)
 			Ω(err).Should(Succeed())
-			Ω(AddModule(mtaPath, string(jsonModuleData), ghodss.Marshal)).Should(Succeed())
+			Ω(AddModule(mtaPath, string(jsonModuleData), Marshal)).Should(Succeed())
 
 			oMtaInput.Modules = append(oMtaInput.Modules, &oModule)
 			Ω(mtaPath).Should(BeAnExistingFile())
@@ -230,7 +228,7 @@ var _ = Describe("MtaServices", func() {
 
 			jsonResourceData, err := json.Marshal(oResource)
 			Ω(err).Should(Succeed())
-			Ω(AddResource(mtaPath, string(jsonResourceData), ghodss.Marshal)).Should(Succeed())
+			Ω(AddResource(mtaPath, string(jsonResourceData), Marshal)).Should(Succeed())
 
 			oMtaInput.Resources = append(oMtaInput.Resources, &oResource)
 			Ω(mtaPath).Should(BeAnExistingFile())
@@ -244,7 +242,7 @@ var _ = Describe("MtaServices", func() {
 		It("Add resource to non existing mta.yaml file", func() {
 			json := "{name:fff}"
 			mtaPath := getTestPath("result", "mta.yaml")
-			Ω(AddResource(mtaPath, json, ghodss.Marshal)).Should(HaveOccurred())
+			Ω(AddResource(mtaPath, json, Marshal)).Should(HaveOccurred())
 		})
 
 		It("Add resource to wrong mta.yaml format", func() {
@@ -259,7 +257,7 @@ var _ = Describe("MtaServices", func() {
 
 			jsonResourceData, err := json.Marshal(oResource)
 			Ω(err).Should(Succeed())
-			Ω(AddResource(mtaPath, string(jsonResourceData), ghodss.Marshal)).Should(HaveOccurred())
+			Ω(AddResource(mtaPath, string(jsonResourceData), Marshal)).Should(HaveOccurred())
 		})
 
 		It("Add resource with wrong json format", func() {
@@ -270,7 +268,7 @@ var _ = Describe("MtaServices", func() {
 			Ω(err).Should(Succeed())
 			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
 
-			Ω(AddResource(mtaPath, wrongJSON, ghodss.Marshal)).Should(HaveOccurred())
+			Ω(AddResource(mtaPath, wrongJSON, Marshal)).Should(HaveOccurred())
 		})
 
 		It("Add resource fails to marshal", func() {
@@ -306,7 +304,7 @@ var _ = Describe("MtaServices", func() {
 
 			jsonResourceData, err := json.Marshal(oResource)
 			Ω(err).Should(Succeed())
-			Ω(AddResource(mtaPath, string(jsonResourceData), ghodss.Marshal)).Should(Succeed())
+			Ω(AddResource(mtaPath, string(jsonResourceData), Marshal)).Should(Succeed())
 
 			oMtaInput.Resources = append(oMtaInput.Resources, &oResource)
 			Ω(mtaPath).Should(BeAnExistingFile())
@@ -349,12 +347,12 @@ var _ = Describe("Module", func() {
 		jsonData, err := json.Marshal(oModule)
 		moduleJSON := string(jsonData)
 		err = ModifyMta(mtaPath, func() error {
-			return AddModule(mtaPath, moduleJSON, yaml.Marshal)
+			return AddModule(mtaPath, moduleJSON, Marshal)
 		}, mtaHashCode, false)
 		Ω(err).Should(Succeed())
 		// wrong yaml
 		err = ModifyMta(getTestPath("result", "mtaX.yaml"), func() error {
-			return AddModule(getTestPath("result", "mtaX.yaml"), moduleJSON, yaml.Marshal)
+			return AddModule(getTestPath("result", "mtaX.yaml"), moduleJSON, Marshal)
 		}, mtaHashCode, false)
 		Ω(err).Should(HaveOccurred())
 		Ω(err.Error()).Should(ContainSubstring("file does not exist"))
@@ -363,7 +361,7 @@ var _ = Describe("Module", func() {
 		moduleJSON = string(jsonData)
 		// hashcode of the mta.yaml is wrong now
 		err = ModifyMta(mtaPath, func() error {
-			return AddModule(mtaPath, moduleJSON, ghodss.Marshal)
+			return AddModule(mtaPath, moduleJSON, Marshal)
 		}, mtaHashCode, false)
 		Ω(err).Should(HaveOccurred())
 	})
@@ -411,6 +409,6 @@ func createErr(path string) (*os.File, error) {
 	return nil, errors.New("err")
 }
 
-func marshalErr(o interface{}) ([]byte, error) {
+func marshalErr(o *MTA) ([]byte, error) {
 	return nil, errors.New("err")
 }

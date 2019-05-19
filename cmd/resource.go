@@ -3,7 +3,6 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
-	"gopkg.in/yaml.v3"
 
 	"github.com/spf13/cobra"
 
@@ -37,7 +36,7 @@ var addResourceCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logs.Logger.Info("add new resource")
 		err := mta.ModifyMta(addResourceMtaCmdPath, func() error {
-			return mta.AddResource(addResourceMtaCmdPath, addResourceCmdData, yaml.Marshal)
+			return mta.AddResource(addResourceMtaCmdPath, addResourceCmdData, mta.Marshal)
 		}, addResourceCmdHashcode, false)
 		if err != nil {
 			logs.Logger.Error(err)
