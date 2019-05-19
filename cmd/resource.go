@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/SAP/cloud-mta/internal/logs"
 	"github.com/SAP/cloud-mta/mta"
-	ghodss "github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 )
 
 var addResourceMtaCmdPath string
@@ -44,7 +44,7 @@ var addResourceCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logs.Logger.Info("add new resource")
 		err := mta.ModifyMta(addResourceMtaCmdPath, func() error {
-			return mta.AddResource(addResourceMtaCmdPath, addResourceCmdData, ghodss.Marshal)
+			return mta.AddResource(addResourceMtaCmdPath, addResourceCmdData, yaml.Marshal)
 		}, addResourceCmdHashcode, false)
 		if err != nil {
 			logs.Logger.Error(err)
@@ -92,7 +92,7 @@ var updateResourceCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logs.Logger.Info("update existing resource")
 		err := mta.ModifyMta(addResourceMtaCmdPath, func() error {
-			return mta.UpdateResource(updateResourceMtaCmdPath, updateResourceCmdData, ghodss.Marshal)
+			return mta.UpdateResource(updateResourceMtaCmdPath, updateResourceCmdData, yaml.Marshal)
 		}, addResourceCmdHashcode, false)
 		if err != nil {
 			logs.Logger.Error(err)
