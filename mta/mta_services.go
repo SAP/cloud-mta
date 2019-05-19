@@ -140,13 +140,8 @@ func UpdateModule(path string, moduleDataJSON string, marshal func(interface{}) 
 		return err
 	}
 
-	moduleDataYaml, err := ghodss.JSONToYAML([]byte(moduleDataJSON))
-	if err != nil {
-		return err
-	}
-
 	module := Module{}
-	err = yaml.Unmarshal(moduleDataYaml, &module)
+	err = unmarshalData(moduleDataJSON, &module)
 	if err != nil {
 		return err
 	}
@@ -185,13 +180,8 @@ func UpdateResource(path string, resourceDataJSON string, marshal func(interface
 		return err
 	}
 
-	resourceDataYaml, err := ghodss.JSONToYAML([]byte(resourceDataJSON))
-	if err != nil {
-		return err
-	}
-
 	resource := Resource{}
-	err = yaml.Unmarshal(resourceDataYaml, &resource)
+	err = unmarshalData(resourceDataJSON, &resource)
 	if err != nil {
 		return err
 	}

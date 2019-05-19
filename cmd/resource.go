@@ -17,6 +17,7 @@ var addResourceCmdHashcode int
 var getResourcesCmdPath string
 var updateResourceMtaCmdPath string
 var updateResourceCmdData string
+var updateResourceCmdHashcode int
 
 func init() {
 	// set flags of commands
@@ -24,7 +25,7 @@ func init() {
 		"the path to the yaml file")
 	addResourceCmd.Flags().StringVarP(&addResourceCmdData, "data", "d", "",
 		"data in JSON format")
-	addResourceCmd.Flags().IntVarP(&addResourceCmdHashcode, "hashcode", "h", 0,
+	addResourceCmd.Flags().IntVarP(&addResourceCmdHashcode, "hashcode", "c", 0,
 		"data hashcode")
 	getResourcesCmd.Flags().StringVarP(&getResourcesCmdPath, "path", "p", "",
 		"the path to the yaml file")
@@ -32,6 +33,8 @@ func init() {
 		"the path to the yaml file")
 	updateResourceCmd.Flags().StringVarP(&updateResourceCmdData, "data", "d", "",
 		"data in JSON format")
+	updateResourceCmd.Flags().IntVarP(&updateResourceCmdHashcode, "hashcode", "c", 0,
+		"data hashcode")
 }
 
 // addResourceCmd - Add new resource
@@ -90,7 +93,9 @@ var updateResourceCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logs.Logger.Info("update existing resource")
-		err := mta.UpdateResource(updateResourceMtaCmdPath, updateResourceCmdData, yaml.Marshal)
+		err := mta.ModifyMta(addResourceMtaCmdPath, func() error {
+			return mta.UpdateResource(updateResourceMtaCmdPath, updateResourceCmdData, yaml.Marshal)
+		}, addResourceCmdHashcode, false)
 		if err != nil {
 			logs.Logger.Error(err)
 		}
