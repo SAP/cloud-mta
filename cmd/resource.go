@@ -3,12 +3,10 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
-	"gopkg.in/yaml.v3"
-
-	"github.com/spf13/cobra"
-
 	"github.com/SAP/cloud-mta/internal/logs"
 	"github.com/SAP/cloud-mta/mta"
+	ghodss "github.com/ghodss/yaml"
+	"github.com/spf13/cobra"
 )
 
 var addResourceMtaCmdPath string
@@ -46,7 +44,7 @@ var addResourceCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logs.Logger.Info("add new resource")
 		err := mta.ModifyMta(addResourceMtaCmdPath, func() error {
-			return mta.AddResource(addResourceMtaCmdPath, addResourceCmdData, yaml.Marshal)
+			return mta.AddResource(addResourceMtaCmdPath, addResourceCmdData, ghodss.Marshal)
 		}, addResourceCmdHashcode, false)
 		if err != nil {
 			logs.Logger.Error(err)
@@ -94,7 +92,7 @@ var updateResourceCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logs.Logger.Info("update existing resource")
 		err := mta.ModifyMta(addResourceMtaCmdPath, func() error {
-			return mta.UpdateResource(updateResourceMtaCmdPath, updateResourceCmdData, yaml.Marshal)
+			return mta.UpdateResource(updateResourceMtaCmdPath, updateResourceCmdData, ghodss.Marshal)
 		}, addResourceCmdHashcode, false)
 		if err != nil {
 			logs.Logger.Error(err)

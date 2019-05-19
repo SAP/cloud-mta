@@ -3,11 +3,10 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
-
 	"github.com/SAP/cloud-mta/internal/logs"
 	"github.com/SAP/cloud-mta/mta"
+	ghodss "github.com/ghodss/yaml"
+	"github.com/spf13/cobra"
 )
 
 var addModuleMtaCmdPath string
@@ -45,7 +44,7 @@ var addModuleCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logs.Logger.Info("add new module")
 		err := mta.ModifyMta(addModuleMtaCmdPath, func() error {
-			return mta.AddModule(addModuleMtaCmdPath, addModuleCmdData, yaml.Marshal)
+			return mta.AddModule(addModuleMtaCmdPath, addModuleCmdData, ghodss.Marshal)
 		}, addModuleCmdHashcode, false)
 		if err != nil {
 			logs.Logger.Error(err)
@@ -93,7 +92,7 @@ var updateModuleCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logs.Logger.Info("update existing module")
 		err := mta.ModifyMta(addModuleMtaCmdPath, func() error {
-			return mta.UpdateModule(updateModuleMtaCmdPath, updateModuleCmdData, yaml.Marshal)
+			return mta.UpdateModule(updateModuleMtaCmdPath, updateModuleCmdData, ghodss.Marshal)
 		}, updateModuleCmdHashcode, false)
 		if err != nil {
 			logs.Logger.Error(err)
