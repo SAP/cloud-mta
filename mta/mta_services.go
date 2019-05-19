@@ -130,12 +130,7 @@ func GetResources(path string) ([]*Resource, error) {
 // UpdateModule updates an existing module according to the module name. In case more than one module with this
 // name exists, one of the modules is updated to the existing structure.
 func UpdateModule(path string, moduleDataJSON string, marshal func(interface{}) ([]byte, error)) error {
-	mtaContent, err := ioutil.ReadFile(filepath.Join(path))
-	if err != nil {
-		return err
-	}
-
-	mtaObj, err := Unmarshal(mtaContent)
+	mtaObj, err := getMtaFromFile(path)
 	if err != nil {
 		return err
 	}
@@ -160,22 +155,13 @@ func UpdateModule(path string, moduleDataJSON string, marshal func(interface{}) 
 		return err
 	}
 
-	mtaBytes, err := marshal(mtaObj)
-	if err != nil {
-		return err
-	}
-	return ioutil.WriteFile(path, mtaBytes, 0644)
+	return saveMTA(path, mtaObj, marshal)
 }
 
 // UpdateResource updates an existing resource according to the resource name. In case more than one resource with this
 // name exists, one of the resources is updated to the existing structure.
 func UpdateResource(path string, resourceDataJSON string, marshal func(interface{}) ([]byte, error)) error {
-	mtaContent, err := ioutil.ReadFile(filepath.Join(path))
-	if err != nil {
-		return err
-	}
-
-	mtaObj, err := Unmarshal(mtaContent)
+	mtaObj, err := getMtaFromFile(path)
 	if err != nil {
 		return err
 	}
@@ -200,11 +186,7 @@ func UpdateResource(path string, resourceDataJSON string, marshal func(interface
 		return err
 	}
 
-	mtaBytes, err := marshal(mtaObj)
-	if err != nil {
-		return err
-	}
-	return ioutil.WriteFile(path, mtaBytes, 0644)
+	return saveMTA(path, mtaObj, marshal)
 }
 
 // CopyFile - copy from source path to target path
