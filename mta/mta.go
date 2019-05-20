@@ -5,6 +5,7 @@ package mta
 import (
 	"bytes"
 	"fmt"
+	yamlv2 "gopkg.in/yaml.v2"
 	"gopkg.in/yaml.v3"
 )
 
@@ -55,4 +56,9 @@ func Unmarshal(content []byte) (*MTA, error) {
 	mtaStr := MTA{}
 	err := dec.Decode(&mtaStr)
 	return &mtaStr, err
+}
+
+// Marshal marshals an MTA object
+func Marshal(omta *MTA) ([]byte, error) {
+	return yamlv2.Marshal(&omta)
 }

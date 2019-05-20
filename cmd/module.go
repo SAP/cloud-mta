@@ -6,7 +6,6 @@ import (
 	"github.com/SAP/cloud-mta/internal/logs"
 	"github.com/SAP/cloud-mta/mta"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 )
 
 var addModuleMtaCmdPath string
@@ -44,7 +43,7 @@ var addModuleCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logs.Logger.Info("add new module")
 		err := mta.ModifyMta(addModuleMtaCmdPath, func() error {
-			return mta.AddModule(addModuleMtaCmdPath, addModuleCmdData, yaml.Marshal)
+			return mta.AddModule(addModuleMtaCmdPath, addModuleCmdData, mta.Marshal)
 		}, addModuleCmdHashcode, false)
 		if err != nil {
 			logs.Logger.Error(err)
@@ -92,7 +91,7 @@ var updateModuleCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logs.Logger.Info("update existing module")
 		err := mta.ModifyMta(addModuleMtaCmdPath, func() error {
-			return mta.UpdateModule(updateModuleMtaCmdPath, updateModuleCmdData, yaml.Marshal)
+			return mta.UpdateModule(updateModuleMtaCmdPath, updateModuleCmdData, mta.Marshal)
 		}, updateModuleCmdHashcode, false)
 		if err != nil {
 			logs.Logger.Error(err)
