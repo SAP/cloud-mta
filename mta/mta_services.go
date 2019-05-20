@@ -142,20 +142,14 @@ func UpdateModule(path string, moduleDataJSON string, marshal func(*MTA) ([]byte
 	}
 
 	// Replace the first existing module with the same name
-	found := false
 	for index, existingModule := range mtaObj.Modules {
 		if existingModule.Name == module.Name {
 			mtaObj.Modules[index] = &module
-			found = true
-			break
+			return saveMTA(path, mtaObj, marshal)
 		}
 	}
-	if !found {
-		err = fmt.Errorf("module with name %s does not exist", module.Name)
-		return err
-	}
 
-	return saveMTA(path, mtaObj, marshal)
+	return fmt.Errorf("module with name %s does not exist", module.Name)
 }
 
 // UpdateResource updates an existing resource according to the resource name. In case more than one resource with this
@@ -173,20 +167,14 @@ func UpdateResource(path string, resourceDataJSON string, marshal func(*MTA) ([]
 	}
 
 	// Replace the first existing resource with the same name
-	found := false
 	for index, existingResource := range mtaObj.Resources {
 		if existingResource.Name == resource.Name {
 			mtaObj.Resources[index] = &resource
-			found = true
-			break
+			return saveMTA(path, mtaObj, marshal)
 		}
 	}
-	if !found {
-		err = fmt.Errorf("resource with name %s does not exist", resource.Name)
-		return err
-	}
 
-	return saveMTA(path, mtaObj, marshal)
+	return fmt.Errorf("resource with name %s does not exist", resource.Name)
 }
 
 // CopyFile - copy from source path to target path

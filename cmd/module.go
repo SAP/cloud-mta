@@ -3,9 +3,11 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/spf13/cobra"
+
 	"github.com/SAP/cloud-mta/internal/logs"
 	"github.com/SAP/cloud-mta/mta"
-	"github.com/spf13/cobra"
 )
 
 var addModuleMtaCmdPath string
