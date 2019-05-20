@@ -42,6 +42,7 @@ var _ = Describe("MtaServices", func() {
 		err := os.RemoveAll(getTestPath("result"))
 		Ω(err).Should(Succeed())
 	})
+	
 	var _ = Describe("CreateMta", func() {
 		It("Create MTA", func() {
 			jsonData, err := json.Marshal(oMtaInput)
