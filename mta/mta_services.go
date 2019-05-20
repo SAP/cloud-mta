@@ -127,7 +127,7 @@ func GetResources(path string) ([]*Resource, error) {
 	return mta.Resources, nil
 }
 
-//isNameUnique - check if name already exists as module/resource/provide name
+//IsNameUnique - check if name already exists as module/resource/provide name
 func IsNameUnique(path string, name string) (bool, error) {
 	mta, err := getMtaFromFile(path)
 	if err != nil {
