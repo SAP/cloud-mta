@@ -10,6 +10,7 @@ func init() {
 	rootCmd.AddCommand(createMtaCmd)
 	rootCmd.AddCommand(copyCmd)
 	rootCmd.AddCommand(deleteFileCmd)
+	rootCmd.AddCommand(existCmd)
 	addCmd.AddCommand(addModuleCmd, addResourceCmd)
 	getCmd.AddCommand(getModulesCmd, getResourcesCmd)
 }

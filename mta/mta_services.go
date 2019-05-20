@@ -127,6 +127,17 @@ func GetResources(path string) ([]*Resource, error) {
 	return mta.Resources, nil
 }
 
+//isNameUnique - check if name already exists as module/resource/provide name
+func IsNameUnique(path string, name string) (bool, error) {
+	mta, err := getMtaFromFile(path)
+	if err != nil {
+		return true, err
+	}
+	names := getNames(mta)
+	_, ok := names[name]
+	return ok, nil
+}
+
 // CopyFile - copy from source path to target path
 func CopyFile(src, dst string, create func(string) (*os.File, error)) (rerr error) {
 	in, err := os.Open(src)
@@ -215,4 +226,18 @@ func ifFileChangeable(path string, isNew, exists, sameHash bool) error {
 		return fmt.Errorf(`could not update the "%s" file; it was modified by another process`, path)
 	}
 	return nil
+}
+
+func getNames(mta *MTA) map[string]string {
+	names := make(map[string]string)
+	for _, module := range mta.Modules {
+		names[module.Name] = module.Name
+		for _, provide := range module.Provides {
+			names[provide.Name] = provide.Name
+		}
+	}
+	for _, resource := range mta.Resources {
+		names[resource.Name] = resource.Name
+	}
+	return names
 }
