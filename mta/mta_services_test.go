@@ -42,7 +42,7 @@ var _ = Describe("MtaServices", func() {
 		err := os.RemoveAll(getTestPath("result"))
 		Ω(err).Should(Succeed())
 	})
-	
+
 	var _ = Describe("CreateMta", func() {
 		It("Create MTA", func() {
 			jsonData, err := json.Marshal(oMtaInput)
@@ -319,7 +319,7 @@ var _ = Describe("MtaServices", func() {
 			Ω(err).Should(Succeed())
 			Ω(exists).Should(BeTrue())
 
-			exists, err = IsNameUnique(mtaPath, oModule.Name + "aaaaa")
+			exists, err = IsNameUnique(mtaPath, oModule.Name+"aaaaa")
 			Ω(err).Should(Succeed())
 			Ω(exists).ShouldNot(BeTrue())
 		})
