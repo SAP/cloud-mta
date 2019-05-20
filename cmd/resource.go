@@ -3,7 +3,6 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
-	"gopkg.in/yaml.v3"
 
 	"github.com/spf13/cobra"
 
@@ -22,7 +21,7 @@ func init() {
 		"the path to the yaml file")
 	addResourceCmd.Flags().StringVarP(&addResourceCmdData, "data", "d", "",
 		"data in JSON format")
-	addResourceCmd.Flags().IntVarP(&addResourceCmdHashcode, "hashcode", "h", 0,
+	addResourceCmd.Flags().IntVarP(&addResourceCmdHashcode, "hashcode", "c", 0,
 		"data hashcode")
 	getResourcesCmd.Flags().StringVarP(&getResourcesCmdPath, "path", "p", "",
 		"the path to the yaml file")
@@ -37,7 +36,7 @@ var addResourceCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logs.Logger.Info("add new resource")
 		err := mta.ModifyMta(addResourceMtaCmdPath, func() error {
-			return mta.AddResource(addResourceMtaCmdPath, addResourceCmdData, yaml.Marshal)
+			return mta.AddResource(addResourceMtaCmdPath, addResourceCmdData, mta.Marshal)
 		}, addResourceCmdHashcode, false)
 		if err != nil {
 			logs.Logger.Error(err)

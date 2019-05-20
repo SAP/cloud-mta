@@ -3,11 +3,9 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
-
 	"github.com/SAP/cloud-mta/internal/logs"
 	"github.com/SAP/cloud-mta/mta"
+	"github.com/spf13/cobra"
 )
 
 var addModuleMtaCmdPath string
@@ -21,7 +19,7 @@ func init() {
 		"the path to the yaml file")
 	addModuleCmd.Flags().StringVarP(&addModuleCmdData, "data", "d", "",
 		"data in JSON format")
-	addModuleCmd.Flags().IntVarP(&addModuleCmdHashcode, "hashcode", "h", 0,
+	addModuleCmd.Flags().IntVarP(&addModuleCmdHashcode, "hashcode", "c", 0,
 		"data hashcode")
 	getModulesCmd.Flags().StringVarP(&getModulesCmdPath, "path", "p", "",
 		"the path to the yaml file")
@@ -36,7 +34,7 @@ var addModuleCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logs.Logger.Info("add new module")
 		err := mta.ModifyMta(addModuleMtaCmdPath, func() error {
-			return mta.AddModule(addModuleMtaCmdPath, addModuleCmdData, yaml.Marshal)
+			return mta.AddModule(addModuleMtaCmdPath, addModuleCmdData, mta.Marshal)
 		}, addModuleCmdHashcode, false)
 		if err != nil {
 			logs.Logger.Error(err)

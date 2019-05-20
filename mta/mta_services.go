@@ -54,7 +54,7 @@ func unmarshalData(dataJSON string, o interface{}) error {
 	return yaml.Unmarshal(dataYaml, o)
 }
 
-func saveMTA(path string, mta *MTA, marshal func(interface{}) ([]byte, error)) error {
+func saveMTA(path string, mta *MTA, marshal func(*MTA) ([]byte, error)) error {
 	mtaBytes, err := marshal(mta)
 	if err != nil {
 		return err
@@ -76,7 +76,7 @@ func CreateMta(path string, mtaDataJSON string, mkDirs func(string, os.FileMode)
 }
 
 //AddModule - add new module
-func AddModule(path string, moduleDataJSON string, marshal func(interface{}) ([]byte, error)) error {
+func AddModule(path string, moduleDataJSON string, marshal func(*MTA) ([]byte, error)) error {
 	mta, err := getMtaFromFile(filepath.Join(path))
 	if err != nil {
 		return err
@@ -93,7 +93,7 @@ func AddModule(path string, moduleDataJSON string, marshal func(interface{}) ([]
 }
 
 //AddResource - add new resource
-func AddResource(path string, resourceDataJSON string, marshal func(interface{}) ([]byte, error)) error {
+func AddResource(path string, resourceDataJSON string, marshal func(*MTA) ([]byte, error)) error {
 	mta, err := getMtaFromFile(path)
 	if err != nil {
 		return err
