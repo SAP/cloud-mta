@@ -351,7 +351,7 @@ func RunAndWriteResultAndHash(info string, path string, action func() (interface
 	logs.Logger.Info(info)
 	result, err := action()
 	hashcode := 0
-	if err != nil {
+	if err == nil {
 		hashcode, _, err = GetMtaHash(path)
 	}
 	writeErr := WriteResult(result, hashcode, err)
