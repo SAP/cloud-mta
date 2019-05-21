@@ -115,6 +115,59 @@ var _ = Describe("MtaServices", func() {
 		})
 	})
 
+	var _ = Describe("PrintResult", func() {
+		var printed string
+		printer := func(s ...interface{}) (int, error) {
+			printed = s[0].(string)
+			return 0, nil
+		}
+		BeforeEach(func() {
+			printed = ""
+		})
+
+		It("Writes only the hashcode when the result and error are nil", func() {
+			err := PrintResult(nil, 123, nil, printer)
+			Ω(err).Should(Succeed())
+			Ω(printed).Should(Equal(`{"hashcode":123}`))
+		})
+
+		It("Writes error message when the error is not nil", func() {
+			err := PrintResult("123", 123, errors.New("error message"), printer)
+			Ω(err).Should(Succeed())
+			Ω(printed).Should(Equal(`{"message":"error message"}`))
+		})
+
+		It("Writes hashcode and result when the result is sent and there is no error", func() {
+			err := PrintResult("1234", 3, nil, printer)
+			Ω(err).Should(Succeed())
+			Ω(printed).Should(Equal(`{"result":"1234","hashcode":3}`))
+		})
+
+		It("Writes complex result", func() {
+			modules := []Module{
+				{
+					Name: "m1",
+					Type: "type1",
+				},
+				{
+					Name: "m2",
+					Type: "type2",
+				},
+			}
+			err := PrintResult(modules, 0, nil, printer)
+			Ω(err).Should(Succeed())
+			Ω(printed).Should(Equal(`{"result":[{"name":"m1","type":"type1"},{"name":"m2","type":"type2"}],"hashcode":0}`))
+		})
+
+		It("Returns print error if print fails", func() {
+			printerErr := func(s ...interface{}) (int, error) {
+				return 0, errors.New("error in print")
+			}
+			err := PrintResult(nil, 1, nil, printerErr)
+			Ω(err).Should(MatchError("error in print"))
+		})
+	})
+
 	var _ = Describe("addModule", func() {
 		It("Add module", func() {
 			mtaPath := getTestPath("result", "temp.mta.yaml")
