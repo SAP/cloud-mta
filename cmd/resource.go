@@ -1,9 +1,6 @@
 package commands
 
 import (
-	"encoding/json"
-	"fmt"
-
 	"github.com/spf13/cobra"
 
 	"github.com/SAP/cloud-mta/internal/logs"
@@ -44,13 +41,15 @@ var addResourceCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logs.Logger.Info("add new resource")
-		err := mta.ModifyMta(addResourceMtaCmdPath, func() error {
+		hash, err := mta.ModifyMta(addResourceMtaCmdPath, func() error {
 			return mta.AddResource(addResourceMtaCmdPath, addResourceCmdData, mta.Marshal)
 		}, addResourceCmdHashcode, false)
+		writeErr := mta.WriteResult(nil, hash, err)
 		if err != nil {
-			logs.Logger.Error(err)
+			// The original error is more important
+			return err
 		}
-		return err
+		return writeErr
 	},
 	Hidden:        true,
 	SilenceUsage:  true,
@@ -66,18 +65,17 @@ var getResourcesCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logs.Logger.Info("get resources")
 		resources, err := mta.GetResources(getResourcesCmdPath)
+		hash, _, hashErr := mta.GetMtaHash(getResourcesCmdPath)
+		if err == nil && hashErr != nil {
+			// Return an error if we couldn't get the hash
+			err = hashErr
+		}
+		writeErr := mta.WriteResult(resources, hash, err)
 		if err != nil {
-			logs.Logger.Error(err)
+			// The original error is more important
+			return err
 		}
-		if resources != nil {
-			output, rerr := json.Marshal(resources)
-			if rerr != nil {
-				logs.Logger.Error(rerr)
-				return rerr
-			}
-			fmt.Print(string(output))
-		}
-		return err
+		return writeErr
 	},
 	Hidden:        true,
 	SilenceUsage:  true,
@@ -92,13 +90,15 @@ var updateResourceCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logs.Logger.Info("update existing resource")
-		err := mta.ModifyMta(addResourceMtaCmdPath, func() error {
+		hash, err := mta.ModifyMta(addResourceMtaCmdPath, func() error {
 			return mta.UpdateResource(updateResourceMtaCmdPath, updateResourceCmdData, mta.Marshal)
 		}, addResourceCmdHashcode, false)
+		writeErr := mta.WriteResult(nil, hash, err)
 		if err != nil {
-			logs.Logger.Error(err)
+			// The original error is more important
+			return err
 		}
-		return err
+		return writeErr
 	},
 	Hidden:        true,
 	SilenceUsage:  true,

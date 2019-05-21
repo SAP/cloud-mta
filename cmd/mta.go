@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -44,13 +43,15 @@ var createMtaCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logs.Logger.Info("create MTA project")
-		err := mta.ModifyMta(createMtaCmdPath, func() error {
+		hash, err := mta.ModifyMta(createMtaCmdPath, func() error {
 			return mta.CreateMta(createMtaCmdPath, createMtaCmdData, os.MkdirAll)
 		}, 0, true)
+		writeErr := mta.WriteResult(nil, hash, err)
 		if err != nil {
-			logs.Logger.Error(err)
+			// The original error is more important
+			return err
 		}
-		return err
+		return writeErr
 	},
 	Hidden:        true,
 	SilenceUsage:  true,
@@ -66,10 +67,17 @@ var copyCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logs.Logger.Info("copy from source path: " + copyCmdSourcePath + " to target path: " + copyCmdTargetPath)
 		err := mta.CopyFile(copyCmdSourcePath, copyCmdTargetPath, os.Create)
-		if err != nil {
-			logs.Logger.Error(err)
+		hash, _, hashErr := mta.GetMtaHash(copyCmdTargetPath)
+		if err == nil && hashErr != nil {
+			// Return an error if we couldn't get the hash
+			err = hashErr
 		}
-		return err
+		writeErr := mta.WriteResult(nil, hash, err)
+		if err != nil {
+			// The original error is more important
+			return err
+		}
+		return writeErr
 	},
 	Hidden:        true,
 	SilenceUsage:  true,
@@ -85,10 +93,12 @@ var deleteFileCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logs.Logger.Info("delete file in path: " + deleteFileCmdPath)
 		err := mta.DeleteFile(deleteFileCmdPath)
+		writeErr := mta.WriteResult(nil, 0, err)
 		if err != nil {
-			logs.Logger.Error(err)
+			// The original error is more important
+			return err
 		}
-		return err
+		return writeErr
 	},
 	Hidden:        true,
 	SilenceUsage:  true,
@@ -104,11 +114,17 @@ var existCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logs.Logger.Info("check if name: " + existCmdName + " exists in " + existCmdPath + " file")
 		exists, err := mta.IsNameUnique(existCmdPath, existCmdName)
-		if err != nil {
-			logs.Logger.Error(err)
+		hash, _, hashErr := mta.GetMtaHash(existCmdPath)
+		if err == nil && hashErr != nil {
+			// Return an error if we couldn't get the hash
+			err = hashErr
 		}
-		fmt.Print(exists)
-		return err
+		writeErr := mta.WriteResult(exists, hash, err)
+		if err != nil {
+			// The original error is more important
+			return err
+		}
+		return writeErr
 	},
 	Hidden:        true,
 	SilenceUsage:  true,

@@ -660,12 +660,12 @@ var _ = Describe("Module", func() {
 
 		jsonData, err := json.Marshal(oModule)
 		moduleJSON := string(jsonData)
-		err = ModifyMta(mtaPath, func() error {
+		_, err = ModifyMta(mtaPath, func() error {
 			return AddModule(mtaPath, moduleJSON, Marshal)
 		}, mtaHashCode, false)
 		Ω(err).Should(Succeed())
 		// wrong yaml
-		err = ModifyMta(getTestPath("result", "mtaX.yaml"), func() error {
+		_, err = ModifyMta(getTestPath("result", "mtaX.yaml"), func() error {
 			return AddModule(getTestPath("result", "mtaX.yaml"), moduleJSON, Marshal)
 		}, mtaHashCode, false)
 		Ω(err).Should(HaveOccurred())
@@ -674,7 +674,7 @@ var _ = Describe("Module", func() {
 		jsonData, err = json.Marshal(oModule)
 		moduleJSON = string(jsonData)
 		// hashcode of the mta.yaml is wrong now
-		err = ModifyMta(mtaPath, func() error {
+		_, err = ModifyMta(mtaPath, func() error {
 			return AddModule(mtaPath, moduleJSON, Marshal)
 		}, mtaHashCode, false)
 		Ω(err).Should(HaveOccurred())
@@ -689,7 +689,7 @@ var _ = Describe("Module", func() {
 		wg.Add(1)
 		var err1 error
 		go func() {
-			err1 = ModifyMta(mtaPath, func() error {
+			_, err1 = ModifyMta(mtaPath, func() error {
 				time.Sleep(time.Second)
 				return nil
 			}, mtaHashCode, false)
@@ -699,7 +699,7 @@ var _ = Describe("Module", func() {
 		wg.Add(1)
 		var err2 error
 		go func() {
-			err2 = ModifyMta(mtaPath, func() error {
+			_, err2 = ModifyMta(mtaPath, func() error {
 				time.Sleep(time.Second)
 				return nil
 			}, mtaHashCode, false)

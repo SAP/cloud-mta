@@ -2,6 +2,7 @@ package mta
 
 import (
 	"crypto/sha1"
+	"encoding/json"
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"io"
@@ -248,12 +249,12 @@ func GetMtaHash(path string) (int, bool, error) {
 }
 
 // ModifyMta - lock and modify mta.yaml file
-func ModifyMta(path string, modify func() error, hashcode int, isNew bool) (rerr error) {
+func ModifyMta(path string, modify func() error, hashcode int, isNew bool) (newHashcode int, rerr error) {
 	// create lock file
 	lockFilePath := filepath.Join(filepath.Dir(path), "mta-lock.lock")
 	file, err := os.OpenFile(lockFilePath, os.O_RDONLY|os.O_CREATE|os.O_EXCL, 0666)
 	if err != nil {
-		return fmt.Errorf(`could not modify the "%s" file; it is locked by another process`, path)
+		return 0, fmt.Errorf(`could not modify the "%s" file; it is locked by another process`, path)
 	}
 	// unlock and remove lock file at the end of modification
 	defer func() {
@@ -277,8 +278,11 @@ func ModifyMta(path string, modify func() error, hashcode int, isNew bool) (rerr
 	if err == nil {
 		err = modify()
 	}
-
-	return err
+	if err != nil {
+		return 0, err
+	}
+	newHashcode, _, err = GetMtaHash(path)
+	return newHashcode, err
 }
 
 func ifFileChangeable(path string, isNew, exists, sameHash bool) error {
@@ -290,4 +294,33 @@ func ifFileChangeable(path string, isNew, exists, sameHash bool) error {
 		return fmt.Errorf(`could not update the "%s" file; it was modified by another process`, path)
 	}
 	return nil
+}
+
+type outputResult struct {
+	Result   interface{} `json:"result,omitempty"`
+	Hashcode int         `json:"hashcode"`
+}
+type outputError struct {
+	Message string `json:"message"`
+}
+
+// WriteResult writes the result of an operation to the output in JSON format. In case of an error
+// the message is written. In case of success the hashcode and results are written.
+func WriteResult(result interface{}, hashcode int, err error) error {
+	if err != nil {
+		outputErr := outputError{err.Error()}
+		bytes, err1 := json.Marshal(outputErr)
+		if err1 != nil {
+			return err1
+		}
+		_, err1 = fmt.Print(string(bytes))
+		return err1
+	}
+	output := outputResult{result, hashcode}
+	bytes, err := json.Marshal(output)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Print(string(bytes))
+	return err
 }
