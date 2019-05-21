@@ -34,10 +34,6 @@ var _ = Describe("MtaServices", func() {
 		Type: "testType",
 	}
 
-	oProvides := Provides{
-		Name: "testProvides",
-	}
-
 	AfterEach(func() {
 		err := os.RemoveAll(getTestPath("result"))
 		Ω(err).Should(Succeed())
@@ -296,30 +292,25 @@ var _ = Describe("MtaServices", func() {
 
 	var _ = Describe("isNameUnique", func() {
 		It("Check if name exists in mta.yaml", func() {
-			mtaPath := getTestPath("result", "mta.yaml")
+			mtaPath := getTestPath("mta.yaml")
 
-			jsonRootData, err := json.Marshal(oMtaInput)
-			Ω(err).Should(Succeed())
-			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
-
-			oModule.Provides = append(oModule.Provides, oProvides)
-			jsonModuleData, err := json.Marshal(oModule)
-			Ω(err).Should(Succeed())
-			Ω(AddModule(mtaPath, string(jsonModuleData), Marshal)).Should(Succeed())
-			oMtaInput.Modules = append(oMtaInput.Modules, &oModule)
-
-			jsonResourceData, err := json.Marshal(oResource)
-			Ω(err).Should(Succeed())
-			Ω(AddResource(mtaPath, string(jsonResourceData), Marshal)).Should(Succeed())
-			oMtaInput.Resources = append(oMtaInput.Resources, &oResource)
-
-			Ω(mtaPath).Should(BeAnExistingFile())
-
-			exists, err := IsNameUnique(mtaPath, oModule.Name)
+			//verify module name exists
+			exists, err := IsNameUnique(mtaPath, "backend")
 			Ω(err).Should(Succeed())
 			Ω(exists).Should(BeTrue())
 
-			exists, err = IsNameUnique(mtaPath, oModule.Name+"aaaaa")
+			//verify provides name exists
+			exists, err = IsNameUnique(mtaPath, "backend_task")
+			Ω(err).Should(Succeed())
+			Ω(exists).Should(BeTrue())
+
+			//verify resource name exists
+			exists, err = IsNameUnique(mtaPath, "database")
+			Ω(err).Should(Succeed())
+			Ω(exists).Should(BeTrue())
+
+			//verify random name doesn't exist
+			exists, err = IsNameUnique(mtaPath, "blablabla")
 			Ω(err).Should(Succeed())
 			Ω(exists).ShouldNot(BeTrue())
 		})

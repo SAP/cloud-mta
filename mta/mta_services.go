@@ -133,9 +133,23 @@ func IsNameUnique(path string, name string) (bool, error) {
 	if err != nil {
 		return true, err
 	}
-	names := getNames(mta)
-	_, ok := names[name]
-	return ok, nil
+
+	for _, module := range mta.Modules {
+		if name == module.Name {
+			return true, nil
+		}
+		for _, provide := range module.Provides {
+			if name == provide.Name {
+				return true, nil
+			}
+		}
+	}
+	for _, resource := range mta.Resources {
+		if name == resource.Name {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 // CopyFile - copy from source path to target path
@@ -228,16 +242,3 @@ func ifFileChangeable(path string, isNew, exists, sameHash bool) error {
 	return nil
 }
 
-func getNames(mta *MTA) map[string]string {
-	names := make(map[string]string)
-	for _, module := range mta.Modules {
-		names[module.Name] = module.Name
-		for _, provide := range module.Provides {
-			names[provide.Name] = provide.Name
-		}
-	}
-	for _, resource := range mta.Resources {
-		names[resource.Name] = resource.Name
-	}
-	return names
-}
