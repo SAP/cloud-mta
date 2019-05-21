@@ -127,6 +127,56 @@ func GetResources(path string) ([]*Resource, error) {
 	return mta.Resources, nil
 }
 
+// UpdateModule updates an existing module according to the module name. In case more than one module with this
+// name exists, one of the modules is updated to the existing structure.
+func UpdateModule(path string, moduleDataJSON string, marshal func(*MTA) ([]byte, error)) error {
+	mtaObj, err := getMtaFromFile(path)
+	if err != nil {
+		return err
+	}
+
+	module := Module{}
+	err = unmarshalData(moduleDataJSON, &module)
+	if err != nil {
+		return err
+	}
+
+	// Replace the first existing module with the same name
+	for index, existingModule := range mtaObj.Modules {
+		if existingModule.Name == module.Name {
+			mtaObj.Modules[index] = &module
+			return saveMTA(path, mtaObj, marshal)
+		}
+	}
+
+	return fmt.Errorf("module with name %s does not exist", module.Name)
+}
+
+// UpdateResource updates an existing resource according to the resource name. In case more than one resource with this
+// name exists, one of the resources is updated to the existing structure.
+func UpdateResource(path string, resourceDataJSON string, marshal func(*MTA) ([]byte, error)) error {
+	mtaObj, err := getMtaFromFile(path)
+	if err != nil {
+		return err
+	}
+
+	resource := Resource{}
+	err = unmarshalData(resourceDataJSON, &resource)
+	if err != nil {
+		return err
+	}
+
+	// Replace the first existing resource with the same name
+	for index, existingResource := range mtaObj.Resources {
+		if existingResource.Name == resource.Name {
+			mtaObj.Resources[index] = &resource
+			return saveMTA(path, mtaObj, marshal)
+		}
+	}
+
+	return fmt.Errorf("resource with name %s does not exist", resource.Name)
+}
+
 //IsNameUnique - check if name already exists as module/resource/provide name
 func IsNameUnique(path string, name string) (bool, error) {
 	mta, err := getMtaFromFile(path)
