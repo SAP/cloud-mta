@@ -3,7 +3,6 @@ package commands
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/SAP/cloud-mta/internal/logs"
 	"github.com/SAP/cloud-mta/mta"
 )
 
@@ -40,16 +39,9 @@ var addModuleCmd = &cobra.Command{
 	Long:  "Add new module",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		logs.Logger.Info("add new module")
-		hash, err := mta.ModifyMta(addModuleMtaCmdPath, func() error {
+		return mta.RunModifyAndWriteHash("add new module", addModuleMtaCmdPath, func() error {
 			return mta.AddModule(addModuleMtaCmdPath, addModuleCmdData, mta.Marshal)
 		}, addModuleCmdHashcode, false)
-		writeErr := mta.WriteResult(nil, hash, err)
-		if err != nil {
-			// The original error is more important
-			return err
-		}
-		return writeErr
 	},
 	Hidden:        true,
 	SilenceUsage:  true,
@@ -63,19 +55,9 @@ var getModulesCmd = &cobra.Command{
 	Long:  "Get all modules",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		logs.Logger.Info("get modules")
-		modules, err := mta.GetModules(getModulesCmdPath)
-		hash, _, hashErr := mta.GetMtaHash(getModulesCmdPath)
-		if err == nil && hashErr != nil {
-			// Return an error if we couldn't get the hash
-			err = hashErr
-		}
-		writeErr := mta.WriteResult(modules, hash, err)
-		if err != nil {
-			// The original error is more important
-			return err
-		}
-		return writeErr
+		return mta.RunAndWriteResultAndHash("get modules", getModulesCmdPath, func() (interface{}, error) {
+			return mta.GetModules(getModulesCmdPath)
+		})
 	},
 	Hidden:        true,
 	SilenceUsage:  true,
@@ -89,16 +71,9 @@ var updateModuleCmd = &cobra.Command{
 	Long:  "Update existing module",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		logs.Logger.Info("update existing module")
-		hash, err := mta.ModifyMta(addModuleMtaCmdPath, func() error {
+		return mta.RunModifyAndWriteHash("update existing module", updateModuleMtaCmdPath, func() error {
 			return mta.UpdateModule(updateModuleMtaCmdPath, updateModuleCmdData, mta.Marshal)
 		}, updateModuleCmdHashcode, false)
-		writeErr := mta.WriteResult(nil, hash, err)
-		if err != nil {
-			// The original error is more important
-			return err
-		}
-		return writeErr
 	},
 	Hidden:        true,
 	SilenceUsage:  true,

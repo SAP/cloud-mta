@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"encoding/json"
 	"fmt"
+	"github.com/SAP/cloud-mta/internal/logs"
 	"gopkg.in/yaml.v3"
 	"io"
 	"io/ioutil"
@@ -329,4 +330,34 @@ func PrintResult(result interface{}, hashcode int, err error, print func(...inte
 	}
 	_, err = print(string(bytes))
 	return err
+}
+
+// RunModifyAndWriteHash logs the info, executes the action while locking the mta file in the path, and writes the
+// result and hashcode (or error) to the output
+func RunModifyAndWriteHash(info string, path string, action func() error, hashcode int, isNew bool) error {
+	logs.Logger.Info(info)
+	newHashcode, err := ModifyMta(path, action, hashcode, isNew)
+	writeErr := WriteResult(nil, newHashcode, err)
+	if err != nil {
+		// The original error is more important
+		return err
+	}
+	return writeErr
+}
+
+// RunAndWriteResultAndHash logs the info, executes the action, and writes the result and hashcode of the mta in the
+// path (or error) to the output
+func RunAndWriteResultAndHash(info string, path string, action func() (interface{}, error)) error {
+	logs.Logger.Info(info)
+	result, err := action()
+	hashcode := 0
+	if err != nil {
+		hashcode, _, err = GetMtaHash(path)
+	}
+	writeErr := WriteResult(result, hashcode, err)
+	if err != nil {
+		// The original error is more important
+		return err
+	}
+	return writeErr
 }

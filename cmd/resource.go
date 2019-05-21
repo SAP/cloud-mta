@@ -3,7 +3,6 @@ package commands
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/SAP/cloud-mta/internal/logs"
 	"github.com/SAP/cloud-mta/mta"
 )
 
@@ -40,16 +39,9 @@ var addResourceCmd = &cobra.Command{
 	Long:  "Add new resources",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		logs.Logger.Info("add new resource")
-		hash, err := mta.ModifyMta(addResourceMtaCmdPath, func() error {
+		return mta.RunModifyAndWriteHash("add new resource", addResourceMtaCmdPath, func() error {
 			return mta.AddResource(addResourceMtaCmdPath, addResourceCmdData, mta.Marshal)
 		}, addResourceCmdHashcode, false)
-		writeErr := mta.WriteResult(nil, hash, err)
-		if err != nil {
-			// The original error is more important
-			return err
-		}
-		return writeErr
 	},
 	Hidden:        true,
 	SilenceUsage:  true,
@@ -63,19 +55,9 @@ var getResourcesCmd = &cobra.Command{
 	Long:  "Get all resources",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		logs.Logger.Info("get resources")
-		resources, err := mta.GetResources(getResourcesCmdPath)
-		hash, _, hashErr := mta.GetMtaHash(getResourcesCmdPath)
-		if err == nil && hashErr != nil {
-			// Return an error if we couldn't get the hash
-			err = hashErr
-		}
-		writeErr := mta.WriteResult(resources, hash, err)
-		if err != nil {
-			// The original error is more important
-			return err
-		}
-		return writeErr
+		return mta.RunAndWriteResultAndHash("get resources", getResourcesCmdPath, func() (interface{}, error) {
+			return mta.GetResources(getResourcesCmdPath)
+		})
 	},
 	Hidden:        true,
 	SilenceUsage:  true,
@@ -89,16 +71,9 @@ var updateResourceCmd = &cobra.Command{
 	Long:  "Update existing resource",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		logs.Logger.Info("update existing resource")
-		hash, err := mta.ModifyMta(addResourceMtaCmdPath, func() error {
+		return mta.RunModifyAndWriteHash("update existing resource", addResourceMtaCmdPath, func() error {
 			return mta.UpdateResource(updateResourceMtaCmdPath, updateResourceCmdData, mta.Marshal)
 		}, addResourceCmdHashcode, false)
-		writeErr := mta.WriteResult(nil, hash, err)
-		if err != nil {
-			// The original error is more important
-			return err
-		}
-		return writeErr
 	},
 	Hidden:        true,
 	SilenceUsage:  true,
