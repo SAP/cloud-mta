@@ -241,4 +241,3 @@ func ifFileChangeable(path string, isNew, exists, sameHash bool) error {
 	}
 	return nil
 }
-
