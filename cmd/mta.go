@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -14,6 +15,8 @@ var createMtaCmdData string
 var copyCmdSourcePath string
 var copyCmdTargetPath string
 var deleteFileCmdPath string
+var existCmdName string
+var existCmdPath string
 
 func init() {
 
@@ -28,6 +31,9 @@ func init() {
 		"the path to the target file")
 	deleteFileCmd.Flags().StringVarP(&deleteFileCmdPath, "path", "p", "",
 		"the path to the file")
+	existCmd.Flags().StringVarP(&existCmdPath, "path", "p", "",
+		"the path to the file")
+	existCmd.Flags().StringVarP(&existCmdName, "name", "n", "", "the name to check")
 }
 
 // createMtaCmd Create new MTA project
@@ -82,6 +88,26 @@ var deleteFileCmd = &cobra.Command{
 		if err != nil {
 			logs.Logger.Error(err)
 		}
+		return err
+	},
+	Hidden:        true,
+	SilenceUsage:  true,
+	SilenceErrors: true,
+}
+
+// existCmd check if name exists in file
+var existCmd = &cobra.Command{
+	Use:   "exist",
+	Short: "Check exists",
+	Long:  "Check exists",
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		logs.Logger.Info("check if name: " + existCmdName + " exists in " + existCmdPath + " file")
+		exists, err := mta.IsNameUnique(existCmdPath, existCmdName)
+		if err != nil {
+			logs.Logger.Error(err)
+		}
+		fmt.Print(exists)
 		return err
 	},
 	Hidden:        true,

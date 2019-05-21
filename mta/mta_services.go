@@ -127,6 +127,31 @@ func GetResources(path string) ([]*Resource, error) {
 	return mta.Resources, nil
 }
 
+//IsNameUnique - check if name already exists as module/resource/provide name
+func IsNameUnique(path string, name string) (bool, error) {
+	mta, err := getMtaFromFile(path)
+	if err != nil {
+		return true, err
+	}
+
+	for _, module := range mta.Modules {
+		if name == module.Name {
+			return true, nil
+		}
+		for _, provide := range module.Provides {
+			if name == provide.Name {
+				return true, nil
+			}
+		}
+	}
+	for _, resource := range mta.Resources {
+		if name == resource.Name {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 // CopyFile - copy from source path to target path
 func CopyFile(src, dst string, create func(string) (*os.File, error)) (rerr error) {
 	in, err := os.Open(src)
