@@ -4,7 +4,6 @@ import (
 	"crypto/sha1"
 	"encoding/json"
 	"fmt"
-	"github.com/SAP/cloud-mta/internal/logs"
 	"gopkg.in/yaml.v3"
 	"io"
 	"io/ioutil"
@@ -16,6 +15,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/SAP/cloud-mta/internal/fs"
+	"github.com/SAP/cloud-mta/internal/logs"
 )
 
 func createMtaYamlFile(path string, mkDirs func(string, os.FileMode) error) (rerr error) {
@@ -308,16 +308,15 @@ type outputError struct {
 // WriteResult writes the result of an operation to the output in JSON format. In case of an error
 // the message is written. In case of success the hashcode and results are written.
 func WriteResult(result interface{}, hashcode int, err error) error {
-	return PrintResult(result, hashcode, err, fmt.Print)
+	return printResult(result, hashcode, err, fmt.Print)
 }
 
-// PrintResult calls the sent print function on the output in JSON format. In case of an error
-// the message is printed. In case of success the hashcode and results are printed.
-func PrintResult(result interface{}, hashcode int, err error, print func(...interface{}) (n int, err error)) error {
+func printResult(result interface{}, hashcode int, err error, print func(...interface{}) (n int, err error)) error {
 	if err != nil {
 		outputErr := outputError{err.Error()}
 		bytes, err1 := json.Marshal(outputErr)
 		if err1 != nil {
+			_, _ = print("could not marshal error with message " + err.Error() + "; " + err1.Error())
 			return err1
 		}
 		_, err1 = print(string(bytes))
@@ -326,6 +325,7 @@ func PrintResult(result interface{}, hashcode int, err error, print func(...inte
 	output := outputResult{result, hashcode}
 	bytes, err := json.Marshal(output)
 	if err != nil {
+		_, _ = print(err.Error())
 		return err
 	}
 	_, err = print(string(bytes))
