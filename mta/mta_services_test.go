@@ -706,6 +706,27 @@ var _ = Describe("MtaServices", func() {
 			Ω(err).Should(HaveOccurred())
 		})
 	})
+
+	var _ = Describe("ModifyMta", func() {
+		It("ModifyMta fails when it cannot create the directory", func() {
+			mtaPath := getTestPath("result", "mta.yaml")
+			_, err := ModifyMta(mtaPath, func() error {
+				return nil
+			}, 0, true, func(s string, mode os.FileMode) error {
+				return errors.New("cannot create directory")
+			})
+			Ω(err).Should(MatchError("cannot create directory"))
+		})
+
+		It("ModifyMta creates the directory for new MTA", func() {
+			mtaPath := getTestPath("result", "mta.yaml")
+			_, err := ModifyMta(mtaPath, func() error {
+				return nil
+			}, 0, true, os.MkdirAll)
+			Ω(err).Should(Succeed())
+			Ω(getTestPath("result")).Should(BeAnExistingFile())
+		})
+	})
 })
 
 var _ = Describe("Module", func() {
@@ -734,7 +755,7 @@ var _ = Describe("Module", func() {
 		moduleJSON := string(jsonData)
 		mtaHashCodeResult, err := ModifyMta(mtaPath, func() error {
 			return AddModule(mtaPath, moduleJSON, Marshal)
-		}, mtaHashCode, false)
+		}, mtaHashCode, false, os.MkdirAll)
 		Ω(err).Should(Succeed())
 		Ω(mtaHashCodeResult).ShouldNot(Equal(mtaHashCode))
 		mtaHashCodeAfterModify, _, err := GetMtaHash(mtaPath)
@@ -743,7 +764,7 @@ var _ = Describe("Module", func() {
 		// wrong yaml
 		_, err = ModifyMta(getTestPath("result", "mtaX.yaml"), func() error {
 			return AddModule(getTestPath("result", "mtaX.yaml"), moduleJSON, Marshal)
-		}, mtaHashCode, false)
+		}, mtaHashCode, false, os.MkdirAll)
 		Ω(err).Should(HaveOccurred())
 		Ω(err.Error()).Should(ContainSubstring("file does not exist"))
 		oModule.Name = "test1"
@@ -752,7 +773,7 @@ var _ = Describe("Module", func() {
 		// hashcode of the mta.yaml is wrong now
 		_, err = ModifyMta(mtaPath, func() error {
 			return AddModule(mtaPath, moduleJSON, Marshal)
-		}, mtaHashCode, false)
+		}, mtaHashCode, false, os.MkdirAll)
 		Ω(err).Should(HaveOccurred())
 	})
 	It("2 parallel processes, second fails to make locking", func() {
@@ -768,7 +789,7 @@ var _ = Describe("Module", func() {
 			_, err1 = ModifyMta(mtaPath, func() error {
 				time.Sleep(time.Second)
 				return nil
-			}, mtaHashCode, false)
+			}, mtaHashCode, false, os.MkdirAll)
 			defer wg.Done()
 		}()
 		time.Sleep(time.Millisecond * 200)
@@ -778,7 +799,7 @@ var _ = Describe("Module", func() {
 			_, err2 = ModifyMta(mtaPath, func() error {
 				time.Sleep(time.Second)
 				return nil
-			}, mtaHashCode, false)
+			}, mtaHashCode, false, os.MkdirAll)
 			defer wg.Done()
 		}()
 		wg.Wait()
