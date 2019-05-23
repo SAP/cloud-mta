@@ -5,6 +5,9 @@ import (
 )
 
 func init() {
+
+	rootCmd.Flags().BoolP("version", "v", false, "version for MTA")
+
 	rootCmd.AddCommand(addCmd)
 	rootCmd.AddCommand(getCmd)
 	rootCmd.AddCommand(updateCmd)

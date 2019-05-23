@@ -20,7 +20,7 @@ type configInfo struct {
 var templatePath = "./tools"
 
 // This code is executed during the go:generate command
-// Reading the config files and generate byte array
+// Reading the configs files and generate byte array
 func main() {
 	// define commands for execution
 	inFile := flag.String("source", "", "source")
@@ -33,7 +33,7 @@ func main() {
 }
 
 func genConf(source string, target, packageName, varName string) error {
-	// Read the config file
+	// Read the configs file
 	inData, err := ioutil.ReadFile(source)
 	if err != nil {
 		return errors.Wrapf(err, "configuration generation failed when reading the %s file", source)
@@ -42,7 +42,7 @@ func genConf(source string, target, packageName, varName string) error {
 	if err != nil {
 		return errors.Wrapf(err, "configuration generation failed when creating the %s file", target)
 	}
-	t := template.Must(template.New("config.tpl").ParseFiles(filepath.Join(templatePath, "config.tpl")))
+	t := template.Must(template.New("configs.tpl").ParseFiles(filepath.Join(templatePath, "configs.tpl")))
 	err = t.Execute(out, configInfo{PackageName: packageName, VarName: varName, Data: fmt.Sprintf("%#v", inData)})
 	errClose := out.Close()
 	if err != nil {

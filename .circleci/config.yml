@@ -1,4 +1,4 @@
-# Golang CircleCI 2.0 config
+# Golang CircleCI 2.0 configs
 version: 2
 jobs:
   build:
