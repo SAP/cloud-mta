@@ -308,13 +308,13 @@ type outputError struct {
 // WriteResult writes the result of an operation to the output in JSON format. In case of an error
 // the message is written. In case of success the hashcode and results are written.
 func WriteResult(result interface{}, hashcode int, err error) error {
-	return printResult(result, hashcode, err, fmt.Print)
+	return printResult(result, hashcode, err, fmt.Print, json.Marshal)
 }
 
-func printResult(result interface{}, hashcode int, err error, print func(...interface{}) (n int, err error)) error {
+func printResult(result interface{}, hashcode int, err error, print func(...interface{}) (n int, err error), jsonMarshal func(v interface{}) ([]byte, error)) error {
 	if err != nil {
 		outputErr := outputError{err.Error()}
-		bytes, err1 := json.Marshal(outputErr)
+		bytes, err1 := jsonMarshal(outputErr)
 		if err1 != nil {
 			_, _ = print("could not marshal error with message " + err.Error() + "; " + err1.Error())
 			return err1
@@ -323,7 +323,7 @@ func printResult(result interface{}, hashcode int, err error, print func(...inte
 		return err1
 	}
 	output := outputResult{result, hashcode}
-	bytes, err := json.Marshal(output)
+	bytes, err := jsonMarshal(output)
 	if err != nil {
 		_, _ = print(err.Error())
 		return err
