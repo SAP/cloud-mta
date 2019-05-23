@@ -71,9 +71,9 @@ var updateResourceCmd = &cobra.Command{
 	Long:  "Update existing resource",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return mta.RunModifyAndWriteHash("update existing resource", addResourceMtaCmdPath, func() error {
+		return mta.RunModifyAndWriteHash("update existing resource", updateResourceMtaCmdPath, func() error {
 			return mta.UpdateResource(updateResourceMtaCmdPath, updateResourceCmdData, mta.Marshal)
-		}, addResourceCmdHashcode, false)
+		}, updateResourceCmdHashcode, false)
 	},
 	Hidden:        true,
 	SilenceUsage:  true,
