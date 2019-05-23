@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -59,7 +60,7 @@ var copyCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return mta.RunAndWriteResultAndHash(
-			"copy from source path: "+copyCmdSourcePath+" to target path: "+copyCmdTargetPath,
+			fmt.Sprintf("copy from source path: %s to target path: %s", copyCmdSourcePath, copyCmdTargetPath),
 			copyCmdTargetPath,
 			func() (interface{}, error) {
 				return nil, mta.CopyFile(copyCmdSourcePath, copyCmdTargetPath, os.Create)
@@ -100,7 +101,7 @@ var existCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return mta.RunAndWriteResultAndHash(
-			"check if name: "+existCmdName+" exists in "+existCmdPath+" file",
+			fmt.Sprintf("check if name %s exists in %s file", existCmdName, existCmdPath),
 			existCmdPath,
 			func() (interface{}, error) {
 				return mta.IsNameUnique(existCmdPath, existCmdName)

@@ -170,6 +170,13 @@ var _ = Describe("MtaServices", func() {
 			err := printResult(nil, 1, nil, printerErr)
 			Ω(err).Should(MatchError("error in print"))
 		})
+
+		It("Returns and writes error if the result cannot be serialized to JSON", func() {
+			var unserializableResult UnmarshalableString = "a"
+			err := printResult(unserializableResult, 0, nil, printer)
+			Ω(err).Should(MatchError(ContainSubstring("cannot marshal value a")))
+			Ω(printed).Should(ContainSubstring("cannot marshal value a"))
+		})
 	})
 
 	var _ = Describe("addModule", func() {
@@ -863,6 +870,13 @@ func marshalErr(o *MTA) ([]byte, error) {
 	return nil, errors.New("could not marshal mta.yaml file")
 }
 
+type UnmarshalableString string
+
+func (s UnmarshalableString) MarshalJSON() ([]byte, error) {
+	return nil, fmt.Errorf("cannot marshal value %s", string(s))
+}
+
+// executeAndProvideOutput runs the execute function in a goroutine and returns the output written to os.Stdout
 func executeAndProvideOutput(execute func()) string {
 	old := os.Stdout // keep backup of the real stdout
 	r, w, _ := os.Pipe()
