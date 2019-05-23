@@ -726,6 +726,21 @@ var _ = Describe("MtaServices", func() {
 			Ω(err).Should(Succeed())
 			Ω(getTestPath("result")).Should(BeAnExistingFile())
 		})
+
+		It("ModifyMta returns an error that the file is locked when lock file exists", func() {
+			mtaPath := getTestPath("result", "mta.yaml")
+			err := os.MkdirAll(mtaPath, os.ModePerm)
+
+			Ω(err).Should(Succeed())
+			lockFilePath := getTestPath("result", "mta-lock.lock")
+			file, err := os.OpenFile(lockFilePath, os.O_RDONLY|os.O_CREATE|os.O_EXCL, 0666)
+			Ω(err).Should(Succeed())
+			_ = file.Close()
+			_, err = ModifyMta(mtaPath, func() error {
+				return nil
+			}, 0, true, os.MkdirAll)
+			Ω(err).Should(MatchError(ContainSubstring("it is locked by another process")))
+		})
 	})
 })
 

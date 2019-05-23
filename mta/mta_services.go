@@ -260,8 +260,10 @@ func ModifyMta(path string, modify func() error, hashcode int, isNew bool, mkDir
 	}
 	lockFilePath := filepath.Join(filepath.Dir(path), "mta-lock.lock")
 	file, err := os.OpenFile(lockFilePath, os.O_RDONLY|os.O_CREATE|os.O_EXCL, 0666)
-	if err != nil {
+	if os.IsExist(err) {
 		return 0, fmt.Errorf(`could not modify the "%s" file; it is locked by another process`, path)
+	} else if err != nil {
+		return 0, fmt.Errorf(`could not lock the "%s" file for modification; %s`, path, err)
 	}
 	// unlock and remove lock file at the end of modification
 	defer func() {
