@@ -250,12 +250,20 @@ func GetMtaHash(path string) (int, bool, error) {
 }
 
 // ModifyMta - lock and modify mta.yaml file
-func ModifyMta(path string, modify func() error, hashcode int, isNew bool) (newHashcode int, rerr error) {
+func ModifyMta(path string, modify func() error, hashcode int, isNew bool, mkDirs func(string, os.FileMode) error) (newHashcode int, rerr error) {
 	// create lock file
+	// Make sure the directory of the lock file exists (it might not in the case of a new MTA)
+	folder := filepath.Dir(path)
+	rerr = mkDirs(folder, os.ModePerm)
+	if rerr != nil {
+		return 0, rerr
+	}
 	lockFilePath := filepath.Join(filepath.Dir(path), "mta-lock.lock")
 	file, err := os.OpenFile(lockFilePath, os.O_RDONLY|os.O_CREATE|os.O_EXCL, 0666)
-	if err != nil {
+	if os.IsExist(err) {
 		return 0, fmt.Errorf(`could not modify the "%s" file; it is locked by another process`, path)
+	} else if err != nil {
+		return 0, fmt.Errorf(`could not lock the "%s" file for modification; %s`, path, err)
 	}
 	// unlock and remove lock file at the end of modification
 	defer func() {
@@ -336,7 +344,7 @@ func printResult(result interface{}, hashcode int, err error, print func(...inte
 // result and hashcode (or error) to the output
 func RunModifyAndWriteHash(info string, path string, action func() error, hashcode int, isNew bool) error {
 	logs.Logger.Info(info)
-	newHashcode, err := ModifyMta(path, action, hashcode, isNew)
+	newHashcode, err := ModifyMta(path, action, hashcode, isNew, os.MkdirAll)
 	writeErr := WriteResult(nil, newHashcode, err)
 	if err != nil {
 		// The original error is more important
