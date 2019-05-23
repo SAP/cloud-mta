@@ -42,7 +42,7 @@ func genConf(source string, target, packageName, varName string) error {
 	if err != nil {
 		return errors.Wrapf(err, "configuration generation failed when creating the %s file", target)
 	}
-	t := template.Must(template.New("configs.tpl").ParseFiles(filepath.Join(templatePath, "configs.tpl")))
+	t := template.Must(template.New("config.tpl").ParseFiles(filepath.Join(templatePath, "config.tpl")))
 	err = t.Execute(out, configInfo{PackageName: packageName, VarName: varName, Data: fmt.Sprintf("%#v", inData)})
 	errClose := out.Close()
 	if err != nil {
