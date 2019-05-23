@@ -44,7 +44,7 @@ var _ = Describe("Mta", func() {
 			},
 			Includes: []Includes{
 				{
-					Name: "config",
+					Name: "configs",
 					Path: "cfg/parameters.json",
 				},
 			},
@@ -80,7 +80,7 @@ var _ = Describe("Mta", func() {
 					},
 					Includes: []Includes{
 						{
-							Name: "config",
+							Name: "configs",
 							Path: "cfg/parameters.json",
 						},
 					},
@@ -157,7 +157,7 @@ var _ = Describe("Mta", func() {
 				},
 				Includes: []Includes{
 					{
-						Name: "config",
+						Name: "configs",
 						Path: "cfg/security.json",
 					},
 					{

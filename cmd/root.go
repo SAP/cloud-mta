@@ -36,9 +36,9 @@ func Execute() error {
 func initConfig() {
 	viper.SetConfigFile(cfgFile)
 	viper.AutomaticEnv() // reads in the environment variables that match
-	// if a config file is found, reads it in
+	// if a configs file is found, reads it in
 	if err := viper.ReadInConfig(); err == nil {
-		logs.Logger.Println("Using config file:", viper.ConfigFileUsed())
+		logs.Logger.Println("Using configs file:", viper.ConfigFileUsed())
 	}
 }
 
