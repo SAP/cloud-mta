@@ -741,6 +741,16 @@ var _ = Describe("MtaServices", func() {
 			}, 0, true, os.MkdirAll)
 			Ω(err).Should(MatchError(ContainSubstring("it is locked by another process")))
 		})
+
+		It("ModifyMta returns an error that the file cannot be locked when it cannot create the lock file", func() {
+			mtaPath := getTestPath("result", "mta.yaml")
+			_, err := ModifyMta(mtaPath, func() error {
+				return nil
+			}, 0, true, func(s string, mode os.FileMode) error {
+				return nil
+			})
+			Ω(err).Should(MatchError(ContainSubstring("could not lock")))
+		})
 	})
 })
 
