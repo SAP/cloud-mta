@@ -1,12 +1,8 @@
 package commands
 
 import (
-	"encoding/json"
-	"fmt"
-
 	"github.com/spf13/cobra"
 
-	"github.com/SAP/cloud-mta/internal/logs"
 	"github.com/SAP/cloud-mta/mta"
 )
 
@@ -43,14 +39,9 @@ var addModuleCmd = &cobra.Command{
 	Long:  "Add new module",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		logs.Logger.Info("add new module")
-		err := mta.ModifyMta(addModuleMtaCmdPath, func() error {
+		return mta.RunModifyAndWriteHash("add new module", addModuleMtaCmdPath, func() error {
 			return mta.AddModule(addModuleMtaCmdPath, addModuleCmdData, mta.Marshal)
 		}, addModuleCmdHashcode, false)
-		if err != nil {
-			logs.Logger.Error(err)
-		}
-		return err
 	},
 	Hidden:        true,
 	SilenceUsage:  true,
@@ -64,20 +55,9 @@ var getModulesCmd = &cobra.Command{
 	Long:  "Get all modules",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		logs.Logger.Info("get modules")
-		modules, err := mta.GetModules(getModulesCmdPath)
-		if err != nil {
-			logs.Logger.Error(err)
-		}
-		if modules != nil {
-			output, rerr := json.Marshal(modules)
-			if rerr != nil {
-				logs.Logger.Error(rerr)
-				return rerr
-			}
-			fmt.Print(string(output))
-		}
-		return err
+		return mta.RunAndWriteResultAndHash("get modules", getModulesCmdPath, func() (interface{}, error) {
+			return mta.GetModules(getModulesCmdPath)
+		})
 	},
 	Hidden:        true,
 	SilenceUsage:  true,
@@ -91,14 +71,9 @@ var updateModuleCmd = &cobra.Command{
 	Long:  "Update existing module",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		logs.Logger.Info("update existing module")
-		err := mta.ModifyMta(addModuleMtaCmdPath, func() error {
+		return mta.RunModifyAndWriteHash("update existing module", updateModuleMtaCmdPath, func() error {
 			return mta.UpdateModule(updateModuleMtaCmdPath, updateModuleCmdData, mta.Marshal)
 		}, updateModuleCmdHashcode, false)
-		if err != nil {
-			logs.Logger.Error(err)
-		}
-		return err
 	},
 	Hidden:        true,
 	SilenceUsage:  true,

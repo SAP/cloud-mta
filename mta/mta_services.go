@@ -2,6 +2,7 @@ package mta
 
 import (
 	"crypto/sha1"
+	"encoding/json"
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"io"
@@ -14,6 +15,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/SAP/cloud-mta/internal/fs"
+	"github.com/SAP/cloud-mta/internal/logs"
 )
 
 func createMtaYamlFile(path string, mkDirs func(string, os.FileMode) error) (rerr error) {
@@ -248,12 +250,12 @@ func GetMtaHash(path string) (int, bool, error) {
 }
 
 // ModifyMta - lock and modify mta.yaml file
-func ModifyMta(path string, modify func() error, hashcode int, isNew bool) (rerr error) {
+func ModifyMta(path string, modify func() error, hashcode int, isNew bool) (newHashcode int, rerr error) {
 	// create lock file
 	lockFilePath := filepath.Join(filepath.Dir(path), "mta-lock.lock")
 	file, err := os.OpenFile(lockFilePath, os.O_RDONLY|os.O_CREATE|os.O_EXCL, 0666)
 	if err != nil {
-		return fmt.Errorf(`could not modify the "%s" file; it is locked by another process`, path)
+		return 0, fmt.Errorf(`could not modify the "%s" file; it is locked by another process`, path)
 	}
 	// unlock and remove lock file at the end of modification
 	defer func() {
@@ -277,8 +279,11 @@ func ModifyMta(path string, modify func() error, hashcode int, isNew bool) (rerr
 	if err == nil {
 		err = modify()
 	}
-
-	return err
+	if err != nil {
+		return 0, err
+	}
+	newHashcode, _, err = GetMtaHash(path)
+	return newHashcode, err
 }
 
 func ifFileChangeable(path string, isNew, exists, sameHash bool) error {
@@ -290,4 +295,69 @@ func ifFileChangeable(path string, isNew, exists, sameHash bool) error {
 		return fmt.Errorf(`could not update the "%s" file; it was modified by another process`, path)
 	}
 	return nil
+}
+
+type outputResult struct {
+	Result   interface{} `json:"result,omitempty"`
+	Hashcode int         `json:"hashcode"`
+}
+type outputError struct {
+	Message string `json:"message"`
+}
+
+// WriteResult writes the result of an operation to the output in JSON format. In case of an error
+// the message is written. In case of success the hashcode and results are written.
+func WriteResult(result interface{}, hashcode int, err error) error {
+	return printResult(result, hashcode, err, fmt.Print, json.Marshal)
+}
+
+func printResult(result interface{}, hashcode int, err error, print func(...interface{}) (n int, err error), jsonMarshal func(v interface{}) ([]byte, error)) error {
+	if err != nil {
+		outputErr := outputError{err.Error()}
+		bytes, err1 := jsonMarshal(outputErr)
+		if err1 != nil {
+			_, _ = print("could not marshal error with message " + err.Error() + "; " + err1.Error())
+			return err1
+		}
+		_, err1 = print(string(bytes))
+		return err1
+	}
+	output := outputResult{result, hashcode}
+	bytes, err := jsonMarshal(output)
+	if err != nil {
+		_, _ = print(err.Error())
+		return err
+	}
+	_, err = print(string(bytes))
+	return err
+}
+
+// RunModifyAndWriteHash logs the info, executes the action while locking the mta file in the path, and writes the
+// result and hashcode (or error) to the output
+func RunModifyAndWriteHash(info string, path string, action func() error, hashcode int, isNew bool) error {
+	logs.Logger.Info(info)
+	newHashcode, err := ModifyMta(path, action, hashcode, isNew)
+	writeErr := WriteResult(nil, newHashcode, err)
+	if err != nil {
+		// The original error is more important
+		return err
+	}
+	return writeErr
+}
+
+// RunAndWriteResultAndHash logs the info, executes the action, and writes the result and hashcode of the mta in the
+// path (or error) to the output
+func RunAndWriteResultAndHash(info string, path string, action func() (interface{}, error)) error {
+	logs.Logger.Info(info)
+	result, err := action()
+	hashcode := 0
+	if err == nil {
+		hashcode, _, err = GetMtaHash(path)
+	}
+	writeErr := WriteResult(result, hashcode, err)
+	if err != nil {
+		// The original error is more important
+		return err
+	}
+	return writeErr
 }

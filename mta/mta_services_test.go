@@ -1,8 +1,11 @@
 package mta
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"reflect"
@@ -13,18 +16,19 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("MtaServices", func() {
-	getMtaInput := func() MTA {
-		// Return a new object every time so we don't accidentally change it for the other tests
-		schemaVersion := "1.1"
-		oMtaInput := MTA{
-			ID:            "test",
-			Version:       "1.2",
-			SchemaVersion: &schemaVersion,
-			Description:   "test mta creation",
-		}
-		return oMtaInput
+func getMtaInput() MTA {
+	// Return a new object every time so we don't accidentally change it for the other tests
+	schemaVersion := "1.1"
+	oMtaInput := MTA{
+		ID:            "test",
+		Version:       "1.2",
+		SchemaVersion: &schemaVersion,
+		Description:   "test mta creation",
 	}
+	return oMtaInput
+}
+
+var _ = Describe("MtaServices", func() {
 
 	oModule := Module{
 		Name: "testModule",
@@ -112,6 +116,74 @@ var _ = Describe("MtaServices", func() {
 			Ω(mtaPath).Should(BeAnExistingFile())
 			Ω(DeleteFile(mtaPath)).Should(Succeed())
 			Ω(mtaPath).ShouldNot(BeAnExistingFile())
+		})
+	})
+
+	var _ = Describe("printResult", func() {
+		var printed string
+		printer := func(s ...interface{}) (int, error) {
+			printed = s[0].(string)
+			return 0, nil
+		}
+		BeforeEach(func() {
+			printed = ""
+		})
+
+		It("Writes only the hashcode when the result and error are nil", func() {
+			err := printResult(nil, 123, nil, printer, json.Marshal)
+			Ω(err).Should(Succeed())
+			Ω(printed).Should(Equal(`{"hashcode":123}`))
+		})
+
+		It("Writes error message when the error is not nil", func() {
+			err := printResult("123", 123, errors.New("error message"), printer, json.Marshal)
+			Ω(err).Should(Succeed())
+			Ω(printed).Should(Equal(`{"message":"error message"}`))
+		})
+
+		It("Writes hashcode and result when the result is sent and there is no error", func() {
+			err := printResult("1234", 3, nil, printer, json.Marshal)
+			Ω(err).Should(Succeed())
+			Ω(printed).Should(Equal(`{"result":"1234","hashcode":3}`))
+		})
+
+		It("Writes complex result", func() {
+			modules := []Module{
+				{
+					Name: "m1",
+					Type: "type1",
+				},
+				{
+					Name: "m2",
+					Type: "type2",
+				},
+			}
+			err := printResult(modules, 0, nil, printer, json.Marshal)
+			Ω(err).Should(Succeed())
+			Ω(printed).Should(Equal(`{"result":[{"name":"m1","type":"type1"},{"name":"m2","type":"type2"}],"hashcode":0}`))
+		})
+
+		It("Returns print error if print fails", func() {
+			printerErr := func(s ...interface{}) (int, error) {
+				return 0, errors.New("error in print")
+			}
+			err := printResult(nil, 1, nil, printerErr, json.Marshal)
+			Ω(err).Should(MatchError("error in print"))
+		})
+
+		It("Returns and writes error if the result cannot be serialized to JSON", func() {
+			var unserializableResult UnmarshalableString = "a"
+			err := printResult(unserializableResult, 0, nil, printer, json.Marshal)
+			Ω(err).Should(MatchError(ContainSubstring("cannot marshal value a")))
+			Ω(printed).Should(ContainSubstring("cannot marshal value a"))
+		})
+
+		It("Returns and writes error if the error message cannot be serialized to JSON", func() {
+			err := printResult(nil, 0, errors.New("some error"), printer, jsonMarshalErr)
+			Ω(err).Should(MatchError("could not marshal to json"))
+			// Both error messages should be printed to the output
+			Ω(printed).Should(ContainSubstring("could not marshal to json"))
+			Ω(printed).Should(ContainSubstring("some error"))
 		})
 	})
 
@@ -660,12 +732,16 @@ var _ = Describe("Module", func() {
 
 		jsonData, err := json.Marshal(oModule)
 		moduleJSON := string(jsonData)
-		err = ModifyMta(mtaPath, func() error {
+		mtaHashCodeResult, err := ModifyMta(mtaPath, func() error {
 			return AddModule(mtaPath, moduleJSON, Marshal)
 		}, mtaHashCode, false)
 		Ω(err).Should(Succeed())
+		Ω(mtaHashCodeResult).ShouldNot(Equal(mtaHashCode))
+		mtaHashCodeAfterModify, _, err := GetMtaHash(mtaPath)
+		Ω(err).Should(Succeed())
+		Ω(mtaHashCodeResult).Should(Equal(mtaHashCodeAfterModify))
 		// wrong yaml
-		err = ModifyMta(getTestPath("result", "mtaX.yaml"), func() error {
+		_, err = ModifyMta(getTestPath("result", "mtaX.yaml"), func() error {
 			return AddModule(getTestPath("result", "mtaX.yaml"), moduleJSON, Marshal)
 		}, mtaHashCode, false)
 		Ω(err).Should(HaveOccurred())
@@ -674,7 +750,7 @@ var _ = Describe("Module", func() {
 		jsonData, err = json.Marshal(oModule)
 		moduleJSON = string(jsonData)
 		// hashcode of the mta.yaml is wrong now
-		err = ModifyMta(mtaPath, func() error {
+		_, err = ModifyMta(mtaPath, func() error {
 			return AddModule(mtaPath, moduleJSON, Marshal)
 		}, mtaHashCode, false)
 		Ω(err).Should(HaveOccurred())
@@ -689,7 +765,7 @@ var _ = Describe("Module", func() {
 		wg.Add(1)
 		var err1 error
 		go func() {
-			err1 = ModifyMta(mtaPath, func() error {
+			_, err1 = ModifyMta(mtaPath, func() error {
 				time.Sleep(time.Second)
 				return nil
 			}, mtaHashCode, false)
@@ -699,7 +775,7 @@ var _ = Describe("Module", func() {
 		wg.Add(1)
 		var err2 error
 		go func() {
-			err2 = ModifyMta(mtaPath, func() error {
+			_, err2 = ModifyMta(mtaPath, func() error {
 				time.Sleep(time.Second)
 				return nil
 			}, mtaHashCode, false)
@@ -715,6 +791,81 @@ var _ = Describe("Module", func() {
 	})
 })
 
+var _ = Describe("RunE helper functions", func() {
+	AfterEach(func() {
+		err := os.RemoveAll(getTestPath("result"))
+		Ω(err).Should(Succeed())
+	})
+
+	It("RunModifyAndWriteHash performs the action and writes the hashcode to the output when there is no error", func() {
+		err := os.MkdirAll(getTestPath("result"), os.ModePerm)
+		Ω(err).Should(Succeed())
+		mtaPath := getTestPath("result", "temp.mta.yaml")
+		json, err := json.Marshal(getMtaInput())
+		Ω(err).Should(Succeed())
+		output := executeAndProvideOutput(func() {
+			err = RunModifyAndWriteHash("info message", mtaPath, func() error {
+				return CreateMta(mtaPath, string(json), os.MkdirAll)
+			}, 0, true)
+			Ω(err).Should(Succeed())
+		})
+		// Check the last line of the result is a json with hashcode and that it's is not 0
+		Ω(output).Should(MatchRegexp(`{"hashcode":[1-9][0-9]*}$`))
+		// Note: the info message is written to the logger but we don't test it because the logger is initialized
+		// with stdout before it's replaced in the test
+	})
+
+	It("RunModifyAndWriteHash writes the error when the action fails", func() {
+		err := os.MkdirAll(getTestPath("result"), os.ModePerm)
+		Ω(err).Should(Succeed())
+		mtaPath := getTestPath("result", "temp.mta.yaml")
+		output := executeAndProvideOutput(func() {
+			err := RunModifyAndWriteHash("info message", mtaPath, func() error {
+				return errors.New("some error")
+			}, 0, true)
+			Ω(err).Should(MatchError("some error"))
+		})
+		// Check the last line of the result is a json with hashcode and that it's is not 0
+		Ω(output).Should(MatchRegexp(`{"message":"some error"}$`))
+		// Note: the info message is written to the logger but we don't test it because the logger is initialized
+		// with stdout before it's replaced in the test
+	})
+
+	It("RunAndWriteResultAndHash performs the action and writes the hashcode and result to the output when there is no error", func() {
+		err := os.MkdirAll(getTestPath("result"), os.ModePerm)
+		Ω(err).Should(Succeed())
+		mtaPath := getTestPath("result", "temp.mta.yaml")
+		output := executeAndProvideOutput(func() {
+			err = RunAndWriteResultAndHash("info message", mtaPath, func() (interface{}, error) {
+				err1 := CopyFile(getTestPath("mta.yaml"), mtaPath, os.Create)
+				Ω(err1).Should(Succeed())
+				return 1, nil
+			})
+			Ω(err).Should(Succeed())
+		})
+		// Check the last line of the result is a json with hashcode and that it's is not 0
+		Ω(output).Should(MatchRegexp(`{"result":1,"hashcode":[1-9][0-9]*}$`))
+		// Note: the info message is written to the logger but we don't test it because the logger is initialized
+		// with stdout before it's replaced in the test
+	})
+
+	It("RunAndWriteResultAndHash writes the error when the action fails", func() {
+		err := os.MkdirAll(getTestPath("result"), os.ModePerm)
+		Ω(err).Should(Succeed())
+		mtaPath := getTestPath("result", "temp.mta.yaml")
+		output := executeAndProvideOutput(func() {
+			err := RunAndWriteResultAndHash("info message", mtaPath, func() (interface{}, error) {
+				return nil, errors.New("some error")
+			})
+			Ω(err).Should(MatchError("some error"))
+		})
+		// Check the last line of the result is a json with hashcode and that it's is not 0
+		Ω(output).Should(MatchRegexp(`{"message":"some error"}$`))
+		// Note: the info message is written to the logger but we don't test it because the logger is initialized
+		// with stdout before it's replaced in the test
+	})
+})
+
 func mkDirsErr(path string, perm os.FileMode) error {
 	return errors.New("err")
 }
@@ -725,4 +876,40 @@ func createErr(path string) (*os.File, error) {
 
 func marshalErr(o *MTA) ([]byte, error) {
 	return nil, errors.New("could not marshal mta.yaml file")
+}
+
+func jsonMarshalErr(o interface{}) ([]byte, error) {
+	return nil, errors.New("could not marshal to json")
+}
+
+type UnmarshalableString string
+
+func (s UnmarshalableString) MarshalJSON() ([]byte, error) {
+	return nil, fmt.Errorf("cannot marshal value %s", string(s))
+}
+
+// executeAndProvideOutput runs the execute function in a goroutine and returns the output written to os.Stdout
+func executeAndProvideOutput(execute func()) string {
+	old := os.Stdout // keep backup of the real stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	execute()
+
+	outC := make(chan string)
+	// copy the output in a separate goroutine so printing can't block indefinitely
+	go func() {
+		var buf bytes.Buffer
+		_, err := io.Copy(&buf, r)
+		if err != nil {
+			fmt.Println(err)
+		}
+		outC <- buf.String()
+	}()
+
+	// back to normal state
+	_ = w.Close()
+	os.Stdout = old // restoring the real stdout
+	out := <-outC
+	return out
 }

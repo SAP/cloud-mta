@@ -1,12 +1,8 @@
 package commands
 
 import (
-	"encoding/json"
-	"fmt"
-
 	"github.com/spf13/cobra"
 
-	"github.com/SAP/cloud-mta/internal/logs"
 	"github.com/SAP/cloud-mta/mta"
 )
 
@@ -43,14 +39,9 @@ var addResourceCmd = &cobra.Command{
 	Long:  "Add new resources",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		logs.Logger.Info("add new resource")
-		err := mta.ModifyMta(addResourceMtaCmdPath, func() error {
+		return mta.RunModifyAndWriteHash("add new resource", addResourceMtaCmdPath, func() error {
 			return mta.AddResource(addResourceMtaCmdPath, addResourceCmdData, mta.Marshal)
 		}, addResourceCmdHashcode, false)
-		if err != nil {
-			logs.Logger.Error(err)
-		}
-		return err
 	},
 	Hidden:        true,
 	SilenceUsage:  true,
@@ -64,20 +55,9 @@ var getResourcesCmd = &cobra.Command{
 	Long:  "Get all resources",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		logs.Logger.Info("get resources")
-		resources, err := mta.GetResources(getResourcesCmdPath)
-		if err != nil {
-			logs.Logger.Error(err)
-		}
-		if resources != nil {
-			output, rerr := json.Marshal(resources)
-			if rerr != nil {
-				logs.Logger.Error(rerr)
-				return rerr
-			}
-			fmt.Print(string(output))
-		}
-		return err
+		return mta.RunAndWriteResultAndHash("get resources", getResourcesCmdPath, func() (interface{}, error) {
+			return mta.GetResources(getResourcesCmdPath)
+		})
 	},
 	Hidden:        true,
 	SilenceUsage:  true,
@@ -91,14 +71,9 @@ var updateResourceCmd = &cobra.Command{
 	Long:  "Update existing resource",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		logs.Logger.Info("update existing resource")
-		err := mta.ModifyMta(addResourceMtaCmdPath, func() error {
+		return mta.RunModifyAndWriteHash("update existing resource", addResourceMtaCmdPath, func() error {
 			return mta.UpdateResource(updateResourceMtaCmdPath, updateResourceCmdData, mta.Marshal)
 		}, addResourceCmdHashcode, false)
-		if err != nil {
-			logs.Logger.Error(err)
-		}
-		return err
 	},
 	Hidden:        true,
 	SilenceUsage:  true,

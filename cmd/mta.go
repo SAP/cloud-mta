@@ -43,14 +43,9 @@ var createMtaCmd = &cobra.Command{
 	Long:  "Create new MTA project",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		logs.Logger.Info("create MTA project")
-		err := mta.ModifyMta(createMtaCmdPath, func() error {
+		return mta.RunModifyAndWriteHash("create MTA project", createMtaCmdPath, func() error {
 			return mta.CreateMta(createMtaCmdPath, createMtaCmdData, os.MkdirAll)
 		}, 0, true)
-		if err != nil {
-			logs.Logger.Error(err)
-		}
-		return err
 	},
 	Hidden:        true,
 	SilenceUsage:  true,
@@ -64,12 +59,13 @@ var copyCmd = &cobra.Command{
 	Long:  "Copy from source path to target path",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		logs.Logger.Info("copy from source path: " + copyCmdSourcePath + " to target path: " + copyCmdTargetPath)
-		err := mta.CopyFile(copyCmdSourcePath, copyCmdTargetPath, os.Create)
-		if err != nil {
-			logs.Logger.Error(err)
-		}
-		return err
+		return mta.RunAndWriteResultAndHash(
+			fmt.Sprintf("copy from source path: %s to target path: %s", copyCmdSourcePath, copyCmdTargetPath),
+			copyCmdTargetPath,
+			func() (interface{}, error) {
+				return nil, mta.CopyFile(copyCmdSourcePath, copyCmdTargetPath, os.Create)
+			},
+		)
 	},
 	Hidden:        true,
 	SilenceUsage:  true,
@@ -85,10 +81,12 @@ var deleteFileCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logs.Logger.Info("delete file in path: " + deleteFileCmdPath)
 		err := mta.DeleteFile(deleteFileCmdPath)
+		writeErr := mta.WriteResult(nil, 0, err)
 		if err != nil {
-			logs.Logger.Error(err)
+			// The original error is more important
+			return err
 		}
-		return err
+		return writeErr
 	},
 	Hidden:        true,
 	SilenceUsage:  true,
@@ -102,13 +100,13 @@ var existCmd = &cobra.Command{
 	Long:  "Check exists",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		logs.Logger.Info("check if name: " + existCmdName + " exists in " + existCmdPath + " file")
-		exists, err := mta.IsNameUnique(existCmdPath, existCmdName)
-		if err != nil {
-			logs.Logger.Error(err)
-		}
-		fmt.Print(exists)
-		return err
+		return mta.RunAndWriteResultAndHash(
+			fmt.Sprintf("check if name %s exists in %s file", existCmdName, existCmdPath),
+			existCmdPath,
+			func() (interface{}, error) {
+				return mta.IsNameUnique(existCmdPath, existCmdName)
+			},
+		)
 	},
 	Hidden:        true,
 	SilenceUsage:  true,
