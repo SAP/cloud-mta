@@ -29,3 +29,121 @@ jobs:
       - run: go test -v github.com/SAP/cloud-mta/validations -coverprofile=validations.coverprofile
       - run: gover
       - run: goveralls -v -service=circle-ci -coverprofile=gover.coverprofile -repotoken $COVERALLS_TOKEN
+      
+#  test:
+#    docker:
+#      - image: shimit/mbt_multi:0.1.0
+#    working_directory: /go/src/github.com/SAP/cloud-mta
+#    steps:
+#      - checkout
+#      - run:
+#          name: install dep
+#          command: |
+#            apk update && apk add curl git build-base bash
+#            curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+#            dep ensure
+#      - run: cf login -a $CF_API -o $ORG -s $SPACE -u $TECH_USER -p $TECH_PASS
+#      - run: cd integration &&  go test -tags=integration
+      
+  deploy:
+    docker:
+      - image: circleci/golang:1.11.5
+    working_directory: /go/src/github.com/SAP/cloud-mta
+    steps:
+      - add_ssh_keys:
+          fingerprints:
+            - "34:86:26:17:59:ed:71:fa:b8:37:fc:d6:a4:68:af:0e"
+      - checkout
+      - run:
+          name: bump release version
+          command: |
+            CURR_MTA_VERSION=$(cat ./VERSION)
+            echo "Current release: ${CURR_MTA_VERSION}"
+            MTA_VERSION=$(echo $CURR_MTA_VERSION | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
+            echo "New release: ${MTA_VERSION}"
+            #Update new version in files
+            sed  -i "/\"version\":/s/${CURR_MTA_VERSION}/${MTA_VERSION}/" ./package.json
+            sed  -i "/cli_version:/s/${CURR_MTA_VERSION}/${MTA_VERSION}/" ./configs/version.yaml
+            sed  -i "s/${CURR_MTA_VERSION}/${MTA_VERSION}/" ./VERSION
+            #Generate version file
+            //go:generate go run ./tools/embed.go -source=./configs/version.yaml -target=./internal/version/version_cfg.go -name=VersionConfig -package=version
+            #Add all updated files to commit
+            git add ./package.json ./internal/version/version_cfg.go ./configs/version.yaml ./VERSION
+            git config user.email "${MBT_REPO_USER_EMAIL}"
+            git config user.name "${MBT_REPO_USER}"
+            git commit -m "[skip ci] Bump version ${MTA_VERSION}"
+            #Push commit directly to master
+            git push -q https://github.com/SAP/cloud-mta.git master
+      - run:
+          name: release new version
+          command: curl -sL https://git.io/goreleaser | bash
+#     - run:
+#         name: publish to npm
+#         command: npm publish
+
+#  ghpages:
+#    docker:
+#      - image: squidfunk/mkdocs-material:4.3.1
+#    working_directory: /go/src/github.com/SAP/cloud-mta-build-tool
+#    steps:
+#      - checkout
+#      - run:
+#          name: Release to GitHub Pages
+#          command: |
+#            cd docs
+#            mkdocs gh-deploy --config-file ../docs/mkdocs.yml --remote-branch gh-pages
+
+workflows:
+  version: 2
+  on_pr_build:
+    jobs:
+      - build:
+          filters:
+            branches:
+              ignore: master
+              
+  on_merge_build_test:
+    jobs:
+      - build:
+          filters:
+            branches:
+              only: master
+#      - test:
+#          requires:
+#            - build
+#          filters:
+#            branches:
+#              only: master
+              
+  on_tag_build_test_deploy:
+    jobs:
+      - build:
+          filters:  # required since `deploy` has tag filters AND requires `build`
+            tags:
+              only: /^v([0-9]+)(\.[0-9]+)(\.[0-9]+)/
+            branches:
+              ignore: /.*/
+      - test:
+          requires:
+            - build
+          filters:  # required since `deploy` has tag filters AND requires `test`
+            tags:
+              only: /^v([0-9]+)(\.[0-9]+)(\.[0-9]+)/
+            branches:
+              ignore: /.*/
+      - deploy:
+          requires:
+            - test
+          filters:  # job runs on tags for no branches
+            tags:
+              only: /^v([0-9]+)(\.[0-9]+)(\.[0-9]+)/
+            branches:
+              ignore: /.*/
+#      - ghpages:
+#          requires:
+#            - test
+#          filters:  # job runs on tags for no branches - just like deploy
+#            tags:
+#              only: /^v([0-9]+)(\.[0-9]+)(\.[0-9]+)/
+#            branches:
+#              ignore: /.*/
