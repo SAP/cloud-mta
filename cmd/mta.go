@@ -17,6 +17,9 @@ var copyCmdTargetPath string
 var deleteFileCmdPath string
 var existCmdName string
 var existCmdPath string
+var updateBuildParametersCmdPath string
+var updateBuildParametersCmdData string
+var updateBuildParametersCmdHashcode int
 
 func init() {
 
@@ -33,7 +36,14 @@ func init() {
 		"the path to the file")
 	existCmd.Flags().StringVarP(&existCmdPath, "path", "p", "",
 		"the path to the file")
-	existCmd.Flags().StringVarP(&existCmdName, "name", "n", "", "the name to check")
+	existCmd.Flags().StringVarP(&existCmdName, "name", "n", "",
+		"the name to check")
+	updateBuildParametersCmd.Flags().StringVarP(&updateBuildParametersCmdPath, "path", "p", "",
+		"the path to the file")
+	updateBuildParametersCmd.Flags().StringVarP(&updateBuildParametersCmdData, "data", "d", "",
+		"data in JSON format")
+	updateBuildParametersCmd.Flags().IntVarP(&updateBuildParametersCmdHashcode, "hashcode", "c", 0,
+		"data hashcode")
 }
 
 // createMtaCmd Create new MTA project
@@ -107,6 +117,22 @@ var existCmd = &cobra.Command{
 				return mta.IsNameUnique(existCmdPath, existCmdName)
 			},
 		)
+	},
+	Hidden:        true,
+	SilenceUsage:  true,
+	SilenceErrors: true,
+}
+
+// updateBuildParametersCmd update build parameters in mta
+var updateBuildParametersCmd = &cobra.Command{
+	Use:   "buildParameters",
+	Short: "Update build parameters",
+	Long:  "Update build parameters",
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return mta.RunModifyAndWriteHash("update build parameters", updateBuildParametersCmdPath, func() error {
+			return mta.UpdateBuildParameters(updateBuildParametersCmdPath, updateBuildParametersCmdData)
+		}, updateBuildParametersCmdHashcode, false)
 	},
 	Hidden:        true,
 	SilenceUsage:  true,
