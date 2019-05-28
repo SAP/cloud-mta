@@ -752,6 +752,88 @@ var _ = Describe("MtaServices", func() {
 			Ω(err).Should(MatchError(ContainSubstring("could not lock")))
 		})
 	})
+
+	var _ = Describe("UpdateBuildParameters", func() {
+		mybuilder := ProjectBuilder{
+			Builder:  "mybuilder",
+			Commands: []string{"abc"},
+		}
+		builders := []ProjectBuilder{mybuilder}
+		projectBuild := ProjectBuild{
+			BeforeAll: builders,
+		}
+
+		It("Add new build parameters", func() {
+			mtaPath := getTestPath("result", "temp.mta.yaml")
+
+			jsonRootData, err := json.Marshal(getMtaInput())
+			Ω(err).Should(Succeed())
+			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
+
+			jsonBuildParametersData, err := json.Marshal(&projectBuild)
+			Ω(err).Should(Succeed())
+			Ω(UpdateBuildParameters(mtaPath, string(jsonBuildParametersData))).Should(Succeed())
+
+			oMtaInput := getMtaInput()
+			oMtaInput.BuildParams = &projectBuild
+			Ω(mtaPath).Should(BeAnExistingFile())
+			yamlData, err := ioutil.ReadFile(mtaPath)
+			Ω(err).Should(Succeed())
+			oMtaOutput, err := Unmarshal(yamlData)
+			Ω(err).Should(Succeed())
+			Ω(reflect.DeepEqual(oMtaInput, *oMtaOutput)).Should(BeTrue())
+		})
+
+		It("Update existing build parameters", func() {
+			otherbuilder := ProjectBuilder{
+				Builder:  "otherbuilder",
+				Commands: []string{"def"},
+			}
+			updateBuilders := []ProjectBuilder{otherbuilder}
+			updateProjectBuild := ProjectBuild{
+				BeforeAll: updateBuilders,
+			}
+
+			mtaPath := getTestPath("result", "temp.mta.yaml")
+
+			jsonRootData, err := json.Marshal(getMtaInput())
+			Ω(err).Should(Succeed())
+			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
+
+			jsonBuildParametersData, err := json.Marshal(&projectBuild)
+			Ω(err).Should(Succeed())
+			Ω(UpdateBuildParameters(mtaPath, string(jsonBuildParametersData))).Should(Succeed())
+
+			jsonUpdateBuildParametersData, err := json.Marshal(&updateProjectBuild)
+			Ω(err).Should(Succeed())
+			Ω(UpdateBuildParameters(mtaPath, string(jsonUpdateBuildParametersData))).Should(Succeed())
+
+			oMtaInput := getMtaInput()
+			oMtaInput.BuildParams = &updateProjectBuild
+			Ω(mtaPath).Should(BeAnExistingFile())
+			yamlData, err := ioutil.ReadFile(mtaPath)
+			Ω(err).Should(Succeed())
+			oMtaOutput, err := Unmarshal(yamlData)
+			Ω(err).Should(Succeed())
+			Ω(reflect.DeepEqual(oMtaInput, *oMtaOutput)).Should(BeTrue())
+		})
+
+		It("Update build parameters in a non existing mta.yaml file", func() {
+			json := "{name:fff}"
+			mtaPath := getTestPath("result", "mta.yaml")
+			Ω(UpdateBuildParameters(mtaPath, json)).Should(HaveOccurred())
+		})
+
+		It("Update build parameters with bad json format", func() {
+			wrongJSON := "{name:fff"
+
+			mtaPath := getTestPath("result", "temp.mta.yaml")
+			jsonRootData, err := json.Marshal(getMtaInput())
+			Ω(err).Should(Succeed())
+			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
+			Ω(UpdateBuildParameters(mtaPath, wrongJSON)).Should(HaveOccurred())
+		})
+	})
 })
 
 var _ = Describe("Module", func() {

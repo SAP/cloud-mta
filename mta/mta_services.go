@@ -204,6 +204,23 @@ func IsNameUnique(path string, name string) (bool, error) {
 	return false, nil
 }
 
+//UpdateBuildParameters - update mta build parameters
+func UpdateBuildParameters(path string, buildParamsDataJSON string) error {
+	mta, err := getMtaFromFile(path)
+	if err != nil {
+		return err
+	}
+
+	buildParams := ProjectBuild{}
+	err = unmarshalData(buildParamsDataJSON, &buildParams)
+	if err != nil {
+		return err
+	}
+
+	mta.BuildParams = &buildParams
+	return saveMTA(path, mta, Marshal)
+}
+
 // CopyFile - copy from source path to target path
 func CopyFile(src, dst string, create func(string) (*os.File, error)) (rerr error) {
 	in, err := os.Open(src)
