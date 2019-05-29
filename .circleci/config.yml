@@ -30,21 +30,6 @@ jobs:
       - run: gover
       - run: goveralls -v -service=circle-ci -coverprofile=gover.coverprofile -repotoken $COVERALLS_TOKEN
       
-#  test:
-#    docker:
-#      - image: shimit/mbt_multi:0.1.0
-#    working_directory: /go/src/github.com/SAP/cloud-mta
-#    steps:
-#      - checkout
-#      - run:
-#          name: install dep
-#          command: |
-#            apk update && apk add curl git build-base bash
-#            curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-#            dep ensure
-#      - run: cf login -a $CF_API -o $ORG -s $SPACE -u $TECH_USER -p $TECH_PASS
-#      - run: cd integration &&  go test -tags=integration
-      
   deploy:
     docker:
       - image: circleci/golang:1.11.5
@@ -77,21 +62,6 @@ jobs:
       - run:
           name: release new version
           command: curl -sL https://git.io/goreleaser | bash
-#     - run:
-#         name: publish to npm
-#         command: npm publish
-
-#  ghpages:
-#    docker:
-#      - image: squidfunk/mkdocs-material:4.3.1
-#    working_directory: /go/src/github.com/SAP/cloud-mta-build-tool
-#    steps:
-#      - checkout
-#      - run:
-#          name: Release to GitHub Pages
-#          command: |
-#            cd docs
-#            mkdocs gh-deploy --config-file ../docs/mkdocs.yml --remote-branch gh-pages
 
 workflows:
   version: 2
@@ -108,12 +78,6 @@ workflows:
           filters:
             branches:
               only: master
-#      - test:
-#          requires:
-#            - build
-#          filters:
-#            branches:
-#              only: master
               
   on_tag_build_test_deploy:
     jobs:
@@ -139,11 +103,3 @@ workflows:
               only: /^v([0-9]+)(\.[0-9]+)(\.[0-9]+)/
             branches:
               ignore: /.*/
-#      - ghpages:
-#          requires:
-#            - test
-#          filters:  # job runs on tags for no branches - just like deploy
-#            tags:
-#              only: /^v([0-9]+)(\.[0-9]+)(\.[0-9]+)/
-#            branches:
-#              ignore: /.*/
