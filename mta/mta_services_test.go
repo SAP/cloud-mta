@@ -888,12 +888,13 @@ var _ = Describe("Module", func() {
 		os.MkdirAll(getTestPath("result"), os.ModePerm)
 		mtaPath := getTestPath("result", "mta.yaml")
 		Ω(CopyFile(getTestPath("mta.yaml"), mtaPath, os.Create)).Should(Succeed())
-		
+
 		mtaHashCode, exists, err := GetMtaHash(mtaPath)
 		Ω(err).Should(Succeed())
 		Ω(exists).Should(BeTrue())
 
 		jsonData, err := json.Marshal(oModule)
+		Ω(err).Should(Succeed())
 		moduleJSON := string(jsonData)
 		mtaHashCodeResult, err := ModifyMta(mtaPath, func() error {
 			return AddModule(mtaPath, moduleJSON, Marshal)
