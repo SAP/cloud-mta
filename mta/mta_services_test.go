@@ -888,8 +888,7 @@ var _ = Describe("Module", func() {
 		os.MkdirAll(getTestPath("result"), os.ModePerm)
 		mtaPath := getTestPath("result", "mta.yaml")
 		Ω(CopyFile(getTestPath("mta.yaml"), mtaPath, os.Create)).Should(Succeed())
-
-		var err error
+		
 		mtaHashCode, exists, err := GetMtaHash(mtaPath)
 		Ω(err).Should(Succeed())
 		Ω(exists).Should(BeTrue())
