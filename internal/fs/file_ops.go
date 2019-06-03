@@ -6,17 +6,17 @@ import (
 	"os"
 )
 
-// CreateFile - create new file
+// CreateFile - creates a new file.
 func CreateFile(path string) (file *os.File, err error) {
-	file, err = os.Create(path) // Truncates if file already exists
+	file, err = os.Create(path) // Truncates the path if the file already exists.
 	if err != nil {
-		return nil, errors.Wrapf(err, fmt.Sprintf("creation of the %s file failed", path))
+		return nil, errors.Wrapf(err, fmt.Sprintf("creation of the \"%s\" file failed", path))
 	}
-	// The caller needs to use defer.close
+	// The caller needs to use the \"defer.close\" command.
 	return file, err
 }
 
-// DeleteFile - delete file
+// DeleteFile - deletes the file.
 func DeleteFile(path string) (err error) {
 	return os.Remove(path)
 }
