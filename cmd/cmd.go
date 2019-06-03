@@ -20,7 +20,7 @@ func init() {
 	updateCmd.AddCommand(updateModuleCmd, updateResourceCmd, updateBuildParametersCmd)
 }
 
-// Parent command add any artifacts
+// The parent command adds any artifacts.
 var addCmd = &cobra.Command{
 	Use:    "add",
 	Short:  "Add artifacts",
@@ -29,7 +29,7 @@ var addCmd = &cobra.Command{
 	Run:    nil,
 }
 
-// Parent command get any artifacts
+// The parent command gets any artifacts.
 var getCmd = &cobra.Command{
 	Use:    "get",
 	Short:  "Get artifacts",
@@ -38,7 +38,7 @@ var getCmd = &cobra.Command{
 	Run:    nil,
 }
 
-// Parent command to update artifacts
+// The parent command updates the artifacts.
 var updateCmd = &cobra.Command{
 	Use:    "update",
 	Short:  "Update artifact",
