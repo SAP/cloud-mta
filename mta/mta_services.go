@@ -40,7 +40,7 @@ func createMtaYamlFile(path string, mkDirs func(string, os.FileMode) error) (rer
 func getMtaFromFile(path string) (*MTA, error) {
 	mtaContent, err := ioutil.ReadFile(filepath.Join(path))
 	if err != nil {
-		return nil, errors.Wrapf(err, `failed when reading %s file`, path)
+		return nil, errors.Wrapf(err, "failed when reading the '%s' file", path)
 	}
 	s := string(mtaContent)
 	s = strings.Replace(s, "\r\n", "\r", -1)
@@ -64,7 +64,7 @@ func saveMTA(path string, mta *MTA, marshal func(*MTA) ([]byte, error)) error {
 	return ioutil.WriteFile(path, mtaBytes, 0644)
 }
 
-// CreateMta - create MTA project
+// CreateMta - creates an MTA project.
 func CreateMta(path string, mtaDataJSON string, mkDirs func(string, os.FileMode) error) error {
 	mtaDataYaml, err := ghodss.JSONToYAML([]byte(mtaDataJSON))
 	if err != nil {
@@ -77,7 +77,7 @@ func CreateMta(path string, mtaDataJSON string, mkDirs func(string, os.FileMode)
 	return ioutil.WriteFile(path, mtaDataYaml, 0644)
 }
 
-//AddModule - add new module
+//AddModule - adds a new module.
 func AddModule(path string, moduleDataJSON string, marshal func(*MTA) ([]byte, error)) error {
 	mta, err := getMtaFromFile(filepath.Join(path))
 	if err != nil {
@@ -94,7 +94,7 @@ func AddModule(path string, moduleDataJSON string, marshal func(*MTA) ([]byte, e
 	return saveMTA(path, mta, marshal)
 }
 
-//AddResource - add new resource
+//AddResource - adds a new resource.
 func AddResource(path string, resourceDataJSON string, marshal func(*MTA) ([]byte, error)) error {
 	mta, err := getMtaFromFile(path)
 	if err != nil {
@@ -111,7 +111,7 @@ func AddResource(path string, resourceDataJSON string, marshal func(*MTA) ([]byt
 	return saveMTA(path, mta, marshal)
 }
 
-//GetModules - get all modules
+//GetModules - gets all modules.
 func GetModules(path string) ([]*Module, error) {
 	mta, err := getMtaFromFile(path)
 	if err != nil {
@@ -120,7 +120,7 @@ func GetModules(path string) ([]*Module, error) {
 	return mta.Modules, nil
 }
 
-//GetResources - get all resources
+//GetResources - gets all resources.
 func GetResources(path string) ([]*Resource, error) {
 	mta, err := getMtaFromFile(path)
 	if err != nil {
@@ -129,7 +129,7 @@ func GetResources(path string) ([]*Resource, error) {
 	return mta.Resources, nil
 }
 
-// UpdateModule updates an existing module according to the module name. In case more than one module with this
+// UpdateModule updates an existing module according to the module name. If more than one module with this
 // name exists, one of the modules is updated to the existing structure.
 func UpdateModule(path string, moduleDataJSON string, marshal func(*MTA) ([]byte, error)) error {
 	mtaObj, err := getMtaFromFile(path)
@@ -143,7 +143,7 @@ func UpdateModule(path string, moduleDataJSON string, marshal func(*MTA) ([]byte
 		return err
 	}
 
-	// Replace the first existing module with the same name
+	// replaces the first existing module with the same name.
 	for index, existingModule := range mtaObj.Modules {
 		if existingModule.Name == module.Name {
 			mtaObj.Modules[index] = &module
@@ -151,11 +151,11 @@ func UpdateModule(path string, moduleDataJSON string, marshal func(*MTA) ([]byte
 		}
 	}
 
-	return fmt.Errorf("module with name %s does not exist", module.Name)
+	return fmt.Errorf("the '%s' module does not exist", module.Name)
 }
 
-// UpdateResource updates an existing resource according to the resource name. In case more than one resource with this
-// name exists, one of the resources is updated to the existing structure.
+// UpdateResource updates an existing resource according to the resource name. If more than one resource with this
+// name exists, one of the resources is updated in the existing structure.
 func UpdateResource(path string, resourceDataJSON string, marshal func(*MTA) ([]byte, error)) error {
 	mtaObj, err := getMtaFromFile(path)
 	if err != nil {
@@ -168,7 +168,7 @@ func UpdateResource(path string, resourceDataJSON string, marshal func(*MTA) ([]
 		return err
 	}
 
-	// Replace the first existing resource with the same name
+	// replaces the first existing resource with the same name.
 	for index, existingResource := range mtaObj.Resources {
 		if existingResource.Name == resource.Name {
 			mtaObj.Resources[index] = &resource
@@ -176,10 +176,10 @@ func UpdateResource(path string, resourceDataJSON string, marshal func(*MTA) ([]
 		}
 	}
 
-	return fmt.Errorf("resource with name %s does not exist", resource.Name)
+	return fmt.Errorf("the '%s' resource does not exist", resource.Name)
 }
 
-//IsNameUnique - check if name already exists as module/resource/provide name
+//IsNameUnique - checks if the name already exists as a `module`/`resource`/`provide` name.
 func IsNameUnique(path string, name string) (bool, error) {
 	mta, err := getMtaFromFile(path)
 	if err != nil {
@@ -204,7 +204,7 @@ func IsNameUnique(path string, name string) (bool, error) {
 	return false, nil
 }
 
-//UpdateBuildParameters - update mta build parameters
+//UpdateBuildParameters - updates the MTA build parameters.
 func UpdateBuildParameters(path string, buildParamsDataJSON string) error {
 	mta, err := getMtaFromFile(path)
 	if err != nil {
@@ -221,7 +221,7 @@ func UpdateBuildParameters(path string, buildParamsDataJSON string) error {
 	return saveMTA(path, mta, Marshal)
 }
 
-// CopyFile - copy from source path to target path
+// CopyFile - copies a file from the source path to the target path.
 func CopyFile(src, dst string, create func(string) (*os.File, error)) (rerr error) {
 	in, err := os.Open(src)
 	if err != nil {
@@ -249,16 +249,16 @@ func CopyFile(src, dst string, create func(string) (*os.File, error)) (rerr erro
 	return err
 }
 
-// DeleteFile - delete file
+// DeleteFile - deletes the file.
 func DeleteFile(path string) error {
 	return fs.DeleteFile(path)
 }
 
-// GetMtaHash - get hashcode of the mta file
+// GetMtaHash - gets the hashcode of the MTA file.
 func GetMtaHash(path string) (int, bool, error) {
 	mtaContent, err := ioutil.ReadFile(filepath.Join(path))
 	if err != nil {
-		// file not exists
+		// the file does not exist.
 		return 0, false, nil
 	}
 	h := sha1.New()
@@ -266,7 +266,7 @@ func GetMtaHash(path string) (int, bool, error) {
 	return code, true, err
 }
 
-// ModifyMta - lock and modify mta.yaml file
+// ModifyMta - locks and modifies the "mta.yaml" file.
 func ModifyMta(path string, modify func() error, hashcode int, force bool, isNew bool, mkDirs func(string, os.FileMode) error) (newHashcode int, rerr error) {
 	// create lock file
 	// Make sure the directory of the lock file exists (it might not in the case of a new MTA)
@@ -278,9 +278,9 @@ func ModifyMta(path string, modify func() error, hashcode int, force bool, isNew
 	lockFilePath := filepath.Join(filepath.Dir(path), "mta-lock.lock")
 	file, err := os.OpenFile(lockFilePath, os.O_RDONLY|os.O_CREATE|os.O_EXCL, 0666)
 	if os.IsExist(err) {
-		return 0, fmt.Errorf(`could not modify the "%s" file; it is locked by another process`, path)
+		return 0, fmt.Errorf("could not modify the '%s' file; it is locked by another process", path)
 	} else if err != nil {
-		return 0, fmt.Errorf(`could not lock the "%s" file for modification; %s`, path, err)
+		return 0, fmt.Errorf("could not lock the '%s' file for modification; %s", path, err)
 	}
 	// unlock and remove lock file at the end of modification
 	defer func() {
@@ -313,11 +313,11 @@ func ModifyMta(path string, modify func() error, hashcode int, force bool, isNew
 
 func ifFileChangeable(path string, isNew, exists, sameHash bool, force bool) error {
 	if isNew && exists {
-		return fmt.Errorf(`could not create the "%s" file; another file with this name already exists`, path)
+		return fmt.Errorf("could not create the '%s' file; another file with this name already exists", path)
 	} else if !isNew && !exists {
-		return fmt.Errorf(`the "%s" file does not exist`, path)
+		return fmt.Errorf("the '%s' file does not exist", path)
 	} else if !sameHash && !force {
-		return fmt.Errorf(`could not update the "%s" file; it was modified by another process`, path)
+		return fmt.Errorf("could not update the '%s' file; it was modified by another process", path)
 	}
 	return nil
 }
