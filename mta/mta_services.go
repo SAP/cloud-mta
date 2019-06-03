@@ -363,7 +363,8 @@ func RunModifyAndWriteHash(info string, path string, force bool, action func() e
 	newHashcode, err := ModifyMta(path, action, hashcode, force, isNew, os.MkdirAll)
 	writeErr := WriteResult(nil, newHashcode, err)
 	if err != nil {
-		// The original error has greater importance and will be displayed first.
+		// If there is an error in both the “ModifyMta” function and the “WriteResult” function, only the “ModifyMta”
+		// function returns the error.
 		return err
 	}
 	return writeErr
@@ -380,7 +381,8 @@ func RunAndWriteResultAndHash(info string, path string, action func() (interface
 	}
 	writeErr := WriteResult(result, hashcode, err)
 	if err != nil {
-		// The original error has greater importance and will be displayed first.
+		// If there is an error in both the “GetMtaHash” function and the “WriteResult” function, only the “GetMtaHash”
+		// function returns the error.
 		return err
 	}
 	return writeErr
