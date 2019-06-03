@@ -305,7 +305,7 @@ var _ = Describe("MtaServices", func() {
 			jsonModuleData, err := json.Marshal(oUpdatedModule)
 			Ω(err).Should(Succeed())
 			err = UpdateModule(mtaPath, string(jsonModuleData), Marshal)
-			Ω(err).Should(MatchError("module with name testModule2 does not exist"))
+			Ω(err).Should(MatchError("the 'testModule2' module does not exist"))
 		})
 
 		It("fails when marshal to mta.yaml fails", func() {
@@ -551,7 +551,7 @@ var _ = Describe("MtaServices", func() {
 			jsonResourceData, err := json.Marshal(oUpdatedResource)
 			Ω(err).Should(Succeed())
 			err = UpdateResource(mtaPath, string(jsonResourceData), Marshal)
-			Ω(err).Should(MatchError("resource with name testResource2 does not exist"))
+			Ω(err).Should(MatchError("the 'testResource2' resource does not exist"))
 		})
 
 		It("fails when marshal to mta.yaml fails", func() {
