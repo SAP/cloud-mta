@@ -19,7 +19,7 @@ func init() {
 	cobra.OnInitialize(initConfig)
 }
 
-// rootCmd represents the base command
+// rootCmd - represents the base command.
 var rootCmd = &cobra.Command{
 	Use:     "MTA",
 	Short:   "MTA tools",
@@ -28,15 +28,15 @@ var rootCmd = &cobra.Command{
 	Args:    cobra.MaximumNArgs(1),
 }
 
-// Execute command adds all child commands to the root command and sets flags appropriately
+// Execute - adds all the child commands to the root command and sets the flags appropriately.
 func Execute() error {
 	return rootCmd.Execute()
 }
 
 func initConfig() {
 	viper.SetConfigFile(cfgFile)
-	viper.AutomaticEnv() // reads in the environment variables that match
-	// if a configs file is found, reads it in
+	viper.AutomaticEnv() // Reads in the environment variables that match.
+	// If a configs file is found, reads it in.
 	if err := viper.ReadInConfig(); err == nil {
 		logs.Logger.Println("Using configs file:", viper.ConfigFileUsed())
 	}
