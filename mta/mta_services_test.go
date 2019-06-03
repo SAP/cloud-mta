@@ -712,7 +712,7 @@ var _ = Describe("MtaServices", func() {
 			mtaPath := getTestPath("result", "mta.yaml")
 			_, err := ModifyMta(mtaPath, func() error {
 				return nil
-			}, 0, true, func(s string, mode os.FileMode) error {
+			}, 0, false, true, func(s string, mode os.FileMode) error {
 				return errors.New("cannot create directory")
 			})
 			Ω(err).Should(MatchError("cannot create directory"))
@@ -722,7 +722,7 @@ var _ = Describe("MtaServices", func() {
 			mtaPath := getTestPath("result", "mta.yaml")
 			_, err := ModifyMta(mtaPath, func() error {
 				return nil
-			}, 0, true, os.MkdirAll)
+			}, 0, false, true, os.MkdirAll)
 			Ω(err).Should(Succeed())
 			Ω(getTestPath("result")).Should(BeAnExistingFile())
 		})
@@ -738,7 +738,7 @@ var _ = Describe("MtaServices", func() {
 			_ = file.Close()
 			_, err = ModifyMta(mtaPath, func() error {
 				return nil
-			}, 0, true, os.MkdirAll)
+			}, 0, false, true, os.MkdirAll)
 			Ω(err).Should(MatchError(ContainSubstring("it is locked by another process")))
 		})
 
@@ -746,7 +746,7 @@ var _ = Describe("MtaServices", func() {
 			mtaPath := getTestPath("result", "mta.yaml")
 			_, err := ModifyMta(mtaPath, func() error {
 				return nil
-			}, 0, true, func(s string, mode os.FileMode) error {
+			}, 0, false, true, func(s string, mode os.FileMode) error {
 				return nil
 			})
 			Ω(err).Should(MatchError(ContainSubstring("could not lock")))
@@ -862,7 +862,7 @@ var _ = Describe("Module", func() {
 		moduleJSON := string(jsonData)
 		mtaHashCodeResult, err := ModifyMta(mtaPath, func() error {
 			return AddModule(mtaPath, moduleJSON, Marshal)
-		}, mtaHashCode, false, os.MkdirAll)
+		}, mtaHashCode, false, false, os.MkdirAll)
 		Ω(err).Should(Succeed())
 		Ω(mtaHashCodeResult).ShouldNot(Equal(mtaHashCode))
 		mtaHashCodeAfterModify, _, err := GetMtaHash(mtaPath)
@@ -871,7 +871,7 @@ var _ = Describe("Module", func() {
 		// wrong yaml
 		_, err = ModifyMta(getTestPath("result", "mtaX.yaml"), func() error {
 			return AddModule(getTestPath("result", "mtaX.yaml"), moduleJSON, Marshal)
-		}, mtaHashCode, false, os.MkdirAll)
+		}, mtaHashCode, false, false, os.MkdirAll)
 		Ω(err).Should(HaveOccurred())
 		Ω(err.Error()).Should(ContainSubstring("file does not exist"))
 		oModule.Name = "test1"
@@ -880,9 +880,37 @@ var _ = Describe("Module", func() {
 		// hashcode of the mta.yaml is wrong now
 		_, err = ModifyMta(mtaPath, func() error {
 			return AddModule(mtaPath, moduleJSON, Marshal)
-		}, mtaHashCode, false, os.MkdirAll)
+		}, mtaHashCode, false, false, os.MkdirAll)
 		Ω(err).Should(HaveOccurred())
 	})
+
+	It("Modify mta.yaml with force even when the hashcode is wrong", func() {
+		os.MkdirAll(getTestPath("result"), os.ModePerm)
+		mtaPath := getTestPath("result", "mta.yaml")
+		Ω(CopyFile(getTestPath("mta.yaml"), mtaPath, os.Create)).Should(Succeed())
+
+		mtaHashCode, exists, err := GetMtaHash(mtaPath)
+		Ω(err).Should(Succeed())
+		Ω(exists).Should(BeTrue())
+
+		jsonData, err := json.Marshal(oModule)
+		Ω(err).Should(Succeed())
+		moduleJSON := string(jsonData)
+		mtaHashCodeResult, err := ModifyMta(mtaPath, func() error {
+			return AddModule(mtaPath, moduleJSON, Marshal)
+		}, mtaHashCode, false, false, os.MkdirAll)
+		Ω(err).Should(Succeed())
+		Ω(mtaHashCodeResult).ShouldNot(Equal(mtaHashCode))
+		mtaHashCodeAfterModify, _, err := GetMtaHash(mtaPath)
+		Ω(err).Should(Succeed())
+		Ω(mtaHashCodeResult).Should(Equal(mtaHashCodeAfterModify))
+		// hashcode of the mta.yaml is wrong now but force is true
+		_, err = ModifyMta(mtaPath, func() error {
+			return AddModule(mtaPath, moduleJSON, Marshal)
+		}, mtaHashCode, true, false, os.MkdirAll)
+		Ω(err).Should(Succeed())
+	})
+
 	It("2 parallel processes, second fails to make locking", func() {
 		os.MkdirAll(getTestPath("result"), os.ModePerm)
 		mtaPath := getTestPath("result", "mta.yaml")
@@ -896,7 +924,7 @@ var _ = Describe("Module", func() {
 			_, err1 = ModifyMta(mtaPath, func() error {
 				time.Sleep(time.Second)
 				return nil
-			}, mtaHashCode, false, os.MkdirAll)
+			}, mtaHashCode, false, false, os.MkdirAll)
 			defer wg.Done()
 		}()
 		time.Sleep(time.Millisecond * 200)
@@ -906,7 +934,7 @@ var _ = Describe("Module", func() {
 			_, err2 = ModifyMta(mtaPath, func() error {
 				time.Sleep(time.Second)
 				return nil
-			}, mtaHashCode, false, os.MkdirAll)
+			}, mtaHashCode, false, false, os.MkdirAll)
 			defer wg.Done()
 		}()
 		wg.Wait()
@@ -932,7 +960,7 @@ var _ = Describe("RunE helper functions", func() {
 		json, err := json.Marshal(getMtaInput())
 		Ω(err).Should(Succeed())
 		output := executeAndProvideOutput(func() {
-			err = RunModifyAndWriteHash("info message", mtaPath, func() error {
+			err = RunModifyAndWriteHash("info message", mtaPath, false, func() error {
 				return CreateMta(mtaPath, string(json), os.MkdirAll)
 			}, 0, true)
 			Ω(err).Should(Succeed())
@@ -948,7 +976,7 @@ var _ = Describe("RunE helper functions", func() {
 		Ω(err).Should(Succeed())
 		mtaPath := getTestPath("result", "temp.mta.yaml")
 		output := executeAndProvideOutput(func() {
-			err := RunModifyAndWriteHash("info message", mtaPath, func() error {
+			err := RunModifyAndWriteHash("info message", mtaPath, false, func() error {
 				return errors.New("some error")
 			}, 0, true)
 			Ω(err).Should(MatchError("some error"))

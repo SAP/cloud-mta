@@ -8,6 +8,7 @@ import (
 
 var addResourceMtaCmdPath string
 var addResourceCmdData string
+var addResourceCmdForce bool
 var addResourceCmdHashcode int
 var getResourcesCmdPath string
 var updateResourceMtaCmdPath string
@@ -20,6 +21,8 @@ func init() {
 		"the path to the yaml file")
 	addResourceCmd.Flags().StringVarP(&addResourceCmdData, "data", "d", "",
 		"data in JSON format")
+	addResourceCmd.Flags().BoolVarP(&addResourceCmdForce, "force", "f", false,
+		"force action")
 	addResourceCmd.Flags().IntVarP(&addResourceCmdHashcode, "hashcode", "c", 0,
 		"data hashcode")
 	getResourcesCmd.Flags().StringVarP(&getResourcesCmdPath, "path", "p", "",
@@ -39,7 +42,7 @@ var addResourceCmd = &cobra.Command{
 	Long:  "Add new resources",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return mta.RunModifyAndWriteHash("add new resource", addResourceMtaCmdPath, func() error {
+		return mta.RunModifyAndWriteHash("add new resource", addResourceMtaCmdPath, addResourceCmdForce, func() error {
 			return mta.AddResource(addResourceMtaCmdPath, addResourceCmdData, mta.Marshal)
 		}, addResourceCmdHashcode, false)
 	},
@@ -71,7 +74,7 @@ var updateResourceCmd = &cobra.Command{
 	Long:  "Update existing resource",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return mta.RunModifyAndWriteHash("update existing resource", updateResourceMtaCmdPath, func() error {
+		return mta.RunModifyAndWriteHash("update existing resource", updateResourceMtaCmdPath, false, func() error {
 			return mta.UpdateResource(updateResourceMtaCmdPath, updateResourceCmdData, mta.Marshal)
 		}, updateResourceCmdHashcode, false)
 	},

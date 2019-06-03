@@ -267,7 +267,7 @@ func GetMtaHash(path string) (int, bool, error) {
 }
 
 // ModifyMta - lock and modify mta.yaml file
-func ModifyMta(path string, modify func() error, hashcode int, isNew bool, mkDirs func(string, os.FileMode) error) (newHashcode int, rerr error) {
+func ModifyMta(path string, modify func() error, hashcode int, force bool, isNew bool, mkDirs func(string, os.FileMode) error) (newHashcode int, rerr error) {
 	// create lock file
 	// Make sure the directory of the lock file exists (it might not in the case of a new MTA)
 	folder := filepath.Dir(path)
@@ -299,7 +299,7 @@ func ModifyMta(path string, modify func() error, hashcode int, isNew bool, mkDir
 	currentHash, exists, err := GetMtaHash(path)
 
 	if err == nil {
-		err = ifFileChangeable(path, isNew, exists, currentHash == hashcode)
+		err = ifFileChangeable(path, isNew, exists, currentHash == hashcode, force)
 	}
 	if err == nil {
 		err = modify()
@@ -311,12 +311,12 @@ func ModifyMta(path string, modify func() error, hashcode int, isNew bool, mkDir
 	return newHashcode, err
 }
 
-func ifFileChangeable(path string, isNew, exists, sameHash bool) error {
+func ifFileChangeable(path string, isNew, exists, sameHash bool, force bool) error {
 	if isNew && exists {
 		return fmt.Errorf(`could not create the "%s" file; another file with this name already exists`, path)
 	} else if !isNew && !exists {
 		return fmt.Errorf(`the "%s" file does not exist`, path)
-	} else if !sameHash {
+	} else if !sameHash && !force {
 		return fmt.Errorf(`could not update the "%s" file; it was modified by another process`, path)
 	}
 	return nil
@@ -359,9 +359,9 @@ func printResult(result interface{}, hashcode int, err error, print func(...inte
 
 // RunModifyAndWriteHash logs the info, executes the action while locking the mta file in the path, and writes the
 // result and hashcode (or error) to the output
-func RunModifyAndWriteHash(info string, path string, action func() error, hashcode int, isNew bool) error {
+func RunModifyAndWriteHash(info string, path string, force bool, action func() error, hashcode int, isNew bool) error {
 	logs.Logger.Info(info)
-	newHashcode, err := ModifyMta(path, action, hashcode, isNew, os.MkdirAll)
+	newHashcode, err := ModifyMta(path, action, hashcode, force, isNew, os.MkdirAll)
 	writeErr := WriteResult(nil, newHashcode, err)
 	if err != nil {
 		// The original error is more important

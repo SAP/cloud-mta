@@ -19,6 +19,7 @@ var existCmdName string
 var existCmdPath string
 var updateBuildParametersCmdPath string
 var updateBuildParametersCmdData string
+var updateBuildParametersCmdForce bool
 var updateBuildParametersCmdHashcode int
 
 func init() {
@@ -42,6 +43,8 @@ func init() {
 		"the path to the file")
 	updateBuildParametersCmd.Flags().StringVarP(&updateBuildParametersCmdData, "data", "d", "",
 		"data in JSON format")
+	updateBuildParametersCmd.Flags().BoolVarP(&updateBuildParametersCmdForce, "force", "f", false,
+		"force action")
 	updateBuildParametersCmd.Flags().IntVarP(&updateBuildParametersCmdHashcode, "hashcode", "c", 0,
 		"data hashcode")
 }
@@ -53,7 +56,7 @@ var createMtaCmd = &cobra.Command{
 	Long:  "Create new MTA project",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return mta.RunModifyAndWriteHash("create MTA project", createMtaCmdPath, func() error {
+		return mta.RunModifyAndWriteHash("create MTA project", createMtaCmdPath, false, func() error {
 			return mta.CreateMta(createMtaCmdPath, createMtaCmdData, os.MkdirAll)
 		}, 0, true)
 	},
@@ -130,7 +133,7 @@ var updateBuildParametersCmd = &cobra.Command{
 	Long:  "Update build parameters",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return mta.RunModifyAndWriteHash("update build parameters", updateBuildParametersCmdPath, func() error {
+		return mta.RunModifyAndWriteHash("update build parameters", updateBuildParametersCmdPath, updateBuildParametersCmdForce, func() error {
 			return mta.UpdateBuildParameters(updateBuildParametersCmdPath, updateBuildParametersCmdData)
 		}, updateBuildParametersCmdHashcode, false)
 	},
