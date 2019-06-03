@@ -67,7 +67,7 @@ var getResourcesCmd = &cobra.Command{
 	SilenceErrors: true,
 }
 
-// updateModuleCmd - updates an existing module.
+// updateResourceCmd - updates an existing resource.
 var updateResourceCmd = &cobra.Command{
 	Use:   "resource",
 	Short: "Update existing resource",
