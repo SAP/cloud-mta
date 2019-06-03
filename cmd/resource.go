@@ -35,7 +35,7 @@ func init() {
 		"data hashcode")
 }
 
-// addResourceCmd - Add new resource
+// addResourceCmd - adds a new resource.
 var addResourceCmd = &cobra.Command{
 	Use:   "resource",
 	Short: "Add new resources",
@@ -51,7 +51,7 @@ var addResourceCmd = &cobra.Command{
 	SilenceErrors: true,
 }
 
-// getResourcesCmd - Get all resources
+// getResourcesCmd - gets all resources.
 var getResourcesCmd = &cobra.Command{
 	Use:   "resources",
 	Short: "Get all resources",
@@ -67,7 +67,7 @@ var getResourcesCmd = &cobra.Command{
 	SilenceErrors: true,
 }
 
-// updateModuleCmd updates an existing module
+// updateResourceCmd - updates an existing resource.
 var updateResourceCmd = &cobra.Command{
 	Use:   "resource",
 	Short: "Update existing resource",
