@@ -8,6 +8,7 @@ import (
 
 var addModuleMtaCmdPath string
 var addModuleCmdData string
+var addModuleCmdForce bool
 var addModuleCmdHashcode int
 var getModulesCmdPath string
 var updateModuleMtaCmdPath string
@@ -20,6 +21,8 @@ func init() {
 		"the path to the yaml file")
 	addModuleCmd.Flags().StringVarP(&addModuleCmdData, "data", "d", "",
 		"data in JSON format")
+	addModuleCmd.Flags().BoolVarP(&addModuleCmdForce, "force", "f", false,
+		"force action")
 	addModuleCmd.Flags().IntVarP(&addModuleCmdHashcode, "hashcode", "c", 0,
 		"data hashcode")
 	getModulesCmd.Flags().StringVarP(&getModulesCmdPath, "path", "p", "",
@@ -39,7 +42,7 @@ var addModuleCmd = &cobra.Command{
 	Long:  "Add new module",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return mta.RunModifyAndWriteHash("add new module", addModuleMtaCmdPath, func() error {
+		return mta.RunModifyAndWriteHash("add new module", addModuleMtaCmdPath, addModuleCmdForce, func() error {
 			return mta.AddModule(addModuleMtaCmdPath, addModuleCmdData, mta.Marshal)
 		}, addModuleCmdHashcode, false)
 	},
@@ -71,7 +74,7 @@ var updateModuleCmd = &cobra.Command{
 	Long:  "Update existing module",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return mta.RunModifyAndWriteHash("update existing module", updateModuleMtaCmdPath, func() error {
+		return mta.RunModifyAndWriteHash("update existing module", updateModuleMtaCmdPath, false, func() error {
 			return mta.UpdateModule(updateModuleMtaCmdPath, updateModuleCmdData, mta.Marshal)
 		}, updateModuleCmdHashcode, false)
 	},
