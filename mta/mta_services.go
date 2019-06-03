@@ -143,7 +143,7 @@ func UpdateModule(path string, moduleDataJSON string, marshal func(*MTA) ([]byte
 		return err
 	}
 
-	// replaces the first existing module with the same name.
+	// Replaces the first existing module with the same name.
 	for index, existingModule := range mtaObj.Modules {
 		if existingModule.Name == module.Name {
 			mtaObj.Modules[index] = &module
@@ -168,7 +168,7 @@ func UpdateResource(path string, resourceDataJSON string, marshal func(*MTA) ([]
 		return err
 	}
 
-	// replaces the first existing resource with the same name.
+	// Replaces the first existing resource with the same name.
 	for index, existingResource := range mtaObj.Resources {
 		if existingResource.Name == resource.Name {
 			mtaObj.Resources[index] = &resource
@@ -268,8 +268,8 @@ func GetMtaHash(path string) (int, bool, error) {
 
 // ModifyMta - locks and modifies the "mta.yaml" file.
 func ModifyMta(path string, modify func() error, hashcode int, force bool, isNew bool, mkDirs func(string, os.FileMode) error) (newHashcode int, rerr error) {
-	// create lock file
-	// Make sure the directory of the lock file exists (it might not in the case of a new MTA)
+	// Creates the lock file.
+	// Makes sure the directory of the lock file exists (it might not exist if it is a new MTA).
 	folder := filepath.Dir(path)
 	rerr = mkDirs(folder, os.ModePerm)
 	if rerr != nil {
@@ -278,11 +278,11 @@ func ModifyMta(path string, modify func() error, hashcode int, force bool, isNew
 	lockFilePath := filepath.Join(filepath.Dir(path), "mta-lock.lock")
 	file, err := os.OpenFile(lockFilePath, os.O_RDONLY|os.O_CREATE|os.O_EXCL, 0666)
 	if os.IsExist(err) {
-		return 0, fmt.Errorf("could not modify the '%s' file; it is locked by another process", path)
+		return 0, fmt.Errorf("could not modify the \"%s\" file; it is locked by another process", path)
 	} else if err != nil {
-		return 0, fmt.Errorf("could not lock the '%s' file for modification; %s", path, err)
+		return 0, fmt.Errorf("could not lock the \"%s\" file for modification; %s", path, err)
 	}
-	// unlock and remove lock file at the end of modification
+	// Unlocks and removes the lock file at the end of modification.
 	defer func() {
 		if file == nil {
 			return
@@ -313,11 +313,11 @@ func ModifyMta(path string, modify func() error, hashcode int, force bool, isNew
 
 func ifFileChangeable(path string, isNew, exists, sameHash bool, force bool) error {
 	if isNew && exists {
-		return fmt.Errorf("could not create the '%s' file; another file with this name already exists", path)
+		return fmt.Errorf("could not create the \"%s\" file; another file with this name already exists", path)
 	} else if !isNew && !exists {
-		return fmt.Errorf("the '%s' file does not exist", path)
+		return fmt.Errorf("the \"%s\" file does not exist", path)
 	} else if !sameHash && !force {
-		return fmt.Errorf("could not update the '%s' file; it was modified by another process", path)
+		return fmt.Errorf("could not update the \"%s\" file; it was modified by another process", path)
 	}
 	return nil
 }
@@ -330,8 +330,7 @@ type outputError struct {
 	Message string `json:"message"`
 }
 
-// WriteResult writes the result of an operation to the output in JSON format. In case of an error
-// the message is written. In case of success the hashcode and results are written.
+// WriteResult - writes the result of an operation to the output in JSON format. If successful, the hashcode and results are written; otherwise an error is displayed.
 func WriteResult(result interface{}, hashcode int, err error) error {
 	return printResult(result, hashcode, err, fmt.Print, json.Marshal)
 }
@@ -357,21 +356,21 @@ func printResult(result interface{}, hashcode int, err error, print func(...inte
 	return err
 }
 
-// RunModifyAndWriteHash logs the info, executes the action while locking the mta file in the path, and writes the
-// result and hashcode (or error) to the output
+// RunModifyAndWriteHash - logs the info, executes the action while locking the MTA file in the path, and writes the
+// result and hashcode (or error, if needed) to the output.
 func RunModifyAndWriteHash(info string, path string, force bool, action func() error, hashcode int, isNew bool) error {
 	logs.Logger.Info(info)
 	newHashcode, err := ModifyMta(path, action, hashcode, force, isNew, os.MkdirAll)
 	writeErr := WriteResult(nil, newHashcode, err)
 	if err != nil {
-		// The original error is more important
+		// The original error has greater importance and will be displayed first.
 		return err
 	}
 	return writeErr
 }
 
-// RunAndWriteResultAndHash logs the info, executes the action, and writes the result and hashcode of the mta in the
-// path (or error) to the output
+// RunAndWriteResultAndHash - logs the info, executes the action, and writes the result and hashcode of the MTA in the
+// path (or an error, if needed) to the output
 func RunAndWriteResultAndHash(info string, path string, action func() (interface{}, error)) error {
 	logs.Logger.Info(info)
 	result, err := action()
@@ -381,7 +380,7 @@ func RunAndWriteResultAndHash(info string, path string, action func() (interface
 	}
 	writeErr := WriteResult(result, hashcode, err)
 	if err != nil {
-		// The original error is more important
+		// The original error has greater importance and will be displayed first.
 		return err
 	}
 	return writeErr
