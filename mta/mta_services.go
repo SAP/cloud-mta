@@ -266,7 +266,6 @@ func GetMtaHash(path string) (int, bool, error) {
 	return code, true, err
 }
 
-
 // ModifyMta - locks and modifies the "mta.yaml" file.
 func ModifyMta(path string, modify func() error, hashcode int, force bool, isNew bool, mkDirs func(string, os.FileMode) error) (newHashcode int, rerr error) {
 	// create lock file
