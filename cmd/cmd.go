@@ -15,6 +15,7 @@ func init() {
 	addCmd.AddCommand(addModuleCmd, addResourceCmd)
 	getCmd.AddCommand(getModulesCmd, getResourcesCmd)
 	updateCmd.AddCommand(updateModuleCmd, updateResourceCmd)
+	rootCmd.AddCommand(resolveMtaCmd)
 }
 
 // Parent command add any artifacts

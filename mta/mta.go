@@ -5,8 +5,8 @@ package mta
 import (
 	"bytes"
 	"fmt"
-	yamlv2 "gopkg.in/yaml.v2"
-	"gopkg.in/yaml.v3"
+
+	yaml "gopkg.in/yaml.v2"
 )
 
 // GetModules returns a list of MTA modules.
@@ -52,13 +52,14 @@ func (mta *MTA) GetResourceByName(name string) (*Resource, error) {
 // Unmarshal returns a reference to the MTA object from a byte array.
 func Unmarshal(content []byte) (*MTA, error) {
 	dec := yaml.NewDecoder(bytes.NewReader(content))
-	dec.KnownFields(true)
+	//dec.KnownFields(true)
 	mtaStr := MTA{}
 	err := dec.Decode(&mtaStr)
+	//err := yaml.Unmarshal(content, &mtaStr)
 	return &mtaStr, err
 }
 
 // Marshal marshals an MTA object
 func Marshal(omta *MTA) ([]byte, error) {
-	return yamlv2.Marshal(&omta)
+	return yaml.Marshal(&omta)
 }
