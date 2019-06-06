@@ -87,17 +87,9 @@ workflows:
               only: /^v([0-9]+)(\.[0-9]+)(\.[0-9]+)/
             branches:
               ignore: /.*/
-      - test:
-          requires:
-            - build
-          filters:  # required since `deploy` has tag filters AND requires `test`
-            tags:
-              only: /^v([0-9]+)(\.[0-9]+)(\.[0-9]+)/
-            branches:
-              ignore: /.*/
       - deploy:
           requires:
-            - test
+            - build
           filters:  # job runs on tags for no branches
             tags:
               only: /^v([0-9]+)(\.[0-9]+)(\.[0-9]+)/
