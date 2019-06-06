@@ -2,7 +2,6 @@ package mta
 
 import (
 	"crypto/sha1"
-	"encoding/json"
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"io"
@@ -12,6 +11,7 @@ import (
 	"strings"
 
 	ghodss "github.com/ghodss/yaml"
+	"github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
 	"github.com/SAP/cloud-mta/internal/fs"
@@ -332,7 +332,7 @@ type outputError struct {
 
 // WriteResult - writes the result of an operation to the output in JSON format. If successful, the hashcode and results are written; otherwise an error is displayed.
 func WriteResult(result interface{}, hashcode int, err error) error {
-	return printResult(result, hashcode, err, fmt.Print, json.Marshal)
+	return printResult(result, hashcode, err, fmt.Print, jsoniter.Marshal)
 }
 
 func printResult(result interface{}, hashcode int, err error, print func(...interface{}) (n int, err error), jsonMarshal func(v interface{}) ([]byte, error)) error {
