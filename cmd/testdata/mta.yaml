@@ -30,7 +30,7 @@ modules:
   parameters-metadata:
     domain: {optional: false, overwritable: true}
   includes:
-  - name: config
+  - name: configs
     path: cfg/parameters.json
   provides:
   - name: backend_task
@@ -49,7 +49,7 @@ modules:
       scheduler_url:
         optional: false
     includes:
-    - name: config
+    - name: configs
       path: cfg/parameters.json
   deployed-after: [ scheduler ]
 
@@ -79,7 +79,7 @@ resources:
     properties:
       prop1: ${value}-~{url}
   includes:
-  - name: config
+  - name: configs
     path: cfg/security.json
   - name: creation
     path: djdk.yaml

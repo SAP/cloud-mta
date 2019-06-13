@@ -5,6 +5,9 @@ import (
 )
 
 func init() {
+
+	rootCmd.Flags().BoolP("version", "v", false, "version for MTA")
+
 	rootCmd.AddCommand(addCmd)
 	rootCmd.AddCommand(getCmd)
 	rootCmd.AddCommand(updateCmd)
@@ -14,11 +17,13 @@ func init() {
 	rootCmd.AddCommand(existCmd)
 	addCmd.AddCommand(addModuleCmd, addResourceCmd)
 	getCmd.AddCommand(getModulesCmd, getResourcesCmd)
-	updateCmd.AddCommand(updateModuleCmd, updateResourceCmd)
+
 	rootCmd.AddCommand(resolveMtaCmd)
+	updateCmd.AddCommand(updateModuleCmd, updateResourceCmd, updateBuildParametersCmd)
+
 }
 
-// Parent command add any artifacts
+// The parent command adds any artifacts.
 var addCmd = &cobra.Command{
 	Use:    "add",
 	Short:  "Add artifacts",
@@ -27,7 +32,7 @@ var addCmd = &cobra.Command{
 	Run:    nil,
 }
 
-// Parent command get any artifacts
+// The parent command gets any artifacts.
 var getCmd = &cobra.Command{
 	Use:    "get",
 	Short:  "Get artifacts",
@@ -36,7 +41,7 @@ var getCmd = &cobra.Command{
 	Run:    nil,
 }
 
-// Parent command to update artifacts
+// The parent command updates the artifacts.
 var updateCmd = &cobra.Command{
 	Use:    "update",
 	Short:  "Update artifact",
