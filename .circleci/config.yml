@@ -40,7 +40,17 @@ jobs:
             - "34:86:26:17:59:ed:71:fa:b8:37:fc:d6:a4:68:af:0e"
       - checkout
       - run:
-          name: bump release version
+          name: install dep
+          command: |
+            apk update && apk add curl git build-base bash
+            curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+            dep ensure
+      - run:
+          name: remove dummy release tag
+          command: |
+            git push https://github.com/SAP/cloud-mta.git --delete release
+      - run:
+          name: bump version
           command: |
             CURR_MTA_VERSION=$(cat ./VERSION)
             echo "Current release: ${CURR_MTA_VERSION}"
@@ -53,15 +63,19 @@ jobs:
             #Generate version file
             go generate -run "go run ./internal/buildtools/embed.go -source=./configs/version.yaml -target=./internal/version/version_cfg.go -name=VersionConfig -package=version"
             #Add all updated files to commit
-            git add ./package.json ./internal/version/version_cfg.go ./configs/version.yaml ./VERSION
-            git config user.email "${MBT_REPO_USER_EMAIL}"
-            git config user.name "${MBT_REPO_USER}"
+            git add ./package.json ./configs/version.yaml ./VERSION ./internal/version/version_cfg.go
+            git config user.email "${MTA_REPO_USER_EMAIL}"
+            git config user.name "${MTA_REPO_USER}"
             git commit -m "[skip ci] Bump version ${MTA_VERSION}"
             #Push commit directly to master
             git push -q https://github.com/SAP/cloud-mta.git master
+            #Tag
+            git tag -a v${MTA_VERSION} -m "New release ${MTA_VERSION}"
+            git push https://github.com/SAP/cloud-mta.git v${MTA_VERSION}
       - run:
           name: release new version
-          command: curl -sL https://git.io/goreleaser | bash
+          command: |
+            curl -sL https://git.io/goreleaser | bash
 
 workflows:
   version: 2
@@ -84,7 +98,7 @@ workflows:
       - build:
           filters:  # required since `deploy` has tag filters AND requires `build`
             tags:
-              only: /^v([0-9]+)(\.[0-9]+)(\.[0-9]+)/
+              only: /release/
             branches:
               ignore: /.*/
       - deploy:
@@ -92,6 +106,6 @@ workflows:
             - build
           filters:  # job runs on tags for no branches
             tags:
-              only: /^v([0-9]+)(\.[0-9]+)(\.[0-9]+)/
+              only: /release/
             branches:
               ignore: /.*/
