@@ -41,7 +41,7 @@ func NewLogger() *logrus.Logger {
 
 // GetLogLevel - Get level from env
 func getLogLevel() string {
-	// TODO Check env if coming from external config or local
+	// TODO Check env if coming from external configs or local
 	lvl, _ := os.LookupEnv(MtaLogLevel)
 	if lvl != "" {
 		return lvl

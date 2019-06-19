@@ -72,7 +72,7 @@ type ModuleTypes struct {
 	ParametersMetaData map[string]interface{} `yaml:"parameters-metadata,omitempty" json:"parameters-metadata,omitempty"`
 }
 
-// Provides List of provided names to which properties (config data) can be attached.
+// Provides List of provided names to which properties (configs data) can be attached.
 type Provides struct {
 	Name string `yaml:"name,omitempty" json:"name,omitempty"`
 	// Indicates, that the provided properties shall be made publicly available by the deployer

@@ -1,6 +1,7 @@
 package mta
 
 import (
+	"github.com/SAP/cloud-mta/internal/logs"
 	"os"
 	"path/filepath"
 	"testing"
@@ -13,6 +14,10 @@ func TestMta(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Mta Suite")
 }
+
+var _ = BeforeSuite(func() {
+	logs.Logger = logs.NewLogger()
+})
 
 func getTestPath(relPath ...string) string {
 	wd, _ := os.Getwd()
