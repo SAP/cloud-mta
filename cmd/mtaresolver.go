@@ -3,29 +3,30 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
-	"path"
-
 	"os"
+	"path"
 	"strings"
 
+	"github.com/SAP/cloud-mta/internal/logs"
 	"github.com/SAP/cloud-mta/mta"
 	"github.com/joho/godotenv"
 )
 
+// MTAResolver is used to resolve MTA properties' variables
 type MTAResolver struct {
 	mta.MTA
 	WorkingDir string
 	context    *ResolveContext
 }
 
-const RESOURCE_TYPE = 1
-const MODULE_TYPE = 2
+const resourceType = 1
+const moduleType = 2
 
-const VARIABLE_PREFIX = "~"
-const PLACEHOLDER_PREFIX = "$"
-const TEMPLATE_PREIX = "^"
+const variablePrefix = "~"
+const placeholderPrefix = "$"
+const templatePrefix = "^"
 
-type MTASource struct {
+type mtaSource struct {
 	Name       string
 	Parameters map[string]interface{} `yaml:"parameters,omitempty"`
 	Properties map[string]interface{} `yaml:"properties,omitempty"`
@@ -34,13 +35,12 @@ type MTASource struct {
 	Resource   *mta.Resource
 }
 
-type EnvVariables map[string]interface{}
+// type package struct {
+// 	Main    string                 `json:"main"`
+// 	Scripts map[string]interface{} `json:"scripts"`
+// }
 
-type Package struct {
-	Main    string                 `json:"main"`
-	Scripts map[string]interface{} `json:"scripts"`
-}
-
+// NewMTAResolver is a factory function for MTAResolver
 func NewMTAResolver(m *mta.MTA, workspaceDir string) *MTAResolver {
 	resolver := &MTAResolver{*m, workspaceDir, &ResolveContext{
 		global:    map[string]string{},
@@ -58,10 +58,11 @@ func NewMTAResolver(m *mta.MTA, workspaceDir string) *MTAResolver {
 	return resolver
 }
 
-func (s *MTASource) IsResource() bool {
-	return s.Type == RESOURCE_TYPE
+func (s *mtaSource) IsResource() bool {
+	return s.Type == resourceType
 }
 
+// ResolveProperies is the main function to trigger the resolution
 func (m *MTAResolver) ResolveProperies(module *mta.Module) {
 
 	if m.Parameters == nil {
@@ -99,7 +100,7 @@ func (m *MTAResolver) ResolveProperies(module *mta.Module) {
 
 	//required properties:
 	for _, req := range module.Requires {
-		requiredSource := m.FindProvider(req.Name)
+		requiredSource := m.findProvider(req.Name)
 		for propName, PropValue := range req.Properties {
 			resolvedValue := m.resolve(module, &req, PropValue)
 			//replace value with resolved value
@@ -114,12 +115,12 @@ func (m *MTAResolver) addValueToContext(key, value string) {
 	if slashPos > 0 {
 		modName := key[:slashPos]
 		key = key[slashPos+1:]
-		modContext, ok := m.context.modules[modName]
+		modulesContext, ok := m.context.modules[modName]
 		if !ok {
-			modContext, ok = m.context.resources[modName]
+			modulesContext, ok = m.context.resources[modName]
 		}
 		if ok {
-			modContext[key] = value
+			modulesContext[key] = value
 		}
 	} else {
 		m.context.global[key] = value
@@ -130,7 +131,7 @@ func (m *MTAResolver) addValueToContext(key, value string) {
 func (m *MTAResolver) resolve(sourceModule *mta.Module, requires *mta.Requires, valueObj interface{}) interface{} {
 	switch valueObj.(type) {
 	case map[interface{}]interface{}:
-		v := ConvertToJsonSafe(valueObj)
+		v := convertToJSONSafe(valueObj)
 		return m.resolve(sourceModule, requires, v)
 	case map[string]interface{}:
 		value := valueObj.(map[string]interface{})
@@ -156,7 +157,7 @@ func (m *MTAResolver) resolve(sourceModule *mta.Module, requires *mta.Requires, 
 func (m *MTAResolver) resolveString(sourceModule *mta.Module, requires *mta.Requires, value string) interface{} {
 	pos := 0
 
-	pos, variableName, wholeValue := ParseNextVariable(pos, value, VARIABLE_PREFIX)
+	pos, variableName, wholeValue := parseNextVariable(pos, value, variablePrefix)
 	if pos < 0 {
 		//no variables
 		return value
@@ -170,7 +171,7 @@ func (m *MTAResolver) resolveString(sourceModule *mta.Module, requires *mta.Requ
 		varValueStr, _ := convertToString(varValue)
 		value = value[:pos] + varValueStr + value[pos+len(variableName)+3:]
 
-		pos, variableName, wholeValue = ParseNextVariable(pos+len(varValueStr), value, VARIABLE_PREFIX)
+		pos, variableName, wholeValue = parseNextVariable(pos+len(varValueStr), value, variablePrefix)
 		if pos >= 0 {
 			varValue = m.getVariableValue(sourceModule, requires, variableName)
 		}
@@ -180,19 +181,20 @@ func (m *MTAResolver) resolveString(sourceModule *mta.Module, requires *mta.Requ
 }
 
 func convertToString(valueObj interface{}) (string, bool) {
-	switch valueObj.(type) {
+	switch v := valueObj.(type) {
 	case string:
-		return valueObj.(string), false
+		return v, false
 	}
-	valueBytes, err := json.Marshal(ConvertToJsonSafe(valueObj))
+	valueBytes, err := json.Marshal(convertToJSONSafe(valueObj))
 	if err != nil {
-		panic(err)
+		logs.Logger.Error(err)
+		return "", false
 	}
 	return string(valueBytes), true
 }
 
-//return start position, name of variable and if it is a whole value
-func ParseNextVariable(pos int, value string, prefix string) (int, string, bool) {
+// return start position, name of variable and if it is a whole value
+func parseNextVariable(pos int, value string, prefix string) (int, string, bool) {
 
 	endSign := "}"
 	posStart := strings.Index(value[pos:], prefix+"{")
@@ -224,14 +226,15 @@ func (m *MTAResolver) getVariableValue(sourceModule *mta.Module, requires *mta.R
 			providerName = variableName[:slashPos]
 			variableName = variableName[slashPos+1:]
 		} else {
-			panic(fmt.Errorf("Cannot resolve value for variable ~{%s}. Missing requires prefix", variableName))
+			logs.Logger.Warnf("Cannot resolve value for variable ~{%s}. Missing requires prefix", variableName)
+			return "~{" + variableName + "}"
 		}
 
 	} else {
 		providerName = requires.Name
 	}
 
-	source := m.FindProvider(providerName)
+	source := m.findProvider(providerName)
 	if source != nil {
 		for propName, propValue := range source.Properties {
 			if propName == variableName {
@@ -240,32 +243,25 @@ func (m *MTAResolver) getVariableValue(sourceModule *mta.Module, requires *mta.R
 				//it is either global->module->requires
 				//or           global->resource
 				propValue = m.resolvePlaceholders(nil, source, nil, propValue)
-				return ConvertToJsonSafe(propValue)
+				return convertToJSONSafe(propValue)
 			}
 		}
 	}
 
-	if source != nil && source.Type == RESOURCE_TYPE && source.Resource.Type == "configuration" {
-		provId, ok := source.Resource.Parameters["provider-id"]
+	if source != nil && source.Type == resourceType && source.Resource.Type == "configuration" {
+		provID, ok := source.Resource.Parameters["provider-id"]
 		if ok {
-			println("Missing configuration ", provId.(string), "/", variableName)
+			println("Missing configuration ", provID.(string), "/", variableName)
 		}
 	}
 
 	return "~{" + variableName + "}"
-
-	// missingType := "Unresolved"
-	// if source.Type == RESOURCE_TYPE && source.Resource.Type == "configuration" {
-	// 	missingType = "Unresolved-conf/" + source.Resource.Name
-	// }
-
-	// return "~{" + missingType + ": " + variableName + "}"
 }
 
-func (m *MTAResolver) resolvePlaceholders(sourceModule *mta.Module, source *MTASource, requires *mta.Requires, valueObj interface{}) interface{} {
+func (m *MTAResolver) resolvePlaceholders(sourceModule *mta.Module, source *mtaSource, requires *mta.Requires, valueObj interface{}) interface{} {
 	switch valueObj.(type) {
 	case map[interface{}]interface{}:
-		v := ConvertToJsonSafe(valueObj)
+		v := convertToJSONSafe(valueObj)
 		return m.resolvePlaceholders(sourceModule, source, requires, v)
 	case map[string]interface{}:
 		value := valueObj.(map[string]interface{})
@@ -287,9 +283,9 @@ func (m *MTAResolver) resolvePlaceholders(sourceModule *mta.Module, source *MTAS
 	}
 }
 
-func (m *MTAResolver) resolvePlaceholdersString(sourceModule *mta.Module, source *MTASource, requires *mta.Requires, value string) interface{} {
+func (m *MTAResolver) resolvePlaceholdersString(sourceModule *mta.Module, source *mtaSource, requires *mta.Requires, value string) interface{} {
 	pos := 0
-	pos, placeholderName, wholeValue := ParseNextVariable(pos, value, PLACEHOLDER_PREFIX)
+	pos, placeholderName, wholeValue := parseNextVariable(pos, value, placeholderPrefix)
 
 	if pos < 0 {
 		return value
@@ -303,7 +299,7 @@ func (m *MTAResolver) resolvePlaceholdersString(sourceModule *mta.Module, source
 		phValueStr, _ := convertToString(placeholderValue)
 		value = value[:pos] + phValueStr + value[pos+len(placeholderName)+3:]
 		//todo verify test coverage
-		pos, placeholderName, wholeValue = ParseNextVariable(pos+len(phValueStr), value, PLACEHOLDER_PREFIX)
+		pos, placeholderName, wholeValue = parseNextVariable(pos+len(phValueStr), value, placeholderPrefix)
 		if pos >= 0 {
 			placeholderValue = m.getParameter(sourceModule, source, requires, placeholderName)
 		}
@@ -312,7 +308,7 @@ func (m *MTAResolver) resolvePlaceholdersString(sourceModule *mta.Module, source
 	return value
 }
 
-func (m *MTAResolver) getParameter(sourceModule *mta.Module, source *MTASource, requires *mta.Requires, paramName string) string {
+func (m *MTAResolver) getParameter(sourceModule *mta.Module, source *mtaSource, requires *mta.Requires, paramName string) string {
 	//first on source parameters scope
 	if source != nil {
 		paramVal := source.Parameters[paramName]
@@ -370,11 +366,11 @@ func (m *MTAResolver) getParameter(sourceModule *mta.Module, source *MTASource, 
 	return "${" + paramName + "}"
 }
 
-func (m *MTAResolver) FindProvider(name string) *MTASource {
+func (m *MTAResolver) findProvider(name string) *mtaSource {
 	for _, module := range m.Modules {
 		for _, provides := range module.Provides {
 			if provides.Name == name {
-				source := MTASource{Name: module.Name, Properties: provides.Properties, Parameters: nil, Type: MODULE_TYPE, Module: module}
+				source := mtaSource{Name: module.Name, Properties: provides.Properties, Parameters: nil, Type: moduleType, Module: module}
 				return &source
 			}
 		}
@@ -383,10 +379,27 @@ func (m *MTAResolver) FindProvider(name string) *MTASource {
 	//in case of resource, its name is the matching to the requires name
 	for _, resource := range m.Resources {
 		if resource.Name == name {
-			source := MTASource{Name: resource.Name, Properties: resource.Properties, Parameters: resource.Parameters, Type: RESOURCE_TYPE, Resource: resource}
+			source := mtaSource{Name: resource.Name, Properties: resource.Properties, Parameters: resource.Parameters, Type: resourceType, Resource: resource}
 			return &source
 		}
 
 	}
 	return nil
+}
+
+func convertToJSONSafe(val interface{}) interface{} {
+	switch v := val.(type) {
+	case map[interface{}]interface{}:
+		res := map[string]interface{}{}
+		for k, v := range v {
+			res[fmt.Sprint(k)] = convertToJSONSafe(v)
+		}
+		return res
+	case []interface{}:
+		for k, v2 := range v {
+			v[k] = convertToJSONSafe(v2)
+		}
+		return v
+	}
+	return val
 }

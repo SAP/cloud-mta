@@ -36,7 +36,7 @@ with concrete values, based on environment variables provided and .env files in 
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logs.Logger.Info("Resolve MTA")
-		err := resolve(resolvePath)
+		err := resolve()
 		if err != nil {
 			logs.Logger.Error(err)
 		}
@@ -47,11 +47,11 @@ with concrete values, based on environment variables provided and .env files in 
 	SilenceErrors: true,
 }
 
-func resolve(mtaPath string) error {
+func resolve() error {
 	if len(resolveModule) == 0 {
 		return errors.New("You must provide module name")
 	}
-	yamlData, err := ioutil.ReadFile(mtaPath)
+	yamlData, err := ioutil.ReadFile(resolvePath)
 	if err != nil {
 		return err
 	}
@@ -61,7 +61,7 @@ func resolve(mtaPath string) error {
 	}
 
 	if len(workspaceDir) == 0 {
-		workspaceDir = path.Dir(mtaPath)
+		workspaceDir = path.Dir(resolvePath)
 	}
 	m := NewMTAResolver(mtaRaw, workspaceDir)
 

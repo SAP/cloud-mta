@@ -8,7 +8,7 @@ import (
 	"github.com/SAP/cloud-mta/mta"
 )
 
-type VcapServices map[string][]VcapService
+type vcapServices map[string][]VcapService
 
 //VcapService - vcap service struct
 type VcapService struct {
@@ -19,12 +19,9 @@ type VcapService struct {
 	Plan         string   `json:"plan"`
 }
 
-const TagResourceNamePrefix = "mta-resource-name:"
+const tagResourceNamePrefix = "mta-resource-name:"
 
-type ParamSource struct {
-	Parameters map[string]interface{}
-}
-
+// ResolveContext holds context ifno during resolving of properties
 type ResolveContext struct {
 	global    map[string]string
 	modules   map[string]map[string]string
@@ -32,36 +29,43 @@ type ResolveContext struct {
 }
 
 func (m *MTAResolver) addServiceNames(module *mta.Module) {
+	vcapServices := m.getvcapServicesFromEnv()
+	if vcapServices == nil {
+		return
+	}
 
 	for _, resource := range m.Resources {
-		if m.context.resources[resource.Name] == nil {
-			m.context.resources[resource.Name] = map[string]string{}
-		}
 		resCtx := m.context.resources[resource.Name]
 
 		//try to find the service-name in VCAP_SERVICES
-		serviceName := m.getServiceInstanceFromEnv(resource)
+		serviceName := findServiceInvcapServices(vcapServices, resource)
 		if len(serviceName) > 0 {
 			resCtx["service-name"] = serviceName
 		}
 	}
 }
 
-func (m *MTAResolver) getServiceInstanceFromEnv(resource *mta.Resource) string {
+func (m *MTAResolver) getvcapServicesFromEnv() *vcapServices {
 	vcap := m.context.global["VCAP_SERVICES"]
 	if len(vcap) > 0 {
-		var vcapServices VcapServices
+		var vcapServices vcapServices
 		err := json.Unmarshal([]byte(vcap), &vcapServices)
 		if err == nil {
-			//look for the resource name as a tag in the service instances:
-			for _, vcapServiceArray := range vcapServices {
-				for _, vcapService := range vcapServiceArray {
-					for _, tag := range vcapService.Tags {
-						pos := strings.Index(tag, TagResourceNamePrefix)
-						if pos == 0 && tag[len(TagResourceNamePrefix):] == resource.Name {
-							return vcapService.Name
-						}
-					}
+			return &vcapServices
+
+		}
+	}
+	return nil
+}
+
+func findServiceInvcapServices(vcapServices *vcapServices, resource *mta.Resource) string {
+	//look for the resource name as a tag in the service instances:
+	for _, vcapServiceArray := range *vcapServices {
+		for _, vcapService := range vcapServiceArray {
+			for _, tag := range vcapService.Tags {
+				pos := strings.Index(tag, tagResourceNamePrefix)
+				if pos == 0 && tag[len(tagResourceNamePrefix):] == resource.Name {
+					return vcapService.Name
 				}
 			}
 		}
