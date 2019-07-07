@@ -436,13 +436,14 @@ func (m *MTAResolver) getParameter(sourceModule *mta.Module, source *mtaSource, 
 		}
 	}
 
+	var ok bool
 	if sourceModule != nil {
 		paramVal := sourceModule.Parameters[paramName]
 		if paramVal != nil {
 			return paramVal.(string)
 		}
 		//defaults to context's module params:
-		paramValStr, ok := m.context.modules[sourceModule.Name][paramName]
+		paramValStr, ok = m.context.modules[sourceModule.Name][paramName]
 		if ok {
 			return paramValStr
 		}
@@ -455,7 +456,7 @@ func (m *MTAResolver) getParameter(sourceModule *mta.Module, source *mtaSource, 
 	}
 
 	//then global scope
-	paramValStr, ok := m.context.global[paramName]
+	paramValStr, ok = m.context.global[paramName]
 	if ok {
 		return paramValStr
 	}

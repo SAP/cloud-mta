@@ -199,9 +199,7 @@ var _ = Describe("convertToString", func() {
 
 var _ = Describe("getParameter", func() {
 	It("parameter found in source parameters", func() {
-		resolver := MTAResolver{
-
-		}
+		resolver := MTAResolver{}
 		source := mtaSource{
 			Parameters: map[string]interface{}{
 				"param1": "value1",
@@ -228,8 +226,7 @@ var _ = Describe("getParameter", func() {
 	})
 	It("parameter found in the requires", func() {
 		resolver := MTAResolver{
-			context: &ResolveContext{
-			},
+			context: &ResolveContext{},
 		}
 		req := mta.Requires{
 			Parameters: map[string]interface{}{
@@ -258,8 +255,7 @@ var _ = Describe("getParameter", func() {
 		Ω(res).Should(Equal("value1"))
 	})
 	It("parameter found on the MTA root scope", func() {
-		resolver := MTAResolver{
-		}
+		resolver := MTAResolver{}
 		resolver.Parameters = map[string]interface{}{
 			"param1": "value1",
 		}
@@ -328,14 +324,12 @@ var _ = Describe("resolvePlaceholders", func() {
 
 var _ = Describe("getVariableValue", func() {
 	It("missing required prefix", func() {
-		resolver := MTAResolver{
-		}
+		resolver := MTAResolver{}
 		res := resolver.getVariableValue(nil, nil, "var_without_prefix")
 		Ω(res).Should(Equal("~{var_without_prefix}"))
 	})
 	It("missing configuration", func() {
-		resolver := MTAResolver{
-		}
+		resolver := MTAResolver{}
 		resolver.Resources = []*mta.Resource{
 			{
 				Name:       "provider",
