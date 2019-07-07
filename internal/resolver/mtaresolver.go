@@ -1,16 +1,112 @@
-package commands
+package resolver
 
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 	"strings"
 
+	"github.com/joho/godotenv"
+	"github.com/pkg/errors"
+
 	"github.com/SAP/cloud-mta/internal/logs"
 	"github.com/SAP/cloud-mta/mta"
-	"github.com/joho/godotenv"
 )
+
+const (
+	emptyModuleNameMsg = "You must provide module name"
+	pathNotFoundMsg    = `the "%s" path not found`
+	unmarshalFailsMsg  = `unmarshal of the "%s" faile`
+	moduleNotFoundMsg  = `the "%s" module not found`
+    marshalFailsMag    = `marshal of the "%s" environment variable failed`
+)
+
+var envGetter = os.Environ
+
+// Resolve - resolve module's parameters
+func Resolve(workspaceDir, moduleName, modulePath string) error {
+	if len(moduleName) == 0 {
+		return errors.New(emptyModuleNameMsg)
+	}
+	yamlData, err := ioutil.ReadFile(modulePath)
+	if err != nil {
+		return errors.Wrapf(err, pathNotFoundMsg, modulePath)
+	}
+	mtaRaw, err := mta.Unmarshal(yamlData)
+	if err != nil {
+		return errors.Wrapf(err, unmarshalFailsMsg, modulePath)
+	}
+
+	if len(workspaceDir) == 0 {
+		workspaceDir = path.Dir(modulePath)
+	}
+	m := NewMTAResolver(mtaRaw, workspaceDir)
+
+	for _, module := range m.GetModules() {
+		if module.Name == moduleName {
+			m.ResolveProperies(module)
+
+			propVarMap, err := getPropertiesAsEnvVar(module)
+			if err != nil {
+				return err
+			}
+			for key, val := range propVarMap {
+				fmt.Println(key + "=" + val)
+			}
+			return nil
+		}
+	}
+
+	return errors.Errorf(moduleNotFoundMsg, moduleName)
+}
+
+func getPropertiesAsEnvVar(module *mta.Module) (map[string]string, error) {
+	envVar := map[string]interface{}{}
+	for key, val := range module.Properties {
+		envVar[key] = val
+	}
+
+	for _, requires := range module.Requires {
+		propMap := envVar
+		if len(requires.Group) > 0 {
+			propMap = map[string]interface{}{}
+		}
+
+		for key, val := range requires.Properties {
+			propMap[key] = val
+		}
+
+		if len(requires.Group) > 0 {
+			//append the array element to group
+			group, ok := envVar[requires.Group]
+			if ok {
+				groupArray := group.([]map[string]interface{})
+				envVar[requires.Group] = append(groupArray, propMap)
+			} else {
+				envVar[requires.Group] = []map[string]interface{}{propMap}
+			}
+		}
+	}
+
+	//serialize
+	retEnvVar := map[string]string{}
+	for key, val := range envVar {
+		switch v := val.(type) {
+		case string:
+			retEnvVar[key] = v
+		default:
+			bytesVal, err := json.Marshal(val)
+			if err != nil {
+				return nil, errors.Errorf(marshalFailsMag, key)
+			}
+			retEnvVar[key] = string(bytesVal)
+		}
+	}
+
+	return retEnvVar, nil
+}
 
 // MTAResolver is used to resolve MTA properties' variables
 type MTAResolver struct {
@@ -24,7 +120,6 @@ const moduleType = 2
 
 const variablePrefix = "~"
 const placeholderPrefix = "$"
-const templatePrefix = "^"
 
 type mtaSource struct {
 	Name       string
@@ -58,10 +153,6 @@ func NewMTAResolver(m *mta.MTA, workspaceDir string) *MTAResolver {
 	return resolver
 }
 
-func (s *mtaSource) IsResource() bool {
-	return s.Type == resourceType
-}
-
 // ResolveProperies is the main function to trigger the resolution
 func (m *MTAResolver) ResolveProperies(module *mta.Module) {
 
@@ -70,7 +161,7 @@ func (m *MTAResolver) ResolveProperies(module *mta.Module) {
 	}
 
 	//add env variables
-	for _, val := range os.Environ() {
+	for _, val := range envGetter() {
 		pos := strings.Index(val, "=")
 		if pos > 0 {
 			key := strings.Trim(val[:pos], " ")
@@ -298,7 +389,6 @@ func (m *MTAResolver) resolvePlaceholdersString(sourceModule *mta.Module, source
 	for pos >= 0 {
 		phValueStr, _ := convertToString(placeholderValue)
 		value = value[:pos] + phValueStr + value[pos+len(placeholderName)+3:]
-		//todo verify test coverage
 		pos, placeholderName, wholeValue = parseNextVariable(pos+len(phValueStr), value, placeholderPrefix)
 		if pos >= 0 {
 			placeholderValue = m.getParameter(sourceModule, source, requires, placeholderName)
@@ -361,7 +451,11 @@ func (m *MTAResolver) getParameter(sourceModule *mta.Module, source *mtaSource, 
 		return paramValStr
 	}
 
-	println("Missing ", source.Name+"/"+paramName)
+	if source == nil {
+		println("Missing ", paramName)
+	} else {
+		println("Missing ", source.Name+"/"+paramName)
+	}
 
 	return "${" + paramName + "}"
 }

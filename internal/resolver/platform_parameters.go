@@ -1,8 +1,7 @@
-package commands
+package resolver
 
 import (
 	"encoding/json"
-
 	"strings"
 
 	"github.com/SAP/cloud-mta/mta"
