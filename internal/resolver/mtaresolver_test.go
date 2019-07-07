@@ -4,14 +4,16 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/SAP/cloud-mta/mta"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	"io"
 	"log"
 	"os"
 	"strings"
 	"sync"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+
+	"github.com/SAP/cloud-mta/mta"
 )
 
 func callResolveAndGetOutput(wd, moduleName, yamlPath string) string {

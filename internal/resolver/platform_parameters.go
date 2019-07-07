@@ -47,10 +47,10 @@ func (m *MTAResolver) addServiceNames(module *mta.Module) {
 func (m *MTAResolver) getvcapServicesFromEnv() *vcapServices {
 	vcap := m.context.global["VCAP_SERVICES"]
 	if len(vcap) > 0 {
-		var vcapServices vcapServices
-		err := json.Unmarshal([]byte(vcap), &vcapServices)
+		var vcapSrv vcapServices
+		err := json.Unmarshal([]byte(vcap), &vcapSrv)
 		if err == nil {
-			return &vcapServices
+			return &vcapSrv
 
 		}
 	}

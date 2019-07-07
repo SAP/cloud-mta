@@ -20,7 +20,7 @@ const (
 	pathNotFoundMsg    = `the "%s" path not found`
 	unmarshalFailsMsg  = `unmarshal of the "%s" faile`
 	moduleNotFoundMsg  = `the "%s" module not found`
-    marshalFailsMag    = `marshal of the "%s" environment variable failed`
+	marshalFailsMag    = `marshal of the "%s" environment variable failed`
 )
 
 var envGetter = os.Environ
@@ -91,6 +91,10 @@ func getPropertiesAsEnvVar(module *mta.Module) (map[string]string, error) {
 	}
 
 	//serialize
+	return serializePropertiesAsEnvVars(envVar)
+}
+
+func serializePropertiesAsEnvVars(envVar map[string]interface{}) (map[string]string, error) {
 	retEnvVar := map[string]string{}
 	for key, val := range envVar {
 		switch v := val.(type) {
@@ -129,11 +133,6 @@ type mtaSource struct {
 	Module     *mta.Module
 	Resource   *mta.Resource
 }
-
-// type package struct {
-// 	Main    string                 `json:"main"`
-// 	Scripts map[string]interface{} `json:"scripts"`
-// }
 
 // NewMTAResolver is a factory function for MTAResolver
 func NewMTAResolver(m *mta.MTA, workspaceDir string) *MTAResolver {
@@ -262,7 +261,7 @@ func (m *MTAResolver) resolveString(sourceModule *mta.Module, requires *mta.Requ
 		varValueStr, _ := convertToString(varValue)
 		value = value[:pos] + varValueStr + value[pos+len(variableName)+3:]
 
-		pos, variableName, wholeValue = parseNextVariable(pos+len(varValueStr), value, variablePrefix)
+		pos, variableName, _ = parseNextVariable(pos+len(varValueStr), value, variablePrefix)
 		if pos >= 0 {
 			varValue = m.getVariableValue(sourceModule, requires, variableName)
 		}
@@ -389,7 +388,7 @@ func (m *MTAResolver) resolvePlaceholdersString(sourceModule *mta.Module, source
 	for pos >= 0 {
 		phValueStr, _ := convertToString(placeholderValue)
 		value = value[:pos] + phValueStr + value[pos+len(placeholderName)+3:]
-		pos, placeholderName, wholeValue = parseNextVariable(pos+len(phValueStr), value, placeholderPrefix)
+		pos, placeholderName, _ = parseNextVariable(pos+len(phValueStr), value, placeholderPrefix)
 		if pos >= 0 {
 			placeholderValue = m.getParameter(sourceModule, source, requires, placeholderName)
 		}
@@ -398,8 +397,7 @@ func (m *MTAResolver) resolvePlaceholdersString(sourceModule *mta.Module, source
 	return value
 }
 
-func (m *MTAResolver) getParameter(sourceModule *mta.Module, source *mtaSource, requires *mta.Requires, paramName string) string {
-	//first on source parameters scope
+func (m *MTAResolver) getParameterFromSource(source *mtaSource, paramName string) string {
 	if source != nil {
 		paramVal := source.Parameters[paramName]
 		if paramVal != nil {
@@ -417,6 +415,17 @@ func (m *MTAResolver) getParameter(sourceModule *mta.Module, source *mtaSource, 
 		if ok {
 			return paramValStr
 		}
+	}
+	return ""
+}
+
+func (m *MTAResolver) getParameter(sourceModule *mta.Module, source *mtaSource, requires *mta.Requires, paramName string) string {
+	//first on source parameters scope
+	paramValStr := m.getParameterFromSource(source, paramName)
+
+	//first on source parameters scope
+	if paramValStr != "" {
+		return paramValStr
 	}
 
 	//then try on requires level
