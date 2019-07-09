@@ -16,11 +16,12 @@ import (
 )
 
 const (
-	emptyModuleNameMsg = "You must provide module name"
-	pathNotFoundMsg    = `the "%s" path not found`
-	unmarshalFailsMsg  = `unmarshal of the "%s" faile`
-	moduleNotFoundMsg  = `the "%s" module not found`
-	marshalFailsMag    = `marshal of the "%s" environment variable failed`
+	emptyModuleNameMsg = "provide a name for the module"
+	pathNotFoundMsg    = `could not find the "%s" path`
+	unmarshalFailsMsg  = `could not unmarshal the "%s"`
+	moduleNotFoundMsg  = `could not find the "%s" module`
+	marshalFailsMag    = `could not marshal the "%s" environment variable`
+	missingPrefixMsg   = `could not resolve the value for the "~{%s}" variable; missing required prefix`
 )
 
 var envGetter = os.Environ
@@ -316,7 +317,7 @@ func (m *MTAResolver) getVariableValue(sourceModule *mta.Module, requires *mta.R
 			providerName = variableName[:slashPos]
 			variableName = variableName[slashPos+1:]
 		} else {
-			logs.Logger.Warnf("Cannot resolve value for variable ~{%s}. Missing requires prefix", variableName)
+			logs.Logger.Warnf(missingPrefixMsg, variableName)
 			return "~{" + variableName + "}"
 		}
 
@@ -341,7 +342,7 @@ func (m *MTAResolver) getVariableValue(sourceModule *mta.Module, requires *mta.R
 	if source != nil && source.Type == resourceType && source.Resource.Type == "configuration" {
 		provID, ok := source.Resource.Parameters["provider-id"]
 		if ok {
-			println("Missing configuration ", provID.(string), "/", variableName)
+			println("missing configuration ", provID.(string), "/", variableName)
 		}
 	}
 
