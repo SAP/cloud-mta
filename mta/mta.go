@@ -55,6 +55,7 @@ func Unmarshal(content []byte) (*MTA, error) {
 	dec.KnownFields(true)
 	mtaStr := MTA{}
 	err := dec.Decode(&mtaStr)
+	//err := yaml.Unmarshal(content, &mtaStr)
 	return &mtaStr, err
 }
 

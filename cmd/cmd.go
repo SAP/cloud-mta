@@ -17,7 +17,10 @@ func init() {
 	rootCmd.AddCommand(existCmd)
 	addCmd.AddCommand(addModuleCmd, addResourceCmd)
 	getCmd.AddCommand(getModulesCmd, getResourcesCmd)
+
+	rootCmd.AddCommand(resolveMtaCmd)
 	updateCmd.AddCommand(updateModuleCmd, updateResourceCmd, updateBuildParametersCmd)
+
 }
 
 // The parent command adds any artifacts.
