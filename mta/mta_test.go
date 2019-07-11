@@ -86,7 +86,7 @@ var _ = Describe("Mta", func() {
 					},
 				},
 			},
-			DeployedAfter: []interface{}{"scheduler"},
+			DeployedAfter: []string{"scheduler"},
 		},
 		{
 			Name: "scheduler",
