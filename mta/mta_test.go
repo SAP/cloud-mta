@@ -274,6 +274,15 @@ var _ = Describe("Mta", func() {
 			Ω(mta).Should(BeEquivalentTo(m))
 		})
 
+		FIt("Wrong deployed-after value", func() {
+			wd, err := os.Getwd()
+			Ω(err).Should(Succeed())
+			content, err := readFile(filepath.Join(wd, "testdata", "mtaWrongDeployedAfter.yaml"))
+			Ω(err).Should(Succeed())
+			_, err = Unmarshal(content)
+			Ω(err).Should(HaveOccurred())
+		})
+
 	})
 
 })
