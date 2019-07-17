@@ -35,14 +35,14 @@ func checkHtmlModulesParams(mta *mta.MTA, mtaNode *yaml.Node) []YamlValidationIs
 
 	for i, module := range mta.Modules {
 		if module.Type == "html5" {
-			issues = append(issues, checkHtmlModuleParams(module, modulesNode[i])...)
+			issues = append(issues, checkHTMLModuleParams(module, modulesNode[i])...)
 		}
 	}
 
 	return issues
 }
 
-func checkHtmlModuleParams(module *mta.Module, moduleNode *yaml.Node) []YamlValidationIssue {
+func checkHTMLModuleParams(module *mta.Module, moduleNode *yaml.Node) []YamlValidationIssue {
 
 	supportedPlatformsDefined := false
 	buildResultDefined := false
