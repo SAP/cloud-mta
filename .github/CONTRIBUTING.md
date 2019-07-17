@@ -45,7 +45,7 @@ request changes to it, or close it with an explanation.
 
 ## Contribution Prerequisites
 
-1. You have [go](https://golang.org/dl/) installed at v1.11+
+1. You have [go](https://golang.org/dl/) installed at v1.12+
 2. You have [dep](https://github.com/golang/dep) installed at v0.5.0+
 3. You are familiar with [GIT](https://git-scm.com/) 
 
