@@ -55,7 +55,7 @@ type Module struct {
 	// Build-parameters are specifically steering the behavior of build tools.
 	BuildParams map[string]interface{} `yaml:"build-parameters,omitempty" json:"build-parameters,omitempty"`
 	// A list containing the names of the modules that must be deployed prior to this one.
-	DeployedAfter interface{} `yaml:"deployed-after,omitempty" json:"deployed-after,omitempty"`
+	DeployedAfter []string `yaml:"deployed-after,omitempty" json:"deployed-after,omitempty"`
 }
 
 // ModuleTypes module types declarations
