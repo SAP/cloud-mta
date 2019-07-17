@@ -274,17 +274,14 @@ var _ = Describe("Mta", func() {
 			Ω(mta).Should(BeEquivalentTo(m))
 		})
 
-		FIt("Wrong deployed-after value", func() {
-			wd, err := os.Getwd()
-			Ω(err).Should(Succeed())
-			content, err := readFile(filepath.Join(wd, "testdata", "mtaWrongDeployedAfter.yaml"))
+		It("Wrong deployed-after value", func() {
+			content, err := readFile(getTestPath("mtaWrongDeployedAfter.yaml"))
 			Ω(err).Should(Succeed())
 			_, err = Unmarshal(content)
 			Ω(err).Should(HaveOccurred())
+			Ω(err.Error()).Should(ContainSubstring("line 54: cannot unmarshal !!int `1` into []string"))
 		})
-
 	})
-
 })
 
 func readFile(file string) ([]byte, error) {
