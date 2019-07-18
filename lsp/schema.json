@@ -1,9 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "http://example.com/mta.schema.json",
-  "title": "com.sap.mta.mta-schema_3.1.8",
+  "title": "com.sap.mta.mta-schema_3.2.0",
   "description": "MTA DESCRIPTOR SCHEMA",
-  "$comment": "Based on https://github.wdf.sap.corp/mta/spec/blob/master/schemas/v3/v3.1/mta-schema.yaml",
+  "$comment": "Based on https://github.wdf.sap.corp/mta/spec/blob/master/schemas/v3/v3.2/mta-schema.yaml",
   "type": "object",
   "required": [
     "_schema-version",
@@ -64,6 +64,13 @@
             "description": "The path to a folder that contains the module artifacts.",
             "type": "string"
           },
+          "deployed-after": {
+            "description": "A list of modules that must be deployed before deploying the current module.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "properties": {
             "description": "A collection of key-value pairs that are available to the module at runtime.",
             "$ref": "#/definitions/properties"
@@ -85,25 +92,25 @@
             "type": "object"
           },
           "includes": {
-              "type": "array",
-              "description": "It is possible to define parameters in external files. The \"includes\" section is used to point to those files.",
-              "items": {
-                "type": "object",
-                "required": [
-                  "name",
-                  "path"
-                ],
-                "properties": {
-                  "name": {
-                    "description": "The name of an \"includes\" section. This name is used by a builder to generate a parameter section in the deployment descriptor.",
-                    "type": "string"
-                  },
-                  "path": {
-                    "description": "A path pointing to a file that contains a map of parameters, either in JSON or in YAML format.",
-                    "type": "string"
-                  }
+            "type": "array",
+            "description": "It is possible to define parameters in external files. The \"includes\" section is used to point to those files.",
+            "items": {
+              "type": "object",
+              "required": [
+                "name",
+                "path"
+              ],
+              "properties": {
+                "name": {
+                  "description": "The name of an \"includes\" section. This name is used by a builder to generate a parameter section in the deployment descriptor.",
+                  "type": "string"
+                },
+                "path": {
+                  "description": "A path pointing to a file that contains a map of parameters, either in JSON or in YAML format.",
+                  "type": "string"
                 }
               }
+            }
           },
           "provides": {
             "description": "Used to define the named property sets that other modules and resources can require.",
@@ -239,26 +246,26 @@
             "$ref": "#/definitions/parameters-metadata"
           },
           "includes": {
-              "type": "array",
-              "description": "It is possible to define parameters in external files. The \"includes\" section is used to point to those files.",
-              "items": {
-                "type": "object",
-                "required": [
-                  "name",
-                  "path"
-                ],
-                "properties": {
-                  "name": {
-                    "description": "The name of an \"includes\" section. This name is used by a builder to generate a parameter section in the deployment descriptor.",
-                    "type": "string"
-                  },
-                  "path": {
-                    "description": "A path pointing to a file that contains a map of parameters, either in JSON or in YAML format.",
-                    "type": "string"
-                  }
+            "type": "array",
+            "description": "It is possible to define parameters in external files. The \"includes\" section is used to point to those files.",
+            "items": {
+              "type": "object",
+              "required": [
+                "name",
+                "path"
+              ],
+              "properties": {
+                "name": {
+                  "description": "The name of an \"includes\" section. This name is used by a builder to generate a parameter section in the deployment descriptor.",
+                  "type": "string"
+                },
+                "path": {
+                  "description": "A path pointing to a file that contains a map of parameters, either in JSON or in YAML format.",
+                  "type": "string"
                 }
               }
-            },
+            }
+          },
           "optional": {
             "description": "If the resource is set to optional and the deployment tools are unable to allocate it, then the tools will issue a warning and continue the deployment process.",
             "type": "boolean",
