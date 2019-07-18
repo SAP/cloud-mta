@@ -8,10 +8,8 @@ import (
 )
 
 const (
-	deprecatedOptMsg = `the "%s" build configuration parameter is not supported by Cloud MTA Build tool; use "custom" builder instead\n` +
-		`for more details on the "custom" builder, see %q`
-
-	customBuilderDocLink = "https://sap.github.io/cloud-mta-build-tool/configuration/#configuring-the-custom-builder"
+	deprecatedOptMsg     = `the "%s" build configuration parameter is not supported by Cloud MTA Build tool; use the "custom" builder instead; see %q`
+ 	customBuilderDocLink = "https://sap.github.io/cloud-mta-build-tool/configuration/#configuring-the-custom-builder"
 )
 
 func checkDeprecatedOpt(module *mta.Module, buildParamsNode *yaml.Node, optFieldName string) []YamlValidationIssue {
