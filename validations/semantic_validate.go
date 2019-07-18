@@ -50,6 +50,8 @@ const (
 	providedPropEntityKind = "provided property set"
 
 	html5RepoDeployMode = "html5-repo"
+
+	html5ModuleType = "html5"
 )
 
 // runSemanticValidations - runs semantic validations

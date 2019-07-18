@@ -8,6 +8,10 @@ import (
 	"github.com/SAP/cloud-mta/mta"
 )
 
+const (
+	customBuilder = "custom"
+)
+
 func checkProjectBuilders(builders []mta.ProjectBuilder, mtaNode *yaml.Node, fieldName string) []YamlValidationIssue {
 	var issues []YamlValidationIssue
 
@@ -27,9 +31,9 @@ func checkProjectBuilders(builders []mta.ProjectBuilder, mtaNode *yaml.Node, fie
 }
 
 func checkCustomBuilder(builder string, commandsDefined bool, builderNode *yaml.Node, commandsNode *yaml.Node) []YamlValidationIssue {
-	if builder == "custom" && !commandsDefined {
+	if builder == customBuilder && !commandsDefined {
 		return []YamlValidationIssue{{Msg: `the "commands" property is missing in the "custom" builder`, Line: builderNode.Line}}
-	} else if builder != "custom" && commandsDefined {
+	} else if builder != customBuilder && commandsDefined {
 		return []YamlValidationIssue{{Msg: fmt.Sprintf(`the "commands" property is not supported by the "%s" builder`, builder), Line: commandsNode.Line}}
 	}
 	return nil

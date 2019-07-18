@@ -34,7 +34,7 @@ func checkHTMLModulesParams(mta *mta.MTA, mtaNode *yaml.Node) []YamlValidationIs
 	modulesNode := getPropContent(mtaNode, modulesYamlField)
 
 	for i, module := range mta.Modules {
-		if module.Type == "html5" {
+		if module.Type == html5ModuleType {
 			issues = append(issues, checkHTMLModuleParams(module, modulesNode[i])...)
 		}
 	}
