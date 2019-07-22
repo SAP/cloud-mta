@@ -55,12 +55,9 @@ modules:
 	})
 })
 
-func checkDeployerConstrError(issue YamlValidationIssue, message string, line int, params ...string) {
-	if len(params) == 1 {
-		Ω(issue.Msg).Should(Equal(fmt.Sprintf(message, params[0], missingConfigDocLink)))
-	} else {
-		Ω(issue.Msg).Should(Equal(fmt.Sprintf(message, params[0], params[1], missingConfigDocLink)))
-	}
+func checkDeployerConstrError(issue YamlValidationIssue, message string, line int, params ...interface{}) {
+	params = append(params, missingConfigDocLink)
+	Ω(issue.Msg).Should(Equal(fmt.Sprintf(message, params...)))
 	Ω(issue.Line).Should(Equal(line))
 
 }
