@@ -42,6 +42,12 @@ modules:
    build-parameters:
      supported-platforms: []
      build-result: dist
+
+ - name: ui5app6
+   type: html5
+   build-parameters:
+     supported-platforms: [cf, neo]
+     build-result: dist1
 `)
 		mta, _ := mta.Unmarshal(mtaContent)
 		node, _ := getMtaNode(mtaContent)

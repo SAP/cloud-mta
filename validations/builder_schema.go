@@ -10,7 +10,7 @@ import (
 func checkStringProperty(props map[string]interface{}, propsNode *yaml.Node, propName string) []YamlValidationIssue {
 
 	_, ok := props[propName].(string)
-	if props != nil && props[propName] != nil && !ok {
+	if props[propName] != nil && !ok {
 		propNode := getPropValueByName(propsNode, propName)
 		return []YamlValidationIssue{
 			{

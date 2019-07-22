@@ -10,7 +10,7 @@ import (
 const (
 	missingConfigDocLink = "https://sap.github.io/cloud-mta-build-tool/migration/#features-that-are-handled-differently-in-the-cloud-mta-build-tool"
 	missingConfigsMsg    = `the "%s" module does not contain the mandatory "supported-platforms" and "build-result" build configurations; see %q`
-	missingConfigMsg     = `the "%s" module does not contain the mandatory the mandatory "%s" build configuration; see %q`
+	missingConfigMsg     = `the "%s" module does not contain the mandatory "%s" build configuration; see %q`
 )
 
 func checkDeployerConstraints(mta *mta.MTA, mtaNode *yaml.Node, source string, strict bool) ([]YamlValidationIssue, []YamlValidationIssue) {
