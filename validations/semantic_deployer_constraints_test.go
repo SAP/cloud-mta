@@ -50,7 +50,7 @@ modules:
 		Ω(len(warn)).Should(Equal(0))
 		checkDeployerConstrError(errors[0], missingConfigsMsg, 10, "ui5app1")
 		checkDeployerConstrError(errors[1], missingConfigsMsg, 13, "ui5app2")
-		checkDeployerConstrError(errors[2], missingConfigMsg, 18, "ui5app3", buildResultYamlField, )
+		checkDeployerConstrError(errors[2], missingConfigMsg, 18, "ui5app3", buildResultYamlField)
 		checkDeployerConstrError(errors[3], missingConfigMsg, 23, "ui5app4", supportedPlatformsYamlField)
 	})
 })

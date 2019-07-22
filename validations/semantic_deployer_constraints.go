@@ -20,28 +20,28 @@ func checkDeployerConstraints(mta *mta.MTA, mtaNode *yaml.Node, source string, s
 		deployMode, ok := mta.Parameters[deployModeYamlField].(string)
 		// case !ok is handled by schema validations
 		if ok && deployMode == html5RepoDeployMode {
-			issues = append(issues, checkHTMLModulesParams(mta, mtaNode)...)
+			issues = append(issues, checkHTML5ModulesParams(mta, mtaNode)...)
 		}
 	}
 
 	return issues, nil
 }
 
-func checkHTMLModulesParams(mta *mta.MTA, mtaNode *yaml.Node) []YamlValidationIssue {
+func checkHTML5ModulesParams(mta *mta.MTA, mtaNode *yaml.Node) []YamlValidationIssue {
 	var issues []YamlValidationIssue
 
 	modulesNode := getPropContent(mtaNode, modulesYamlField)
 
 	for i, module := range mta.Modules {
 		if module.Type == html5ModuleType {
-			issues = append(issues, checkHTMLModuleParams(module, modulesNode[i])...)
+			issues = append(issues, checkHTML5ModuleParams(module, modulesNode[i])...)
 		}
 	}
 
 	return issues
 }
 
-func checkHTMLModuleParams(module *mta.Module, moduleNode *yaml.Node) []YamlValidationIssue {
+func checkHTML5ModuleParams(module *mta.Module, moduleNode *yaml.Node) []YamlValidationIssue {
 
 	supportedPlatformsDefined := false
 	buildResultDefined := false
