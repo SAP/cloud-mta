@@ -25,7 +25,7 @@ const (
 	commandsYamlField           = "commands"
 	beforeAllYamlField          = "before-all"
 	afterAllYamlField           = "after-all"
-	deployModeYamlField         = "deploy-mode"
+	deployModeYamlField         = "deploy_mode"
 
 	npmOptsYamlField   = "npm-opts"
 	gruntOptsYamlField = "grunt-opts"
