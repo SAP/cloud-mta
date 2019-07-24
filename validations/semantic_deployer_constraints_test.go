@@ -16,7 +16,7 @@ _schema-version: '2.1'
 version: 0.0.1
 
 parameters:
-  deploy-mode: html5-repo
+  deploy_mode: html5-repo
 
 modules:
  - name: ui5app1
