@@ -207,3 +207,22 @@ var _ = DescribeTable("GetLiteralStringValue", func(data string, matcher GomegaM
 `, BeEmpty()),
 	Entry("Valid", fmt.Sprintf("%g", 0.55), Equal("0.55")),
 )
+
+var _ = Describe("getPropByName", func() {
+	var data = []byte(`
+firstName: Hello
+lastName: World`)
+	It("sanity", func() {
+		node, _ := getMtaNode([]byte(data))
+		node = getPropByName(node, "lastName")
+		Ω(node.Value).Should(Equal("lastName"))
+		Ω(node.Line).Should(Equal(3))
+	})
+	It("nil node", func() {
+		Ω(getPropByName(nil, "x")).Should(BeNil())
+	})
+	It("property not exists", func() {
+		node, _ := getMtaNode([]byte(data))
+		Ω(getPropByName(node, "x")).Should(BeNil())
+	})
+})
