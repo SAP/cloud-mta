@@ -28,6 +28,8 @@ type ModuleExt struct {
 	Name string
 	// Provided property values can be accessed by "~{<name-of-provides-section>/<provided-property-name>}". Such expressions can be part of an arbitrary string
 	Properties map[string]interface{} `yaml:"properties,omitempty"`
+	// THE 'includes' ELEMENT IS ONLY RELEVANT FOR DEVELOPMENT DESCRIPTORS (PRIO TO BUILD), NOT FOR DEPLOYMENT DESCRIPTORS!
+	Includes []Includes `yaml:"includes,omitempty"`
 	// list of names either matching a resource name or a name provided by another module within the same MTA
 	Requires []Requires `yaml:"requires,omitempty"`
 	// List of provided names (MTA internal)to which properties (= configuration data) can be attached
@@ -45,4 +47,6 @@ type ResourceExt struct {
 	Parameters map[string]interface{} `yaml:"parameters,omitempty"`
 	// property names and values make up the configuration data which is to be provided to requiring modules at runtime
 	Properties map[string]interface{} `yaml:"properties,omitempty"`
+	// If a resource is declared to be active, it is allocated and bound according to declared requirements
+	Active bool `yaml:"active,omitempty"`
 }

@@ -25,7 +25,8 @@ type MTA struct {
 	// Resource type declarations
 	ResourceTypes []*ResourceTypes `yaml:"resource-types,omitempty" json:"resource-types,omitempty"`
 	// Parameters can be used to steer the behavior of tools which interpret this descriptor
-	Parameters map[string]interface{} `yaml:"parameters,omitempty" json:"parameters,omitempty"`
+	Parameters         map[string]interface{} `yaml:"parameters,omitempty" json:"parameters,omitempty"`
+	ParametersMetaData map[string]MetaData    `yaml:"parameters-metadata,omitempty" json:"parameters-metadata,omitempty"`
 	// Experimental - use for pre/post hook
 	BuildParams *ProjectBuild `yaml:"build-parameters,omitempty" json:"build-parameters,omitempty"`
 }
@@ -42,7 +43,7 @@ type Module struct {
 	Path string `yaml:"path,omitempty" json:"path,omitempty"`
 	// Provided property values can be accessed by "~{<name-of-provides-section>/<provided-property-name>}". Such expressions can be part of an arbitrary string
 	Properties         map[string]interface{} `yaml:"properties,omitempty" json:"properties,omitempty"`
-	PropertiesMetaData map[string]interface{} `yaml:"properties-metadata,omitempty" json:"properties-metadata,omitempty"`
+	PropertiesMetaData map[string]MetaData    `yaml:"properties-metadata,omitempty" json:"properties-metadata,omitempty"`
 	// THE 'includes' ELEMENT IS ONLY RELEVANT FOR DEVELOPMENT DESCRIPTORS (PRIO TO BUILD), NOT FOR DEPLOYMENT DESCRIPTORS!
 	Includes []Includes `yaml:"includes,omitempty" json:"includes,omitempty"`
 	// list of names either matching a resource name or a name provided by another module within the same MTA
@@ -51,7 +52,7 @@ type Module struct {
 	Provides []Provides `yaml:"provides,omitempty" json:"provides,omitempty"`
 	// Parameters can be used to steer the behavior of tools which interpret this descriptor. Parameters are not made available to the module at runtime
 	Parameters         map[string]interface{} `yaml:"parameters,omitempty" json:"parameters,omitempty"`
-	ParametersMetaData map[string]interface{} `yaml:"parameters-metadata,omitempty" json:"parameters-metadata,omitempty"`
+	ParametersMetaData map[string]MetaData    `yaml:"parameters-metadata,omitempty" json:"parameters-metadata,omitempty"`
 	// Build-parameters are specifically steering the behavior of build tools.
 	BuildParams map[string]interface{} `yaml:"build-parameters,omitempty" json:"build-parameters,omitempty"`
 	// A list containing the names of the modules that must be deployed prior to this one.
@@ -68,10 +69,10 @@ type ModuleTypes struct {
 	Extends string `yaml:"extends,omitempty" json:"extends,omitempty"`
 	// Properties inherited by all resources of this type
 	Properties         map[string]interface{} `yaml:"properties,omitempty" json:"properties,omitempty"`
-	PropertiesMetaData map[string]interface{} `yaml:"properties-metadata,omitempty" json:"properties-metadata,omitempty"`
+	PropertiesMetaData map[string]MetaData    `yaml:"properties-metadata,omitempty" json:"properties-metadata,omitempty"`
 	// Parameters inherited by all resources of this type
 	Parameters         map[string]interface{} `yaml:"parameters,omitempty" json:"parameters,omitempty"`
-	ParametersMetaData map[string]interface{} `yaml:"parameters-metadata,omitempty" json:"parameters-metadata,omitempty"`
+	ParametersMetaData map[string]MetaData    `yaml:"parameters-metadata,omitempty" json:"parameters-metadata,omitempty"`
 }
 
 // Provides List of provided names to which properties (configs data) can be attached.
@@ -81,7 +82,7 @@ type Provides struct {
 	Public bool `yaml:"public,omitempty" json:"public,omitempty"`
 	// property names and values make up the configuration data which is to be provided to requiring modules at runtime
 	Properties         map[string]interface{} `yaml:"properties,omitempty" json:"properties,omitempty"`
-	PropertiesMetaData map[string]interface{} `yaml:"properties-metadata,omitempty" json:"properties-metadata,omitempty"`
+	PropertiesMetaData map[string]MetaData    `yaml:"properties-metadata,omitempty" json:"properties-metadata,omitempty"`
 }
 
 // Requires list of names either matching a resource name or a name provided by another module within the same MTA.
@@ -94,10 +95,10 @@ type Requires struct {
 	List string `yaml:"list,omitempty" json:"list,omitempty"`
 	// Provided property values can be accessed by "~{<provided-property-name>}". Such expressions can be part of an arbitrary string
 	Properties         map[string]interface{} `yaml:"properties,omitempty" json:"properties,omitempty"`
-	PropertiesMetaData map[string]interface{} `yaml:"properties-metadata,omitempty" json:"properties-metadata,omitempty"`
+	PropertiesMetaData map[string]MetaData    `yaml:"properties-metadata,omitempty" json:"properties-metadata,omitempty"`
 	// Parameters can be used to influence the behavior of tools which interpret this descriptor. Parameters are not made available to requiring modules at runtime
 	Parameters         map[string]interface{} `yaml:"parameters,omitempty" json:"parameters,omitempty"`
-	ParametersMetaData map[string]interface{} `yaml:"parameters-metadata,omitempty" json:"parameters-metadata,omitempty"`
+	ParametersMetaData map[string]MetaData    `yaml:"parameters-metadata,omitempty" json:"parameters-metadata,omitempty"`
 	// THE 'includes' ELEMENT IS ONLY RELEVANT FOR DEVELOPMENT DESCRIPTORS (PRIO TO BUILD), NOT FOR DEPLOYMENT DESCRIPTORS!
 	Includes []Includes `yaml:"includes,omitempty" json:"includes,omitempty"`
 }
@@ -111,10 +112,10 @@ type Resource struct {
 	Description string `yaml:"description,omitempty" json:"description,omitempty"`
 	// Parameters can be used to influence the behavior of tools which interpret this descriptor. Parameters are not made available to requiring modules at runtime
 	Parameters         map[string]interface{} `yaml:"parameters,omitempty" json:"parameters,omitempty"`
-	ParametersMetaData map[string]interface{} `yaml:"parameters-metadata,omitempty" json:"parameters-metadata,omitempty"`
+	ParametersMetaData map[string]MetaData    `yaml:"parameters-metadata,omitempty" json:"parameters-metadata,omitempty"`
 	// property names and values make up the configuration data which is to be provided to requiring modules at runtime
 	Properties         map[string]interface{} `yaml:"properties,omitempty" json:"properties,omitempty"`
-	PropertiesMetaData map[string]interface{} `yaml:"properties-metadata,omitempty" json:"properties-metadata,omitempty"`
+	PropertiesMetaData map[string]MetaData    `yaml:"properties-metadata,omitempty" json:"properties-metadata,omitempty"`
 	// THE 'includes' ELEMENT IS ONLY RELEVANT FOR DEVELOPMENT DESCRIPTORS (PRIO TO BUILD), NOT FOR DEPLOYMENT DESCRIPTORS!
 	Includes []Includes `yaml:"includes,omitempty" json:"includes,omitempty"`
 	// A resource can be declared to be optional, if the MTA can compensate for its non-existence
@@ -133,10 +134,10 @@ type ResourceTypes struct {
 	Extends string `yaml:"extends,omitempty" json:"extends,omitempty"`
 	// Properties inherited by all resources of this type
 	Properties         map[string]interface{} `yaml:"properties,omitempty" json:"properties,omitempty"`
-	PropertiesMetaData map[string]interface{} `yaml:"properties-metadata,omitempty" json:"properties-metadata,omitempty"`
+	PropertiesMetaData map[string]MetaData    `yaml:"properties-metadata,omitempty" json:"properties-metadata,omitempty"`
 	// Parameters inherited by all resources of this type
 	Parameters         map[string]interface{} `yaml:"parameters,omitempty" json:"parameters,omitempty"`
-	ParametersMetaData map[string]interface{} `yaml:"parameters-metadata,omitempty" json:"parameters-metadata,omitempty"`
+	ParametersMetaData map[string]MetaData    `yaml:"parameters-metadata,omitempty" json:"parameters-metadata,omitempty"`
 }
 
 // Includes The 'includes' element only relevant for development descriptor, not for deployment descriptor
@@ -169,6 +170,18 @@ type Hook struct {
 	// A list of strings that define the points at which the hook must be executed.
 	Phases             []string               `yaml:"phases,omitempty" json:"phases,omitempty"`
 	Parameters         map[string]interface{} `yaml:"parameters,omitempty" json:"parameters,omitempty"`
-	ParametersMetaData map[string]interface{} `yaml:"parameters-metadata,omitempty" json:"parameters-metadata,omitempty"`
+	ParametersMetaData map[string]MetaData    `yaml:"parameters-metadata,omitempty" json:"parameters-metadata,omitempty"`
 	Requires           []Requires             `yaml:"requires,omitempty" json:"requires,omitempty"`
+}
+
+// MetaData - The properties-metadata and the parameters-metadata structure
+type MetaData struct {
+	// If set to true, the value can be overwritten by an extension descriptor.
+	OverWritable bool `yaml:"overwritable,omitempty" json:"overwritable,omitempty"`
+	// If set to false, a value must be present in the final deployment configuration.
+	Optional bool `yaml:"optional,omitempty" json:"optional,omitempty"`
+	// An interface with which a UI-tool can query for possible parameter names together with the expected datatypes and default values.
+	Datatype interface{} `yaml:"datatype,omitempty" json:"datatype,omitempty"`
+	// Indicate sensitive information to a UI-tool which it can use, e.g., for masking a value
+	Sensitive bool `yaml:"sensitive,omitempty" json:"sensitive,omitempty"`
 }
