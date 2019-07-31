@@ -104,7 +104,7 @@ type Requires struct {
 type Resource struct {
 	Name string `yaml:"name,omitempty" json:"name,omitempty"`
 	// A type of a resource. This type is interpreted by and must be known to the deployer. Resources can be untyped
-	Type string `yaml:"type" json:"type"`
+	Type string `yaml:"type,omitempty" json:"type,omitempty"`
 	// A non-translatable description of this resource. This is not a text for application users
 	Description string `yaml:"description,omitempty" json:"description,omitempty"`
 	// Parameters can be used to influence the behavior of tools which interpret this descriptor. Parameters are not made available to requiring modules at runtime
