@@ -56,7 +56,7 @@ type Module struct {
 	BuildParams map[string]interface{} `yaml:"build-parameters,omitempty" json:"build-parameters,omitempty"`
 	// A list containing the names of the modules that must be deployed prior to this one.
 	DeployedAfter []string `yaml:"deployed-after,omitempty" json:"deployed-after,omitempty"`
-	Hooks         []Hooks  `yaml:"hooks,omitempty" json:"hooks,omitempty"`
+	Hooks         []Hook   `yaml:"hooks,omitempty" json:"hooks,omitempty"`
 }
 
 // ModuleTypes module types declarations
@@ -160,7 +160,7 @@ type ProjectBuilder struct {
 }
 
 // Hooks - define and execute hooks at specific phases of module deployment.
-type Hooks struct {
+type Hook struct {
 	// An MTA internal name which can be used for documentation purposes and shown by the deployer.
 	Name string `yaml:"name,omitempty" json:"name,omitempty"`
 	// Defines the type of action that should be executed by the deployer.

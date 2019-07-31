@@ -86,7 +86,7 @@ var _ = Describe("Mta", func() {
 				},
 			},
 			DeployedAfter: []string{"scheduler"},
-			Hooks: []Hooks{
+			Hooks: []Hook{
 				{
 					Name:   "hook",
 					Type:   "task",
