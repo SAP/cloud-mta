@@ -159,7 +159,7 @@ type ProjectBuilder struct {
 	Commands []string `yaml:"commands,omitempty" json:"commands,omitempty"`
 }
 
-// Includes The 'includes' element only relevant for development descriptor, not for deployment descriptor
+// Hooks change the typical deployment process
 type Hooks struct {
 	// An MTA internal name which can be used for documentation purposes and shown by the deployer.
 	Name string `yaml:"name,omitempty" json:"name,omitempty"`
