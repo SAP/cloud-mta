@@ -57,7 +57,7 @@ type Module struct {
 	// A list containing the names of the modules that must be deployed prior to this one.
 	DeployedAfter []string `yaml:"deployed-after,omitempty" json:"deployed-after,omitempty"`
 	// Define and execute at specific phases of module deployment.
-	Hooks         []Hook `yaml:"hooks,omitempty" json:"hooks,omitempty"`
+	Hooks []Hook `yaml:"hooks,omitempty" json:"hooks,omitempty"`
 }
 
 // ModuleTypes module types declarations
