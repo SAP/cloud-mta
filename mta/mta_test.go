@@ -1,14 +1,13 @@
 package mta
 
 import (
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-	"github.com/pkg/errors"
 	"strings"
 )
 
@@ -87,6 +86,17 @@ var _ = Describe("Mta", func() {
 				},
 			},
 			DeployedAfter: []string{"scheduler"},
+			Hooks: []Hooks{
+				{
+					Name:   "hook",
+					Type:   "task",
+					Phases: []string{"application.before-stop.live", "application.before-stop.idle"},
+					Parameters: map[string]interface{}{
+						"name":    "foo-task",
+						"command": "sleep 5m",
+					},
+				},
+			},
 		},
 		{
 			Name: "scheduler",
@@ -126,7 +136,7 @@ var _ = Describe("Mta", func() {
 		AfterAll:  buildersAfter,
 	}
 
-	schemaVersion := "3.2"
+	schemaVersion := "3.3"
 	mta := &MTA{
 		SchemaVersion: &schemaVersion,
 		ID:            "com.acme.scheduling",
