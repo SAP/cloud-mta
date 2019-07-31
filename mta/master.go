@@ -159,7 +159,7 @@ type ProjectBuilder struct {
 	Commands []string `yaml:"commands,omitempty" json:"commands,omitempty"`
 }
 
-// Hooks change the typical deployment process
+// Hooks - define and execute hooks at specific phases of module deployment.
 type Hooks struct {
 	// An MTA internal name which can be used for documentation purposes and shown by the deployer.
 	Name string `yaml:"name,omitempty" json:"name,omitempty"`
