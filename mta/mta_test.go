@@ -87,6 +87,17 @@ var _ = Describe("Mta", func() {
 				},
 			},
 			DeployedAfter: []string{"scheduler"},
+			Hooks: []Hook{
+				{
+					Name:   "hook",
+					Type:   "task",
+					Phases: []string{"application.before-stop.live", "application.before-stop.idle"},
+					Parameters: map[string]interface{}{
+						"name":    "foo-task",
+						"command": "sleep 5m",
+					},
+				},
+			},
 		},
 		{
 			Name: "scheduler",
@@ -126,7 +137,7 @@ var _ = Describe("Mta", func() {
 		AfterAll:  buildersAfter,
 	}
 
-	schemaVersion := "3.2"
+	schemaVersion := "3.3"
 	mta := &MTA{
 		SchemaVersion: &schemaVersion,
 		ID:            "com.acme.scheduling",

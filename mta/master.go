@@ -56,6 +56,8 @@ type Module struct {
 	BuildParams map[string]interface{} `yaml:"build-parameters,omitempty" json:"build-parameters,omitempty"`
 	// A list containing the names of the modules that must be deployed prior to this one.
 	DeployedAfter []string `yaml:"deployed-after,omitempty" json:"deployed-after,omitempty"`
+	// Defined and executed at specific phases of module deployment.
+	Hooks []Hook `yaml:"hooks,omitempty" json:"hooks,omitempty"`
 }
 
 // ModuleTypes module types declarations
@@ -156,4 +158,17 @@ type ProjectBuilder struct {
 	Builder  string   `yaml:"builder,omitempty" json:"builder,omitempty"`
 	Timeout  string   `yaml:"timeout,omitempty" json:"timeout,omitempty"`
 	Commands []string `yaml:"commands,omitempty" json:"commands,omitempty"`
+}
+
+// Hook - defined and executed at specific phases of module deployment.
+type Hook struct {
+	// An MTA internal name which can be used for documentation purposes and shown by the deployer.
+	Name string `yaml:"name,omitempty" json:"name,omitempty"`
+	// Defines the type of action that should be executed by the deployer.
+	Type string `yaml:"type,omitempty" json:"type,omitempty"`
+	// A list of strings that define the points at which the hook must be executed.
+	Phases             []string               `yaml:"phases,omitempty" json:"phases,omitempty"`
+	Parameters         map[string]interface{} `yaml:"parameters,omitempty" json:"parameters,omitempty"`
+	ParametersMetaData map[string]interface{} `yaml:"parameters-metadata,omitempty" json:"parameters-metadata,omitempty"`
+	Requires           []Requires             `yaml:"requires,omitempty" json:"requires,omitempty"`
 }
