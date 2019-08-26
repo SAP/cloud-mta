@@ -318,6 +318,14 @@ var _ = Describe("Mta", func() {
 			Ω(err).Should(HaveOccurred())
 			Ω(err.Error()).Should(ContainSubstring("line 54: cannot unmarshal !!int `1` into []string"))
 		})
+
+		It("Wrong properties-metadata value", func() {
+			content, err := readFile(getTestPath("mtaWrongMetaData.yaml"))
+			Ω(err).Should(Succeed())
+			_, err = Unmarshal(content)
+			Ω(err).Should(HaveOccurred())
+			Ω(err.Error()).Should(ContainSubstring("line 22: cannot unmarshal !!bool `true` into map[string]mta.MetaData"))
+		})
 	})
 })
 

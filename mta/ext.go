@@ -251,23 +251,20 @@ func mergeMapKey(m *map[string]interface{}, key string, value interface{}) error
 }
 
 // extendIncludes extends Slice Includes with elements of mta extension Slice Includes
-func extendIncludes(m *[]Includes, ext []Includes) error {
+func extendIncludes(m *[]Includes, ext []Includes) {
 	if ext != nil {
 		if *m == nil {
 			*m = []Includes{}
 		}
 		*m = append(*m, ext...)
 	}
-	return nil
 }
 
 // extendBool extends bool with element of mta extension bool
-func extendBool(m *bool, ext *bool) error {
+func extendBool(m *bool, ext *bool) {
 	if ext != nil {
 		*m = *ext
 	}
-
-	return nil
 }
 
 func chain() *chainError {
@@ -294,10 +291,7 @@ func (v *chainError) extendIncludes(m *[]Includes, ext []Includes, msg string, a
 	if v.err != nil {
 		return v
 	}
-	err := extendIncludes(m, ext)
-	if err != nil {
-		v.err = errors.Wrapf(err, msg, args...)
-	}
+	extendIncludes(m, ext)
 	return v
 }
 
@@ -305,9 +299,6 @@ func (v *chainError) extendBool(m *bool, ext *bool, msg string, args ...interfac
 	if v.err != nil {
 		return v
 	}
-	err := extendBool(m, ext)
-	if err != nil {
-		v.err = errors.Wrapf(err, msg, args...)
-	}
+	extendBool(m, ext)
 	return v
 }
