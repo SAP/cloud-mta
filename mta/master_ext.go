@@ -38,6 +38,8 @@ type ModuleExt struct {
 	Parameters map[string]interface{} `yaml:"parameters,omitempty"`
 	// Build-parameters are specifically steering the behavior of build tools.
 	BuildParams map[string]interface{} `yaml:"build-parameters,omitempty"`
+	// Defined and executed at specific phases of module deployment.
+	Hooks []Hook `yaml:"hooks,omitempty" json:"hooks,omitempty"`
 }
 
 // ResourceExt - can be anything required to run the application which is not provided by the application itself.
@@ -49,4 +51,6 @@ type ResourceExt struct {
 	Properties map[string]interface{} `yaml:"properties,omitempty"`
 	// If a resource is declared to be active, it is allocated and bound according to declared requirements
 	Active bool `yaml:"active,omitempty"`
+	// list of names either matching a resource name or a name provided by another module within the same MTA
+	Requires []Requires `yaml:"requires,omitempty" json:"requires,omitempty"`
 }

@@ -10,13 +10,31 @@ const (
 	mergeModulesErrorMsg   = `could not merge modules from MTA extension with ID "%s"`
 	mergeResourcesErrorMsg = `could not merge resources from MTA extension with ID "%s"`
 
-	mergeModuleErrorMsg           = `could not merge the "%s" module`
-	mergeModuleProvidesErrorMsg   = `could not merge the "%s" provides in the "%s" module`
-	unknownModuleProvidesErrorMsg = `the "%s" provides in the "%s" module is defined in the MTA extension but not in the "mta.yaml" file`
-	unknownModuleErrorMsg         = `the "%s" module is defined in the MTA extension but not in the "mta.yaml" file`
+	mergeRootParametersErrorMsg = `could not merge parameters from MTA extension with ID "%s"`
 
-	mergeResourceErrorMsg   = `could not merge the "%s" resource`
-	unknownResourceErrorMsg = `the "%s" resource is defined in the MTA extension but not in the "mta.yaml" file`
+	mergeModulePropertiesErrorMsg             = `could not merge the properties of the "%s" module`
+	mergeModuleParametersErrorMsg             = `could not merge the parameters of the "%s" module`
+	mergeModuleBuildParametersErrorMsg        = `could not merge the build parameters of the "%s" module`
+	mergeModuleIncludesErrorMsg               = `could not merge the includes of the "%s" module`
+	mergeModuleProvidesPropertiesErrorMsg     = `could not merge the properties of the "%s" provides in the "%s" module`
+	mergeModuleRequiresPropertiesErrorMsg     = `could not merge the properties of the "%s" requires in the "%s" module`
+	mergeModuleRequiresParametersErrorMsg     = `could not merge the parameters of the "%s" requires in the "%s" module`
+	mergeModuleHookParametersErrorMsg         = `could not merge the parameters of the "%s" hook in the "%s" module`
+	mergeModuleHookRequiresPropertiesErrorMsg = `could not merge the properties of the "%s" requires in the "%s" hook of the "%s" module`
+	mergeModuleHookRequiresParametersErrorMsg = `could not merge the parameters of the "%s" requires in the "%s" hook of the "%s" module`
+	unknownModuleHookRequiresErrorMsg         = `the "%s" requires in the "%s" hook of the "%s" module is defined in the MTA extension but not in the "mta.yaml" file`
+	unknownModuleProvidesErrorMsg             = `the "%s" provides in the "%s" module is defined in the MTA extension but not in the "mta.yaml" file`
+	unknownModuleRequiresErrorMsg             = `the "%s" requires in the "%s" module is defined in the MTA extension but not in the "mta.yaml" file`
+	unknownModuleHookErrorMsg                 = `the "%s" hook in the "%s" module is defined in the MTA extension but not in the "mta.yaml" file`
+	unknownModuleErrorMsg                     = `the "%s" module is defined in the MTA extension but not in the "mta.yaml" file`
+
+	mergeResourceActiveErrorMsg             = `could not merge the active property of the "%s" resource`
+	mergeResourcePropertiesErrorMsg         = `could not merge the properties of the "%s" resource`
+	mergeResourceParametersErrorMsg         = `could not merge the parameters of the "%s" resource`
+	mergeResourceRequiresPropertiesErrorMsg = `could not merge the properties of the "%s" requires in the "%s" resource`
+	mergeResourceRequiresParametersErrorMsg = `could not merge the parameters of the "%s" requires in the "%s" resource`
+	unknownResourceRequiresErrorMsg         = `the "%s" requires in the "%s" resource is defined in the MTA extension but not in the "mta.yaml" file`
+	unknownResourceErrorMsg                 = `the "%s" resource is defined in the MTA extension but not in the "mta.yaml" file`
 
 	overwriteStructuredWithScalarErrorMsg = `"%s": cannot overwrite a structured value with a scalar value`
 	overwriteScalarWithStructuredErrorMsg = `"%s": cannot overwrite a scalar value with a structured value`
@@ -36,11 +54,18 @@ func UnmarshalExt(content []byte) (*EXT, error) {
 
 // Merge merges mta object with mta extension object extension properties complement and overwrite mta properties
 func Merge(mta *MTA, mtaExt *EXT) error {
-	if err := mergeModules(*mta, mtaExt.Modules); err != nil {
+	err := chain().
+		extendMap(&mta.Parameters, mta.ParametersMetaData, mtaExt.Parameters, mergeRootParametersErrorMsg, mtaExt.ID).
+		err
+	if err != nil {
+		return err
+	}
+
+	if err = mergeModules(*mta, mtaExt.Modules); err != nil {
 		return errors.Wrapf(err, mergeModulesErrorMsg, mtaExt.ID)
 	}
 
-	if err := mergeResources(*mta, mtaExt.Resources); err != nil {
+	if err = mergeResources(*mta, mtaExt.Resources); err != nil {
 		return errors.Wrapf(err, mergeResourcesErrorMsg, mtaExt.ID)
 	}
 
@@ -52,22 +77,27 @@ func mergeModules(mtaObj MTA, mtaExtModules []*ModuleExt) error {
 	for _, extModule := range mtaExtModules {
 		if module, err := mtaObj.GetModuleByName(extModule.Name); err == nil {
 			err = chain().
-				extendMap(&module.Properties, module.PropertiesMetaData, extModule.Properties).
-				extendMap(&module.Parameters, module.ParametersMetaData, extModule.Parameters).
-				extendMap(&module.BuildParams, nil, extModule.BuildParams).
-				extendIncludes(&module.Includes, extModule.Includes).
+				extendMap(&module.Properties, module.PropertiesMetaData, extModule.Properties, mergeModulePropertiesErrorMsg, module.Name).
+				extendMap(&module.Parameters, module.ParametersMetaData, extModule.Parameters, mergeModuleParametersErrorMsg, module.Name).
+				extendMap(&module.BuildParams, nil, extModule.BuildParams, mergeModuleBuildParametersErrorMsg, module.Name).
+				extendIncludes(&module.Includes, extModule.Includes, mergeModuleIncludesErrorMsg, module.Name).
 				err
 			if err != nil {
-				return errors.Wrapf(err, mergeModuleErrorMsg, module.Name)
+				return err
 			}
-			for _, extProvide := range extModule.Provides {
-				if provide := module.GetProvidesByName(extProvide.Name); provide != nil {
-					if err = extendMap(&provide.Properties, provide.PropertiesMetaData, extProvide.Properties); extModule != nil {
-						return errors.Wrapf(err, mergeModuleProvidesErrorMsg, provide.Name, module.Name)
-					}
-				} else {
-					return errors.Errorf(unknownModuleProvidesErrorMsg, extProvide.Name, extModule.Name)
-				}
+			err = mergeModuleProvides(module, extModule)
+			if err != nil {
+				return err
+			}
+			if err = mergeRequires(extModule.Requires, module,
+				msg{unknownModuleRequiresErrorMsg, []interface{}{extModule.Name}},
+				msg{mergeModuleRequiresPropertiesErrorMsg, []interface{}{module.Name}},
+				msg{mergeModuleRequiresParametersErrorMsg, []interface{}{module.Name}}); err != nil {
+				return err
+			}
+			err = mergeModuleHooks(module, extModule)
+			if err != nil {
+				return err
 			}
 		} else {
 			return errors.Wrapf(err, unknownModuleErrorMsg, extModule.Name)
@@ -77,21 +107,97 @@ func mergeModules(mtaObj MTA, mtaExtModules []*ModuleExt) error {
 	return nil
 }
 
-// mergeResources is responsible for handling the rules of merging modules
+func mergeModuleProvides(module *Module, extModule *ModuleExt) error {
+	for _, extProvide := range extModule.Provides {
+		if provide := module.GetProvidesByName(extProvide.Name); provide != nil {
+			err := chain().
+				extendMap(&provide.Properties, provide.PropertiesMetaData, extProvide.Properties, mergeModuleProvidesPropertiesErrorMsg, provide.Name, module.Name).
+				err
+			if err != nil {
+				return err
+			}
+		} else {
+			return errors.Errorf(unknownModuleProvidesErrorMsg, extProvide.Name, extModule.Name)
+		}
+	}
+	return nil
+}
+
+func mergeModuleHooks(module *Module, extModule *ModuleExt) error {
+	for _, extHook := range extModule.Hooks {
+		if hook := module.GetHookByName(extHook.Name); hook != nil {
+			err := chain().
+				extendMap(&hook.Parameters, hook.ParametersMetaData, extHook.Parameters, mergeModuleHookParametersErrorMsg, hook.Name, module.Name).
+				err
+			if err != nil {
+				return err
+			}
+			if err = mergeRequires(extHook.Requires, hook,
+				msg{unknownModuleHookRequiresErrorMsg, []interface{}{extHook.Name, extModule.Name}},
+				msg{mergeModuleHookRequiresPropertiesErrorMsg, []interface{}{hook.Name, module.Name}},
+				msg{mergeModuleHookRequiresParametersErrorMsg, []interface{}{hook.Name, module.Name}}); err != nil {
+				return err
+			}
+		} else {
+			return errors.Errorf(unknownModuleHookErrorMsg, extHook.Name, extModule.Name)
+		}
+	}
+	return nil
+}
+
+// mergeResources is responsible for handling the rules of merging resources
 func mergeResources(mtaObj MTA, mtaExtResources []*ResourceExt) error {
 	for _, extResource := range mtaExtResources {
 		if resource, err := mtaObj.GetResourceByName(extResource.Name); err == nil {
 			err = chain().
-				extendBool(&resource.Active, &extResource.Active).
+				extendBool(&resource.Active, &extResource.Active, mergeResourceActiveErrorMsg, resource.Name).
+				extendMap(&resource.Properties, resource.PropertiesMetaData, extResource.Properties, mergeResourcePropertiesErrorMsg, resource.Name).
+				extendMap(&resource.Parameters, resource.ParametersMetaData, extResource.Parameters, mergeResourceParametersErrorMsg, resource.Name).
 				err
 			if err != nil {
-				return errors.Wrapf(err, mergeResourceErrorMsg, resource.Name)
+				return err
+			}
+			if err = mergeRequires(extResource.Requires, resource,
+				msg{unknownResourceRequiresErrorMsg, []interface{}{extResource.Name}},
+				msg{mergeResourceRequiresPropertiesErrorMsg, []interface{}{resource.Name}},
+				msg{mergeResourceRequiresParametersErrorMsg, []interface{}{resource.Name}}); err != nil {
+				return err
 			}
 		} else {
 			return errors.Wrapf(err, unknownResourceErrorMsg, extResource.Name)
 		}
 	}
 
+	return nil
+}
+
+type requiresProvider interface {
+	GetRequiresByName(name string) *Requires
+}
+type msg struct {
+	msg  string
+	args []interface{}
+}
+
+func (msg msg) getArgs(prependArgs ...interface{}) []interface{} {
+	return append(prependArgs, msg.args...)
+}
+
+// mergeRequires is responsible for merging the requires part of modules, resources etc
+func mergeRequires(requires []Requires, extRequiresProvider requiresProvider, unknownRequiresMsg msg, mergePropertiesMsg msg, mergeParametersMsg msg) error {
+	for _, extRequires := range requires {
+		if requires := extRequiresProvider.GetRequiresByName(extRequires.Name); requires != nil {
+			err := chain().
+				extendMap(&requires.Properties, requires.PropertiesMetaData, extRequires.Properties, mergePropertiesMsg.msg, mergePropertiesMsg.getArgs(requires.Name)...).
+				extendMap(&requires.Parameters, requires.ParametersMetaData, extRequires.Parameters, mergeParametersMsg.msg, mergeParametersMsg.getArgs(requires.Name)...).
+				err
+			if err != nil {
+				return err
+			}
+		} else {
+			return errors.Errorf(unknownRequiresMsg.msg, unknownRequiresMsg.getArgs(extRequires.Name)...)
+		}
+	}
 	return nil
 }
 
@@ -173,26 +279,35 @@ type chainError struct {
 	err error
 }
 
-func (v *chainError) extendMap(m *map[string]interface{}, meta map[string]MetaData, ext map[string]interface{}) *chainError {
+func (v *chainError) extendMap(m *map[string]interface{}, meta map[string]MetaData, ext map[string]interface{}, msg string, args ...interface{}) *chainError {
 	if v.err != nil {
 		return v
 	}
-	v.err = extendMap(m, meta, ext)
+	err := extendMap(m, meta, ext)
+	if err != nil {
+		v.err = errors.Wrapf(err, msg, args...)
+	}
 	return v
 }
 
-func (v *chainError) extendIncludes(m *[]Includes, ext []Includes) *chainError {
+func (v *chainError) extendIncludes(m *[]Includes, ext []Includes, msg string, args ...interface{}) *chainError {
 	if v.err != nil {
 		return v
 	}
-	v.err = extendIncludes(m, ext)
+	err := extendIncludes(m, ext)
+	if err != nil {
+		v.err = errors.Wrapf(err, msg, args...)
+	}
 	return v
 }
 
-func (v *chainError) extendBool(m *bool, ext *bool) *chainError {
+func (v *chainError) extendBool(m *bool, ext *bool, msg string, args ...interface{}) *chainError {
 	if v.err != nil {
 		return v
 	}
-	v.err = extendBool(m, ext)
+	err := extendBool(m, ext)
+	if err != nil {
+		v.err = errors.Wrapf(err, msg, args...)
+	}
 	return v
 }

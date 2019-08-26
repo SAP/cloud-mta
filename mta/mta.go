@@ -41,9 +41,53 @@ func (mta *MTA) GetResourceByName(name string) (*Resource, error) {
 
 // GetProvidesByName returns a specific provide by name
 func (module *Module) GetProvidesByName(name string) *Provides {
-	for _, p := range module.Provides {
+	for i, p := range module.Provides {
 		if p.Name == name {
-			return &p
+			return &module.Provides[i]
+		}
+	}
+
+	return nil
+}
+
+// GetRequiresByName returns a specific requires by name
+func (module *Module) GetRequiresByName(name string) *Requires {
+	for i, r := range module.Requires {
+		if r.Name == name {
+			return &module.Requires[i]
+		}
+	}
+
+	return nil
+}
+
+// GetHookByName returns a specific hook by name
+func (module *Module) GetHookByName(name string) *Hook {
+	for i, h := range module.Hooks {
+		if h.Name == name {
+			return &module.Hooks[i]
+		}
+	}
+
+	return nil
+}
+
+// GetRequiresByName returns a specific requires by name
+func (resource *Resource) GetRequiresByName(name string) *Requires {
+	for i, r := range resource.Requires {
+		if r.Name == name {
+			return &resource.Requires[i]
+		}
+	}
+
+	return nil
+}
+
+// GetRequiresByName returns a specific requires by name
+func (hook *Hook) GetRequiresByName(name string) *Requires {
+	for i, r := range hook.Requires {
+		if r.Name == name {
+			return &hook.Requires[i]
 		}
 	}
 

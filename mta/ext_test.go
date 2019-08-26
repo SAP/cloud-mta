@@ -1,11 +1,12 @@
 package mta
 
 import (
+	"os"
+	"path/filepath"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
-	"os"
-	"path/filepath"
 )
 
 var _ = Describe("Extension MTA", func() {
@@ -332,6 +333,82 @@ var _ = Describe("Extension MTA", func() {
 	})
 
 	var _ = Describe("Merge", func() {
+		It("merges the root parameters", func() {
+			mtaObj := MTA{
+				Parameters: map[string]interface{}{
+					"p1": "the p",
+				},
+			}
+			err := Merge(&mtaObj, &EXT{
+				Parameters: map[string]interface{}{
+					"p1": "changed",
+					"p2": "added",
+				},
+			})
+
+			Ω(err).Should(Succeed())
+			Ω(mtaObj).Should(Equal(MTA{
+				Parameters: map[string]interface{}{
+					"p1": "changed",
+					"p2": "added",
+				},
+			}))
+		})
+		It("merges the root parameters when original map is nil", func() {
+			mtaObj := MTA{}
+			err := Merge(&mtaObj, &EXT{
+				Parameters: map[string]interface{}{
+					"p2": "added",
+				},
+			})
+
+			Ω(err).Should(Succeed())
+			Ω(mtaObj).Should(Equal(MTA{
+				Parameters: map[string]interface{}{
+					"p2": "added",
+				},
+			}))
+		})
+		It("fails if it can't merge root parameters", func() {
+			mtaObj := MTA{
+				Parameters: map[string]interface{}{
+					"p1p1": "value",
+				},
+			}
+			err := Merge(&mtaObj, &EXT{
+				Parameters: map[string]interface{}{
+					"p1p1": map[string]interface{}{
+						"p1p2c1": "added",
+					},
+					"p1p2": map[string]interface{}{
+						"p1p2c1": "changed",
+					},
+				},
+			})
+
+			Ω(err).Should(HaveOccurred())
+			Ω(err.Error()).Should(ContainSubstring(overwriteScalarWithStructuredErrorMsg, "p1p1"))
+		})
+		It("fails if it can't merge root parameters because of metadata", func() {
+			mtaObj := MTA{
+				Parameters: map[string]interface{}{
+					"p1p1": "value",
+				},
+				ParametersMetaData: map[string]MetaData{
+					"p1p1": {
+						OverWritable: false,
+					},
+				},
+			}
+			err := Merge(&mtaObj, &EXT{
+				Parameters: map[string]interface{}{
+					"p1p1": "changed",
+				},
+			})
+
+			Ω(err).Should(HaveOccurred())
+			Ω(err.Error()).Should(ContainSubstring(overwriteNonOverwritableErrorMsg, "p1p1"))
+		})
 		Context("modules", func() {
 			It("merges the module properties", func() {
 				checkModuleMerge(Module{
@@ -349,6 +426,21 @@ var _ = Describe("Extension MTA", func() {
 					Name: "module1",
 					Properties: map[string]interface{}{
 						"p1": "changed",
+						"p2": "added",
+					},
+				})
+			})
+			It("merges the module properties when original map is nil", func() {
+				checkModuleMerge(Module{
+					Name: "module1",
+				}, ModuleExt{
+					Name: "module1",
+					Properties: map[string]interface{}{
+						"p2": "added",
+					},
+				}, Module{
+					Name: "module1",
+					Properties: map[string]interface{}{
 						"p2": "added",
 					},
 				})
@@ -377,6 +469,21 @@ var _ = Describe("Extension MTA", func() {
 					},
 				})
 			})
+			It("merges the module parameters when original map is nil", func() {
+				checkModuleMerge(Module{
+					Name: "module1",
+				}, ModuleExt{
+					Name: "module1",
+					Parameters: map[string]interface{}{
+						"p1p1": "added",
+					},
+				}, Module{
+					Name: "module1",
+					Parameters: map[string]interface{}{
+						"p1p1": "added",
+					},
+				})
+			})
 			It("merges the module build parameters", func() {
 				checkModuleMerge(Module{
 					Name: "module1",
@@ -399,6 +506,769 @@ var _ = Describe("Extension MTA", func() {
 							"p1b2c1": "added",
 						},
 					},
+				})
+			})
+			It("merges the module build parameters when original map is nil", func() {
+				checkModuleMerge(Module{
+					Name: "module1",
+				}, ModuleExt{
+					Name: "module1",
+					BuildParams: map[string]interface{}{
+						"p1b1": "added",
+					},
+				}, Module{
+					Name: "module1",
+					BuildParams: map[string]interface{}{
+						"p1b1": "added",
+					},
+				})
+			})
+			Context("hooks", func() {
+				It("merges the module hooks parameters", func() {
+					checkModuleMerge(Module{
+						Name: "module1",
+						Hooks: []Hook{
+							{
+								Name: "h1",
+								Parameters: map[string]interface{}{
+									"provp1": "the prop",
+								},
+								ParametersMetaData: map[string]MetaData{
+									"provp1": {
+										OverWritable: true,
+									},
+								},
+							},
+							{
+								Name: "h2",
+							},
+						},
+					}, ModuleExt{
+						Name: "module1",
+						Hooks: []Hook{
+							{
+								Name: "h1",
+								Parameters: map[string]interface{}{
+									"provp1": "changed",
+									"provep2": map[string]interface{}{
+										"provep2t1": "added",
+									},
+								},
+							},
+							{
+								Name: "h2",
+								Parameters: map[string]interface{}{
+									"provp1": "added",
+								},
+							},
+						},
+					}, Module{
+						Name: "module1",
+						Hooks: []Hook{
+							{
+								Name: "h1",
+								Parameters: map[string]interface{}{
+									"provp1": "changed",
+									"provep2": map[string]interface{}{
+										"provep2t1": "added",
+									},
+								},
+								ParametersMetaData: map[string]MetaData{
+									"provp1": {
+										OverWritable: true,
+									},
+								},
+							},
+							{
+								Name: "h2",
+								Parameters: map[string]interface{}{
+									"provp1": "added",
+								},
+							},
+						},
+					})
+				})
+				It("fails if there is a module hook in the extension that doesn't exist in the original MTA", func() {
+					checkModuleMergeFails(Module{
+						Name: "module1",
+						Hooks: []Hook{
+							{
+								Name: "h1",
+								Parameters: map[string]interface{}{
+									"provp1": "the prop",
+								},
+							},
+						},
+					}, ModuleExt{
+						Name: "module1",
+						Hooks: []Hook{
+							{
+								Name: "h2",
+								Parameters: map[string]interface{}{
+									"provp1": "changed",
+								},
+							},
+						},
+					}, unknownModuleHookErrorMsg, "h2", "module1")
+				})
+				It("fails if it can't merge module hook parameters", func() {
+					checkModuleMergeFails(Module{
+						Name: "module1",
+						Hooks: []Hook{
+							{
+								Name: "h1",
+								Parameters: map[string]interface{}{
+									"provp1":  "value",
+									"provep2": "value",
+								},
+							},
+						},
+					}, ModuleExt{
+						Name: "module1",
+						Hooks: []Hook{
+							{
+								Name: "h1",
+								Parameters: map[string]interface{}{
+									"provp1": "changed",
+									"provep2": map[string]interface{}{
+										"provep2t1": "added",
+									},
+								},
+							},
+						},
+					}, overwriteScalarWithStructuredErrorMsg, "provep2")
+				})
+				It("fails if it can't merge module hook parameters because of metadata", func() {
+					checkModuleMergeFails(Module{
+						Name: "module1",
+						Hooks: []Hook{
+							{
+								Name: "h1",
+								Parameters: map[string]interface{}{
+									"provp1": "value",
+								},
+								ParametersMetaData: map[string]MetaData{
+									"provp1": {
+										OverWritable: false,
+									},
+								},
+							},
+						},
+					}, ModuleExt{
+						Name: "module1",
+						Hooks: []Hook{
+							{
+								Name: "h1",
+								Parameters: map[string]interface{}{
+									"provp1": "changed",
+								},
+							},
+						},
+					}, overwriteNonOverwritableErrorMsg, "provp1")
+				})
+				It("merges the module hooks requires parameters", func() {
+					checkModuleMerge(Module{
+						Name: "module1",
+						Hooks: []Hook{
+							{
+								Name: "h1",
+								Requires: []Requires{
+									{
+										Name: "r1",
+										Parameters: map[string]interface{}{
+											"provp1": "the prop",
+										},
+										ParametersMetaData: map[string]MetaData{
+											"provp1": {
+												OverWritable: true,
+											},
+										},
+									},
+									{
+										Name: "r2",
+									},
+								},
+							},
+						},
+					}, ModuleExt{
+						Name: "module1",
+						Hooks: []Hook{
+							{
+								Name: "h1",
+								Requires: []Requires{
+									{
+										Name: "r1",
+										Parameters: map[string]interface{}{
+											"provp1": "changed",
+											"provep2": map[string]interface{}{
+												"provep2t1": "added",
+											},
+										},
+									},
+									{
+										Name: "r2",
+										Parameters: map[string]interface{}{
+											"provp1": "added",
+										},
+									},
+								},
+							},
+						},
+					}, Module{
+						Name: "module1",
+						Hooks: []Hook{
+							{
+								Name: "h1",
+								Requires: []Requires{
+									{
+										Name: "r1",
+										Parameters: map[string]interface{}{
+											"provp1": "changed",
+											"provep2": map[string]interface{}{
+												"provep2t1": "added",
+											},
+										},
+										ParametersMetaData: map[string]MetaData{
+											"provp1": {
+												OverWritable: true,
+											},
+										},
+									},
+									{
+										Name: "r2",
+										Parameters: map[string]interface{}{
+											"provp1": "added",
+										},
+									},
+								},
+							},
+						},
+					})
+				})
+				It("merges the module hooks requires properties", func() {
+					checkModuleMerge(Module{
+						Name: "module1",
+						Hooks: []Hook{
+							{
+								Name: "h1",
+								Requires: []Requires{
+									{
+										Name: "r1",
+										Properties: map[string]interface{}{
+											"provp1": "the prop",
+										},
+										PropertiesMetaData: map[string]MetaData{
+											"provp1": {
+												OverWritable: true,
+											},
+										},
+									},
+									{
+										Name: "r2",
+									},
+								},
+							},
+						},
+					}, ModuleExt{
+						Name: "module1",
+						Hooks: []Hook{
+							{
+								Name: "h1",
+								Requires: []Requires{
+									{
+										Name: "r1",
+										Properties: map[string]interface{}{
+											"provp1": "changed",
+											"provep2": map[string]interface{}{
+												"provep2t1": "added",
+											},
+										},
+									},
+									{
+										Name: "r2",
+										Properties: map[string]interface{}{
+											"provp1": "added",
+										},
+									},
+								},
+							},
+						},
+					}, Module{
+						Name: "module1",
+						Hooks: []Hook{
+							{
+								Name: "h1",
+								Requires: []Requires{
+									{
+										Name: "r1",
+										Properties: map[string]interface{}{
+											"provp1": "changed",
+											"provep2": map[string]interface{}{
+												"provep2t1": "added",
+											},
+										},
+										PropertiesMetaData: map[string]MetaData{
+											"provp1": {
+												OverWritable: true,
+											},
+										},
+									},
+									{
+										Name: "r2",
+										Properties: map[string]interface{}{
+											"provp1": "added",
+										},
+									},
+								},
+							},
+						},
+					})
+				})
+				It("fails if there is a module hook requires in the extension that doesn't exist in the original MTA", func() {
+					checkModuleMergeFails(Module{
+						Name: "module1",
+						Hooks: []Hook{
+							{
+								Name: "h1",
+								Requires: []Requires{
+									{
+										Name: "r1",
+										Properties: map[string]interface{}{
+											"provp1": "the prop",
+										},
+									},
+								},
+							},
+						},
+					}, ModuleExt{
+						Name: "module1",
+						Hooks: []Hook{
+							{
+								Name: "h1",
+								Requires: []Requires{
+									{
+										Name: "r2",
+										Properties: map[string]interface{}{
+											"provp1": "changed",
+										},
+									},
+								},
+							},
+						},
+					}, unknownModuleHookRequiresErrorMsg, "r2", "h1", "module1")
+				})
+				It("fails if it can't merge module hook requires properties", func() {
+					checkModuleMergeFails(Module{
+						Name: "module1",
+						Hooks: []Hook{
+							{
+								Name: "h1",
+								Requires: []Requires{
+									{
+										Name: "p1",
+										Properties: map[string]interface{}{
+											"provp1":  "value",
+											"provep2": "value",
+										},
+									},
+								},
+							},
+						},
+					}, ModuleExt{
+						Name: "module1",
+						Hooks: []Hook{
+							{
+								Name: "h1",
+								Requires: []Requires{
+									{
+										Name: "p1",
+										Properties: map[string]interface{}{
+											"provp1": "changed",
+											"provep2": map[string]interface{}{
+												"provep2t1": "added",
+											},
+										},
+									},
+								},
+							},
+						},
+					}, overwriteScalarWithStructuredErrorMsg, "provep2")
+				})
+				It("fails if it can't merge module hook requires properties because of metadata", func() {
+					checkModuleMergeFails(Module{
+						Name: "module1",
+						Hooks: []Hook{
+							{
+								Name: "h1",
+								Requires: []Requires{
+									{
+										Name: "p1",
+										Properties: map[string]interface{}{
+											"provp1": "value",
+										},
+										PropertiesMetaData: map[string]MetaData{
+											"provp1": {
+												OverWritable: false,
+											},
+										},
+									},
+								},
+							},
+						},
+					}, ModuleExt{
+						Name: "module1",
+						Hooks: []Hook{
+							{
+								Name: "h1",
+								Requires: []Requires{
+									{
+										Name: "p1",
+										Properties: map[string]interface{}{
+											"provp1": "changed",
+										},
+									},
+								},
+							},
+						},
+					}, overwriteNonOverwritableErrorMsg, "provp1")
+				})
+				It("fails if it can't merge module hook requires parameters", func() {
+					checkModuleMergeFails(Module{
+						Name: "module1",
+						Hooks: []Hook{
+							{
+								Name: "h1",
+								Requires: []Requires{
+									{
+										Name: "p1",
+										Parameters: map[string]interface{}{
+											"provp1":  "value",
+											"provep2": "value",
+										},
+									},
+								},
+							},
+						},
+					}, ModuleExt{
+						Name: "module1",
+						Hooks: []Hook{
+							{
+								Name: "h1",
+								Requires: []Requires{
+									{
+										Name: "p1",
+										Parameters: map[string]interface{}{
+											"provp1": "changed",
+											"provep2": map[string]interface{}{
+												"provep2t1": "added",
+											},
+										},
+									},
+								},
+							},
+						},
+					}, overwriteScalarWithStructuredErrorMsg, "provep2")
+				})
+				It("fails if it can't merge module hook requires parameters because of metadata", func() {
+					checkModuleMergeFails(Module{
+						Name: "module1",
+						Hooks: []Hook{
+							{
+								Name: "h1",
+								Requires: []Requires{
+									{
+										Name: "p1",
+										Parameters: map[string]interface{}{
+											"provp1": "value",
+										},
+										ParametersMetaData: map[string]MetaData{
+											"provp1": {
+												OverWritable: false,
+											},
+										},
+									},
+								},
+							},
+						},
+					}, ModuleExt{
+						Name: "module1",
+						Hooks: []Hook{
+							{
+								Name: "h1",
+								Requires: []Requires{
+									{
+										Name: "p1",
+										Parameters: map[string]interface{}{
+											"provp1": "changed",
+										},
+									},
+								},
+							},
+						},
+					}, overwriteNonOverwritableErrorMsg, "provp1")
+				})
+			})
+			Context("requires", func() {
+				It("merges the module requires parameters", func() {
+					checkModuleMerge(Module{
+						Name: "module1",
+						Requires: []Requires{
+							{
+								Name: "r1",
+								Parameters: map[string]interface{}{
+									"provp1": "the prop",
+								},
+								ParametersMetaData: map[string]MetaData{
+									"provp1": {
+										OverWritable: true,
+									},
+								},
+							},
+							{
+								Name: "r2",
+							},
+						},
+					}, ModuleExt{
+						Name: "module1",
+						Requires: []Requires{
+							{
+								Name: "r1",
+								Parameters: map[string]interface{}{
+									"provp1": "changed",
+									"provep2": map[string]interface{}{
+										"provep2t1": "added",
+									},
+								},
+							},
+							{
+								Name: "r2",
+								Parameters: map[string]interface{}{
+									"provp1": "added",
+								},
+							},
+						},
+					}, Module{
+						Name: "module1",
+						Requires: []Requires{
+							{
+								Name: "r1",
+								Parameters: map[string]interface{}{
+									"provp1": "changed",
+									"provep2": map[string]interface{}{
+										"provep2t1": "added",
+									},
+								},
+								ParametersMetaData: map[string]MetaData{
+									"provp1": {
+										OverWritable: true,
+									},
+								},
+							},
+							{
+								Name: "r2",
+								Parameters: map[string]interface{}{
+									"provp1": "added",
+								},
+							},
+						},
+					})
+				})
+				It("merges the module requires properties", func() {
+					checkModuleMerge(Module{
+						Name: "module1",
+						Requires: []Requires{
+							{
+								Name: "r1",
+								Properties: map[string]interface{}{
+									"provp1": "the prop",
+								},
+								PropertiesMetaData: map[string]MetaData{
+									"provp1": {
+										OverWritable: true,
+									},
+								},
+							},
+							{
+								Name: "r2",
+							},
+						},
+					}, ModuleExt{
+						Name: "module1",
+						Requires: []Requires{
+							{
+								Name: "r1",
+								Properties: map[string]interface{}{
+									"provp1": "changed",
+									"provep2": map[string]interface{}{
+										"provep2t1": "added",
+									},
+								},
+							},
+							{
+								Name: "r2",
+								Properties: map[string]interface{}{
+									"provp1": "added",
+								},
+							},
+						},
+					}, Module{
+						Name: "module1",
+						Requires: []Requires{
+							{
+								Name: "r1",
+								Properties: map[string]interface{}{
+									"provp1": "changed",
+									"provep2": map[string]interface{}{
+										"provep2t1": "added",
+									},
+								},
+								PropertiesMetaData: map[string]MetaData{
+									"provp1": {
+										OverWritable: true,
+									},
+								},
+							},
+							{
+								Name: "r2",
+								Properties: map[string]interface{}{
+									"provp1": "added",
+								},
+							},
+						},
+					})
+				})
+				It("fails if there is a module requires in the extension that doesn't exist in the original MTA", func() {
+					checkModuleMergeFails(Module{
+						Name: "module1",
+						Requires: []Requires{
+							{
+								Name: "r1",
+								Properties: map[string]interface{}{
+									"provp1": "the prop",
+								},
+							},
+						},
+					}, ModuleExt{
+						Name: "module1",
+						Requires: []Requires{
+							{
+								Name: "r2",
+								Properties: map[string]interface{}{
+									"provp1": "changed",
+								},
+							},
+						},
+					}, unknownModuleRequiresErrorMsg, "r2", "module1")
+				})
+				It("fails if it can't merge module requires properties", func() {
+					checkModuleMergeFails(Module{
+						Name: "module1",
+						Requires: []Requires{
+							{
+								Name: "p1",
+								Properties: map[string]interface{}{
+									"provp1":  "value",
+									"provep2": "value",
+								},
+							},
+						},
+					}, ModuleExt{
+						Name: "module1",
+						Requires: []Requires{
+							{
+								Name: "p1",
+								Properties: map[string]interface{}{
+									"provp1": "changed",
+									"provep2": map[string]interface{}{
+										"provep2t1": "added",
+									},
+								},
+							},
+						},
+					}, overwriteScalarWithStructuredErrorMsg, "provep2")
+				})
+				It("fails if it can't merge module requires properties because of metadata", func() {
+					checkModuleMergeFails(Module{
+						Name: "module1",
+						Requires: []Requires{
+							{
+								Name: "p1",
+								Properties: map[string]interface{}{
+									"provp1": "value",
+								},
+								PropertiesMetaData: map[string]MetaData{
+									"provp1": {
+										OverWritable: false,
+									},
+								},
+							},
+						},
+					}, ModuleExt{
+						Name: "module1",
+						Requires: []Requires{
+							{
+								Name: "p1",
+								Properties: map[string]interface{}{
+									"provp1": "changed",
+								},
+							},
+						},
+					}, overwriteNonOverwritableErrorMsg, "provp1")
+				})
+				It("fails if it can't merge module requires parameters", func() {
+					checkModuleMergeFails(Module{
+						Name: "module1",
+						Requires: []Requires{
+							{
+								Name: "p1",
+								Parameters: map[string]interface{}{
+									"provp1":  "value",
+									"provep2": "value",
+								},
+							},
+						},
+					}, ModuleExt{
+						Name: "module1",
+						Requires: []Requires{
+							{
+								Name: "p1",
+								Parameters: map[string]interface{}{
+									"provp1": "changed",
+									"provep2": map[string]interface{}{
+										"provep2t1": "added",
+									},
+								},
+							},
+						},
+					}, overwriteScalarWithStructuredErrorMsg, "provep2")
+				})
+				It("fails if it can't merge module requires parameters because of metadata", func() {
+					checkModuleMergeFails(Module{
+						Name: "module1",
+						Requires: []Requires{
+							{
+								Name: "p1",
+								Parameters: map[string]interface{}{
+									"provp1": "value",
+								},
+								ParametersMetaData: map[string]MetaData{
+									"provp1": {
+										OverWritable: false,
+									},
+								},
+							},
+						},
+					}, ModuleExt{
+						Name: "module1",
+						Requires: []Requires{
+							{
+								Name: "p1",
+								Parameters: map[string]interface{}{
+									"provp1": "changed",
+								},
+							},
+						},
+					}, overwriteNonOverwritableErrorMsg, "provp1")
 				})
 			})
 			Context("module includes", func() {
@@ -532,6 +1402,9 @@ var _ = Describe("Extension MTA", func() {
 								},
 							},
 						},
+						{
+							Name: "p2",
+						},
 					},
 				}, ModuleExt{
 					Name: "module1",
@@ -544,6 +1417,12 @@ var _ = Describe("Extension MTA", func() {
 								"provep2": map[string]interface{}{
 									"provep2t1": "added",
 								},
+							},
+						},
+						{
+							Name: "p2",
+							Properties: map[string]interface{}{
+								"provp1": "added",
 							},
 						},
 					},
@@ -563,6 +1442,12 @@ var _ = Describe("Extension MTA", func() {
 								"provp1": {
 									OverWritable: true,
 								},
+							},
+						},
+						{
+							Name: "p2",
+							Properties: map[string]interface{}{
+								"provp1": "added",
 							},
 						},
 					},
@@ -821,28 +1706,417 @@ var _ = Describe("Extension MTA", func() {
 					},
 				}))
 			})
+			It("merges the resource properties", func() {
+				checkResourceMerge(Resource{
+					Name: "resource1",
+					Properties: map[string]interface{}{
+						"p1": "the p",
+					},
+				}, ResourceExt{
+					Name: "resource1",
+					Properties: map[string]interface{}{
+						"p1": "changed",
+						"p2": "added",
+					},
+				}, Resource{
+					Name: "resource1",
+					Properties: map[string]interface{}{
+						"p1": "changed",
+						"p2": "added",
+					},
+				})
+			})
+			It("merges the resource properties when original map is nil", func() {
+				checkResourceMerge(Resource{
+					Name: "resource1",
+				}, ResourceExt{
+					Name: "resource1",
+					Properties: map[string]interface{}{
+						"p2": "added",
+					},
+				}, Resource{
+					Name: "resource1",
+					Properties: map[string]interface{}{
+						"p2": "added",
+					},
+				})
+			})
+			It("merges the resource parameters", func() {
+				checkResourceMerge(Resource{
+					Name: "resource1",
+					Parameters: map[string]interface{}{
+						"p1": "the p",
+					},
+				}, ResourceExt{
+					Name: "resource1",
+					Parameters: map[string]interface{}{
+						"p1": "changed",
+						"p2": "added",
+					},
+				}, Resource{
+					Name: "resource1",
+					Parameters: map[string]interface{}{
+						"p1": "changed",
+						"p2": "added",
+					},
+				})
+			})
+			It("merges the resource parameters when original map is nil", func() {
+				checkResourceMerge(Resource{
+					Name: "resource1",
+				}, ResourceExt{
+					Name: "resource1",
+					Parameters: map[string]interface{}{
+						"p2": "added",
+					},
+				}, Resource{
+					Name: "resource1",
+					Parameters: map[string]interface{}{
+						"p2": "added",
+					},
+				})
+			})
+			Context("requires", func() {
+				It("merges the resource requires parameters", func() {
+					checkResourceMerge(Resource{
+						Name: "resource1",
+						Requires: []Requires{
+							{
+								Name: "r1",
+								Parameters: map[string]interface{}{
+									"provp1": "the prop",
+								},
+								ParametersMetaData: map[string]MetaData{
+									"provp1": {
+										OverWritable: true,
+									},
+								},
+							},
+							{
+								Name: "r2",
+							},
+						},
+					}, ResourceExt{
+						Name: "resource1",
+						Requires: []Requires{
+							{
+								Name: "r1",
+								Parameters: map[string]interface{}{
+									"provp1": "changed",
+									"provep2": map[string]interface{}{
+										"provep2t1": "added",
+									},
+								},
+							},
+							{
+								Name: "r2",
+								Parameters: map[string]interface{}{
+									"provp1": "added",
+								},
+							},
+						},
+					}, Resource{
+						Name: "resource1",
+						Requires: []Requires{
+							{
+								Name: "r1",
+								Parameters: map[string]interface{}{
+									"provp1": "changed",
+									"provep2": map[string]interface{}{
+										"provep2t1": "added",
+									},
+								},
+								ParametersMetaData: map[string]MetaData{
+									"provp1": {
+										OverWritable: true,
+									},
+								},
+							},
+							{
+								Name: "r2",
+								Parameters: map[string]interface{}{
+									"provp1": "added",
+								},
+							},
+						},
+					})
+				})
+				It("merges the resource requires properties", func() {
+					checkResourceMerge(Resource{
+						Name: "resource1",
+						Requires: []Requires{
+							{
+								Name: "r1",
+								Properties: map[string]interface{}{
+									"provp1": "the prop",
+								},
+								PropertiesMetaData: map[string]MetaData{
+									"provp1": {
+										OverWritable: true,
+									},
+								},
+							},
+							{
+								Name: "r2",
+							},
+						},
+					}, ResourceExt{
+						Name: "resource1",
+						Requires: []Requires{
+							{
+								Name: "r1",
+								Properties: map[string]interface{}{
+									"provp1": "changed",
+									"provep2": map[string]interface{}{
+										"provep2t1": "added",
+									},
+								},
+							},
+							{
+								Name: "r2",
+								Properties: map[string]interface{}{
+									"provp1": "added",
+								},
+							},
+						},
+					}, Resource{
+						Name: "resource1",
+						Requires: []Requires{
+							{
+								Name: "r1",
+								Properties: map[string]interface{}{
+									"provp1": "changed",
+									"provep2": map[string]interface{}{
+										"provep2t1": "added",
+									},
+								},
+								PropertiesMetaData: map[string]MetaData{
+									"provp1": {
+										OverWritable: true,
+									},
+								},
+							},
+							{
+								Name: "r2",
+								Properties: map[string]interface{}{
+									"provp1": "added",
+								},
+							},
+						},
+					})
+				})
+				It("fails if there is a resource requires in the extension that doesn't exist in the original MTA", func() {
+					checkResourceMergeFails(Resource{
+						Name: "resource1",
+						Requires: []Requires{
+							{
+								Name: "r1",
+								Properties: map[string]interface{}{
+									"provp1": "the prop",
+								},
+							},
+						},
+					}, ResourceExt{
+						Name: "resource1",
+						Requires: []Requires{
+							{
+								Name: "r2",
+								Properties: map[string]interface{}{
+									"provp1": "changed",
+								},
+							},
+						},
+					}, unknownResourceRequiresErrorMsg, "r2", "resource1")
+				})
+				It("fails if it can't merge resource requires properties", func() {
+					checkResourceMergeFails(Resource{
+						Name: "resource1",
+						Requires: []Requires{
+							{
+								Name: "p1",
+								Properties: map[string]interface{}{
+									"provp1":  "value",
+									"provep2": "value",
+								},
+							},
+						},
+					}, ResourceExt{
+						Name: "resource1",
+						Requires: []Requires{
+							{
+								Name: "p1",
+								Properties: map[string]interface{}{
+									"provp1": "changed",
+									"provep2": map[string]interface{}{
+										"provep2t1": "added",
+									},
+								},
+							},
+						},
+					}, overwriteScalarWithStructuredErrorMsg, "provep2")
+				})
+				It("fails if it can't merge resource requires properties because of metadata", func() {
+					checkResourceMergeFails(Resource{
+						Name: "resource1",
+						Requires: []Requires{
+							{
+								Name: "p1",
+								Properties: map[string]interface{}{
+									"provp1": "value",
+								},
+								PropertiesMetaData: map[string]MetaData{
+									"provp1": {
+										OverWritable: false,
+									},
+								},
+							},
+						},
+					}, ResourceExt{
+						Name: "resource1",
+						Requires: []Requires{
+							{
+								Name: "p1",
+								Properties: map[string]interface{}{
+									"provp1": "changed",
+								},
+							},
+						},
+					}, overwriteNonOverwritableErrorMsg, "provp1")
+				})
+				It("fails if it can't merge resource requires parameters", func() {
+					checkResourceMergeFails(Resource{
+						Name: "resource1",
+						Requires: []Requires{
+							{
+								Name: "p1",
+								Parameters: map[string]interface{}{
+									"provp1":  "value",
+									"provep2": "value",
+								},
+							},
+						},
+					}, ResourceExt{
+						Name: "resource1",
+						Requires: []Requires{
+							{
+								Name: "p1",
+								Parameters: map[string]interface{}{
+									"provp1": "changed",
+									"provep2": map[string]interface{}{
+										"provep2t1": "added",
+									},
+								},
+							},
+						},
+					}, overwriteScalarWithStructuredErrorMsg, "provep2")
+				})
+				It("fails if it can't merge resource requires parameters because of metadata", func() {
+					checkResourceMergeFails(Resource{
+						Name: "resource1",
+						Requires: []Requires{
+							{
+								Name: "p1",
+								Parameters: map[string]interface{}{
+									"provp1": "value",
+								},
+								ParametersMetaData: map[string]MetaData{
+									"provp1": {
+										OverWritable: false,
+									},
+								},
+							},
+						},
+					}, ResourceExt{
+						Name: "resource1",
+						Requires: []Requires{
+							{
+								Name: "p1",
+								Parameters: map[string]interface{}{
+									"provp1": "changed",
+								},
+							},
+						},
+					}, overwriteNonOverwritableErrorMsg, "provp1")
+				})
+			})
 			It("fails if there is a resource in the extension that doesn't exist in the original MTA", func() {
-				extMta := EXT{
-					Resources: []*ResourceExt{
-						{
-							Name:   "ra",
-							Active: true,
+				checkResourceMergeFails(Resource{
+					Name:   "rb",
+					Active: false,
+				}, ResourceExt{
+					Name:   "ra",
+					Active: true,
+				}, unknownResourceErrorMsg, "ra")
+			})
+			It("fails if it can't merge resource properties", func() {
+				checkResourceMergeFails(Resource{
+					Name: "resource1",
+					Properties: map[string]interface{}{
+						"p1": "value",
+					},
+				}, ResourceExt{
+					Name: "resource1",
+					Properties: map[string]interface{}{
+						"p1": map[string]interface{}{
+							"p1p2": "changed",
+						},
+						"p2": "added",
+					},
+				}, overwriteScalarWithStructuredErrorMsg, "p1")
+			})
+			It("fails if it can't merge resource properties because of metadata", func() {
+				checkResourceMergeFails(Resource{
+					Name: "resource1",
+					Properties: map[string]interface{}{
+						"p1": "value",
+					},
+					PropertiesMetaData: map[string]MetaData{
+						"p1": {
+							OverWritable: false,
 						},
 					},
-				}
-				mtaObj := MTA{
-					Resources: []*Resource{
-						{
-							Name:   "rb",
-							Active: false,
+				}, ResourceExt{
+					Name: "resource1",
+					Properties: map[string]interface{}{
+						"p1": "changed",
+					},
+				}, overwriteNonOverwritableErrorMsg, "p1")
+			})
+			It("fails if it can't merge resource parameters", func() {
+				checkResourceMergeFails(Resource{
+					Name: "resource1",
+					Parameters: map[string]interface{}{
+						"p1p1": "value",
+					},
+				}, ResourceExt{
+					Name: "resource1",
+					Parameters: map[string]interface{}{
+						"p1p1": map[string]interface{}{
+							"p1p2c1": "added",
+						},
+						"p1p2": map[string]interface{}{
+							"p1p2c1": "changed",
 						},
 					},
-				}
-
-				err := Merge(&mtaObj, &extMta)
-
-				Ω(err).Should(HaveOccurred())
-				Ω(err.Error()).Should(ContainSubstring(unknownResourceErrorMsg, "ra"))
+				}, overwriteScalarWithStructuredErrorMsg, "p1p1")
+			})
+			It("fails if it can't merge resource parameters because of metadata", func() {
+				checkResourceMergeFails(Resource{
+					Name: "resource1",
+					Parameters: map[string]interface{}{
+						"p1p1": "value",
+					},
+					ParametersMetaData: map[string]MetaData{
+						"p1p1": {
+							OverWritable: false,
+						},
+					},
+				}, ResourceExt{
+					Name: "resource1",
+					Parameters: map[string]interface{}{
+						"p1p1": "changed",
+					},
+				}, overwriteNonOverwritableErrorMsg, "p1p1")
 			})
 		})
 
@@ -931,44 +2205,73 @@ var _ = Describe("Extension MTA", func() {
 	})
 })
 
-func checkModuleMerge(mtaModule Module, mtaExtModule ModuleExt, expected Module) {
-	mtaObj := MTA{
-		Modules: []*Module{
-			&mtaModule,
-		},
-	}
-	extMta := EXT{
-		Modules: []*ModuleExt{
-			&mtaExtModule,
-		},
-	}
-
+func checkMerge(mtaObj MTA, extMta EXT, expected MTA) {
 	err := Merge(&mtaObj, &extMta)
-
 	Ω(err).Should(Succeed())
-	Ω(mtaObj).Should(Equal(MTA{
-		Modules: []*Module{
-			&expected,
-		},
-	}))
+	Ω(mtaObj).Should(Equal(expected))
 }
 
-func checkModuleMergeFails(mtaModule Module, mtaExtModule ModuleExt, msg string, args ...interface{}) {
-	mtaObj := MTA{
-		Modules: []*Module{
-			&mtaModule,
-		},
-	}
-	extMta := EXT{
-		Modules: []*ModuleExt{
-			&mtaExtModule,
-		},
-	}
-
+func checkMergeFails(mtaObj MTA, extMta EXT, msg string, args ...interface{}) {
 	err := Merge(&mtaObj, &extMta)
 
 	Ω(err).Should(HaveOccurred())
 	Ω(err.Error()).Should(ContainSubstring(msg, args...))
+}
+
+func checkModuleMerge(mtaModule Module, mtaExtModule ModuleExt, expected Module) {
+	checkMerge(MTA{
+		Modules: []*Module{
+			&mtaModule,
+		},
+	}, EXT{
+		Modules: []*ModuleExt{
+			&mtaExtModule,
+		},
+	}, MTA{
+		Modules: []*Module{
+			&expected,
+		},
+	})
+}
+
+func checkModuleMergeFails(mtaModule Module, mtaExtModule ModuleExt, msg string, args ...interface{}) {
+	checkMergeFails(MTA{
+		Modules: []*Module{
+			&mtaModule,
+		},
+	}, EXT{
+		Modules: []*ModuleExt{
+			&mtaExtModule,
+		},
+	}, msg, args...)
+}
+
+func checkResourceMerge(mtaResource Resource, mtaExtResource ResourceExt, expected Resource) {
+	checkMerge(MTA{
+		Resources: []*Resource{
+			&mtaResource,
+		},
+	}, EXT{
+		Resources: []*ResourceExt{
+			&mtaExtResource,
+		},
+	}, MTA{
+		Resources: []*Resource{
+			&expected,
+		},
+	})
+}
+
+func checkResourceMergeFails(mtaResource Resource, mtaExtResource ResourceExt, msg string, args ...interface{}) {
+	checkMergeFails(MTA{
+		Resources: []*Resource{
+			&mtaResource,
+		},
+	}, EXT{
+		Resources: []*ResourceExt{
+			&mtaExtResource,
+		},
+	}, msg, args...)
 }
 
 func checkExtendMap(m map[string]interface{}, ext map[string]interface{}, meta map[string]MetaData, expected map[string]interface{}) {
