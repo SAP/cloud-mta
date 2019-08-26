@@ -1,0 +1,32 @@
+ID: mtahtml5ext
+extends: mtahtml5
+_schema-version: '2.1'
+version: 0.0.1
+
+modules:
+ - name: ui5app
+   parameters:
+      disk-quota: 256M
+      memory: 256M
+   parameters-metadata:
+      memory:
+        overwritable: true
+
+ - name: ui5app
+   properties:
+      A: 1
+   properties-metadata:
+      A:
+        optional: false
+
+resources:
+  - name: res1
+    properties:
+      A: 1
+      A: 2
+  - name: res2
+    parameters:
+      B: aa
+      B: bb
+  - name: res3
+    badprop: xx

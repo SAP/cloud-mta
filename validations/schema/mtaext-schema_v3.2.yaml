@@ -1,0 +1,137 @@
+### Schema definition according to http://www.kuwata-lab.com/kwalify/
+###    - For non-typed elements the default type "str" applies
+###
+### Schema versioning:
+###    - This schema definition declares a semantic version by its "name" element.
+###    - A descriptor can express a schema version constraint by using the "_schema-version" element. See element description below
+###
+### Character set restrictions and captitalization:
+###    - All schema element names shall be considered to be case sensitive. E.g., "modules" is a valid element name, "MODULES" is not valid.
+###    - The string values of "ID" and all "name" keys defined in the schema must obey the following regular expression: \A[A-Za-z0-9_\-\.]+\z
+###      This means, the complete string value must be composed out of upper-case letters A-Z, and/or lower-case letters a-z, and/or digits 0-9, and/or the underscore "_", and/or the minus dash "-", and and/or the period "."
+###    - If the descriptor key path represents a file system path, then it must be interpreted as relative paths and must be path-traversal-safe.
+###      This means, path must then not begin with a slash "/", or backslash "\", or two periods "..".
+###    - For the following names only a limited set of characters shall be used: (due to restrictions for environment variable names)
+###         - all property names which will be used as lookup-names (e.g. names of environment variables)
+###         - all group names
+###         The restriction is as follows (motivated by environment variable restrictions described at http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap08.html):
+###           - Names used consist solely of letters, digits, and the <underscore> ( '_' ) from the characters defined in Portable Character Set and do not begin with a digit.
+###           - It is recommended preserve/use upper/lowercase for better readability, but to use names which stay unique when transformed into uppercase
+###
+### Other restrictions/constraints:
+###    - Transformation of descriptors into a valid JSON document shall be possible.
+###    - Property sections shall have a map structure at its first level. This fact cannot be expressed by the here used schema definition language,
+###      so that "type: any" is used. Any deeper levels can be structured in any way, but it shall be possible to transform them into a valid JSON document.
+###    - Tools validating and parsing an MTA descriptor shall take care that map keys have unique names. This is typically not validated by common YAML parser libraries.
+
+desc:   MTA EXTENSION DESCRIPTOR SCHEMA
+# schema version must be extracted as there is no "version" element available to version schemas
+name:   com.sap.mta.mtaext-schema_3.2.0
+
+type:   map
+mapping:
+  # Used to indicate to an MTA processing tool (e.g. a deployer), which schema version was taken as the base when authoring a
+  # descriptor. Schema versions have to follow the semantic versioning standard with the exception that trailing numbers
+  # (<minor>.<patch> or <patch>) can be omitted. A tool (e.g. a deployer) shall then insert the highest numbers it supports.
+  _schema-version: {required: true}
+  # A globally unique ID of this MTA descriptor extension. Unlimited string of unicode characters.
+  ID: {required: true, pattern: '/^[A-Za-z0-9_\-\.]+$/'}
+  # a globally unique ID of the MTA or the MTA extension which shall be extended by this descriptor
+  extends: {required: true}
+  # a non-translatable description of this descriptor. This is not a text for application users
+  description:
+  # the provider of this extension descriptor
+  provider:
+
+  ## from here on, the information is specified which is used as actual extension
+
+  # a list of targets to which the MTA shall be deployed to.
+  # targets can only be specified when extending deployment descriptors and not for extending development descriptors.
+  targets:
+    type: seq
+    sequence:
+      - type: str
+
+  modules:
+    type: seq
+    sequence:
+      - type: map
+        mapping:
+          name: {required: true, unique: true, pattern: '/^[A-Za-z0-9_\-\.]+$/'}
+          properties: &properties
+            type: map
+            mapping: { =: {type: any} }
+          parameters: &parameters
+            type: map
+            mapping: { =: {type: any} }
+          # Build-parameters ARE ONLY RELEVANT FOR DEVELOPMENT DESCRIPTORS (PRIO TO BUILD), NOT FOR DEPLOYMENT DESCRIPTORS!
+          build-parameters:
+            type: map
+            mapping: { =: {type: any} }
+          includes: &includes
+            type: seq
+            sequence:
+              - type: map
+                mapping:
+                  name: {required: true, unique: true}
+                  path: {required: true}
+
+          provides:
+            type: seq
+            sequence:
+              - type: map
+                mapping:
+                  name: {required: true, unique: true, pattern: '/^[A-Za-z0-9_\-\.]+$/'}
+                  properties: *properties
+                  parameters: *parameters
+
+          requires:
+            type: seq
+            sequence:
+              - type: map
+                mapping:
+                  name: {required: true, unique: true, pattern: '/^[A-Za-z0-9_\-\.]+$/'}
+                  properties: *properties
+                  parameters: *parameters
+                  includes: *includes
+
+  resources:
+    type: seq
+    sequence:
+      - type: map
+        mapping:
+          name: {required: true, unique: true, pattern: '/^[A-Za-z0-9_\-\.]+$/'}
+          properties: *properties
+          parameters: *parameters
+          includes: *includes
+          active: {type: bool, default: true}
+          requires:
+            type: seq
+            sequence:
+              - type: map
+                mapping:
+                  name: {required: true, unique: true, pattern: '/^[A-Za-z0-9_\-\.]+$/'}
+                  properties: *properties
+                  parameters: *parameters
+                  includes: *includes
+
+  module-types:
+    type: seq
+    sequence:
+      - type: map
+        mapping:
+          name: {required: true, unique: true, pattern: '/^[A-Za-z0-9_\-\.]+$/'}
+          properties: *properties
+          parameters: *parameters
+
+  resource-types:
+    type: seq
+    sequence:
+      - type: map
+        mapping:
+          name: {required: true, unique: true, pattern: '/^[A-Za-z0-9_\-\.]+$/'}
+          properties: *properties
+          parameters: *parameters
+
+  parameters: *parameters
+  includes: *includes

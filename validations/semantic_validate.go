@@ -26,6 +26,9 @@ const (
 	beforeAllYamlField          = "before-all"
 	afterAllYamlField           = "after-all"
 	deployModeYamlField         = "deploy_mode"
+	parametersMetadataField     = "parameters-metadata"
+	propertiesMetadataField     = "properties-metadata"
+	hooksYamlField              = "hooks"
 
 	npmOptsYamlField   = "npm-opts"
 	gruntOptsYamlField = "grunt-opts"
@@ -37,6 +40,7 @@ const (
 	buildersValidation       = "builders"
 	deprecatedOptsValidation = "deprecatedOpts"
 	deployerConstrValidation = "deployerConstraints"
+	metadataValidation       = "metadata"
 
 	propertiesMtaField      = "Properties"
 	parametersMtaField      = "Parameters"
@@ -44,10 +48,13 @@ const (
 	nameMtaField            = "Name"
 
 	moduleEntityKind       = "module"
+	resourceEntityKind     = "resource"
 	propertyEntityKind     = "property"
 	parameterEntityKind    = "parameter"
 	buildParamEntityKind   = "build parameter"
 	providedPropEntityKind = "provided property set"
+	requiresPropEntityKind = "requires property set"
+	hookPropEntityKind     = "hook"
 
 	html5RepoDeployMode = "html5-repo"
 
@@ -90,6 +97,29 @@ func getSemanticValidations(exclude string) []checkSemantic {
 	if !strings.Contains(exclude, deployerConstrValidation) {
 		validations = append(validations, checkDeployerConstraints)
 	}
+	if !strings.Contains(exclude, metadataValidation) {
+		validations = append(validations, checkParamsAndPropertiesMetadata)
+	}
 
 	return validations
+}
+
+func getIndexedNodePropLine(node *yaml.Node, index int, propName string) (line int, propFound bool) {
+	indexedNode := node.Content[index]
+	nameNode := getPropValueByName(indexedNode, propName)
+	if nameNode == nil {
+		return indexedNode.Line, false // First line of the indexed node (in case we can't find the property inside the node)
+	}
+	return nameNode.Line, true
+}
+
+func getNamedObjectNodeByIndex(parentNode *yaml.Node, fieldName string, index int) *yaml.Node {
+	objectsNode := getPropValueByName(parentNode, fieldName)
+	return objectsNode.Content[index]
+}
+
+func getNamedObjectLineByIndex(parentNode *yaml.Node, fieldName string, index int) int {
+	objectsNode := getPropValueByName(parentNode, fieldName)
+	line, _ := getIndexedNodePropLine(objectsNode, index, nameYamlField)
+	return line
 }
