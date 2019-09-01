@@ -25,21 +25,21 @@ var _ = Describe("Mta", func() {
 			Properties: map[string]interface{}{
 				"backend_type": nil,
 			},
-			PropertiesMetaData: map[string]interface{}{
-				"backend_type": map[interface{}]interface{}{
-					"optional":     false,
-					"overwritable": true,
-					"datatype":     "str",
+			PropertiesMetaData: map[string]MetaData{
+				"backend_type": {
+					Optional:     false,
+					OverWritable: true,
+					Datatype:     "str",
 				},
 			},
 			Parameters: map[string]interface{}{
 				"domain":   nil,
 				"password": "asfhuwehkew efgehk",
 			},
-			ParametersMetaData: map[string]interface{}{
-				"domain": map[interface{}]interface{}{
-					"optional":     false,
-					"overwritable": true,
+			ParametersMetaData: map[string]MetaData{
+				"domain": {
+					Optional:     false,
+					OverWritable: true,
 				},
 			},
 			Includes: []Includes{
@@ -55,10 +55,23 @@ var _ = Describe("Mta", func() {
 					Properties: map[string]interface{}{
 						"url": "${default-url}/tasks",
 					},
-					PropertiesMetaData: map[string]interface{}{
-						"url": map[interface{}]interface{}{
-							"optional":     true,
-							"overwritable": true,
+					PropertiesMetaData: map[string]MetaData{
+						"url": {
+							Optional:     true,
+							OverWritable: true,
+						},
+					},
+				},
+				{
+					Name:   "finished_backend_tasks",
+					Public: true,
+					Properties: map[string]interface{}{
+						"url": "${default-url}/finishedTasks",
+					},
+					PropertiesMetaData: map[string]MetaData{
+						"url": {
+							Optional:     true,
+							OverWritable: false,
 						},
 					},
 				},
@@ -73,9 +86,10 @@ var _ = Describe("Mta", func() {
 					Properties: map[string]interface{}{
 						"scheduler_url": "~{url}",
 					},
-					PropertiesMetaData: map[string]interface{}{
-						"scheduler_url": map[interface{}]interface{}{
-							"optional": false,
+					PropertiesMetaData: map[string]MetaData{
+						"scheduler_url": {
+							Optional:     false,
+							OverWritable: true,
 						},
 					},
 					Includes: []Includes{
@@ -87,6 +101,17 @@ var _ = Describe("Mta", func() {
 				},
 			},
 			DeployedAfter: []string{"scheduler"},
+			Hooks: []Hook{
+				{
+					Name:   "hook",
+					Type:   "task",
+					Phases: []string{"application.before-stop.live", "application.before-stop.idle"},
+					Parameters: map[string]interface{}{
+						"name":    "foo-task",
+						"command": "sleep 5m",
+					},
+				},
+			},
 		},
 		{
 			Name: "scheduler",
@@ -126,7 +151,7 @@ var _ = Describe("Mta", func() {
 		AfterAll:  buildersAfter,
 	}
 
-	schemaVersion := "3.2"
+	schemaVersion := "3.3"
 	mta := &MTA{
 		SchemaVersion: &schemaVersion,
 		ID:            "com.acme.scheduling",
@@ -170,19 +195,20 @@ var _ = Describe("Mta", func() {
 						"type": "com.acme.plugin",
 					},
 				},
-				ParametersMetaData: map[string]interface{}{
-					"filter": map[interface{}]interface{}{
-						"optional":     false,
-						"overwritable": false,
+				ParametersMetaData: map[string]MetaData{
+					"filter": {
+						Optional:     false,
+						OverWritable: false,
 					},
 				},
 				Properties: map[string]interface{}{
 					"plugin_name": "${name}",
 					"plugin_url":  "${url}/sources",
 				},
-				PropertiesMetaData: map[string]interface{}{
-					"plugin_name": map[interface{}]interface{}{
-						"optional": true,
+				PropertiesMetaData: map[string]MetaData{
+					"plugin_name": {
+						Optional:     true,
+						OverWritable: true,
 					},
 				},
 			},
@@ -195,9 +221,10 @@ var _ = Describe("Mta", func() {
 					"buildpack": nil,
 					"memory":    "256M",
 				},
-				ParametersMetaData: map[string]interface{}{
-					"buildpack": map[interface{}]interface{}{
-						"optional": false,
+				ParametersMetaData: map[string]MetaData{
+					"buildpack": {
+						Optional:     false,
+						OverWritable: true,
 					},
 				},
 				Properties: map[string]interface{}{
@@ -213,9 +240,10 @@ var _ = Describe("Mta", func() {
 					"service":      "postgresql",
 					"service-plan": nil,
 				},
-				ParametersMetaData: map[string]interface{}{
-					"service-plan": map[interface{}]interface{}{
-						"optional": false,
+				ParametersMetaData: map[string]MetaData{
+					"service-plan": {
+						Optional:     false,
+						OverWritable: true,
 					},
 				},
 			},
@@ -260,6 +288,15 @@ var _ = Describe("Mta", func() {
 				Ω(err).Should(HaveOccurred())
 			})
 		})
+
+		Describe("Get methods on Module", func() {
+			It("GetProvidesByName - Sanity", func() {
+				module := mta.Modules[0]
+				Ω(*(module.GetProvidesByName("backend_task"))).Should(Equal(module.Provides[0]))
+				Ω(*(module.GetProvidesByName("finished_backend_tasks"))).Should(Equal(module.Provides[1]))
+				Ω(module.GetProvidesByName("finished")).Should(BeNil())
+			})
+		})
 	})
 
 	var _ = Describe("Unmarshal", func() {
@@ -280,6 +317,14 @@ var _ = Describe("Mta", func() {
 			_, err = Unmarshal(content)
 			Ω(err).Should(HaveOccurred())
 			Ω(err.Error()).Should(ContainSubstring("line 54: cannot unmarshal !!int `1` into []string"))
+		})
+
+		It("Wrong properties-metadata value", func() {
+			content, err := readFile(getTestPath("mtaWrongMetaData.yaml"))
+			Ω(err).Should(Succeed())
+			_, err = Unmarshal(content)
+			Ω(err).Should(HaveOccurred())
+			Ω(err.Error()).Should(ContainSubstring("line 23: cannot unmarshal !!bool `true` into mta.rawMetadata"))
 		})
 	})
 })

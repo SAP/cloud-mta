@@ -26,17 +26,7 @@ func (mta *MTA) GetModuleByName(name string) (*Module, error) {
 			return m, nil
 		}
 	}
-	return nil, fmt.Errorf("the %s module is not defined ", name)
-}
-
-// GetModuleByName returns a specific module by name from extension object
-func (ext *EXT) GetModuleByName(name string) (*ModuleExt, error) {
-	for _, m := range ext.Modules {
-		if m.Name == name {
-			return m, nil
-		}
-	}
-	return nil, fmt.Errorf("the %s module is not defined ", name)
+	return nil, fmt.Errorf(`the "%s" module is not defined`, name)
 }
 
 // GetResourceByName returns a specific resource by name.
@@ -47,6 +37,61 @@ func (mta *MTA) GetResourceByName(name string) (*Resource, error) {
 		}
 	}
 	return nil, fmt.Errorf("the %s resource is not defined ", name)
+}
+
+// GetProvidesByName returns a specific provide by name
+func (module *Module) GetProvidesByName(name string) *Provides {
+	for i, p := range module.Provides {
+		if p.Name == name {
+			return &module.Provides[i]
+		}
+	}
+
+	return nil
+}
+
+// GetRequiresByName returns a specific requires by name
+func (module *Module) GetRequiresByName(name string) *Requires {
+	for i, r := range module.Requires {
+		if r.Name == name {
+			return &module.Requires[i]
+		}
+	}
+
+	return nil
+}
+
+// GetHookByName returns a specific hook by name
+func (module *Module) GetHookByName(name string) *Hook {
+	for i, h := range module.Hooks {
+		if h.Name == name {
+			return &module.Hooks[i]
+		}
+	}
+
+	return nil
+}
+
+// GetRequiresByName returns a specific requires by name
+func (resource *Resource) GetRequiresByName(name string) *Requires {
+	for i, r := range resource.Requires {
+		if r.Name == name {
+			return &resource.Requires[i]
+		}
+	}
+
+	return nil
+}
+
+// GetRequiresByName returns a specific requires by name
+func (hook *Hook) GetRequiresByName(name string) *Requires {
+	for i, r := range hook.Requires {
+		if r.Name == name {
+			return &hook.Requires[i]
+		}
+	}
+
+	return nil
 }
 
 // Unmarshal returns a reference to the MTA object from a byte array.
@@ -62,4 +107,16 @@ func Unmarshal(content []byte) (*MTA, error) {
 // Marshal marshals an MTA object
 func Marshal(omta *MTA) ([]byte, error) {
 	return yamlv2.Marshal(&omta)
+}
+
+// UnmarshalYAML unmarshals a MetaData object, setting default values for fields not in the source
+func (meta *MetaData) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	type rawMetadata MetaData
+	raw := rawMetadata{OverWritable: true, Optional: false} // Default values
+	if err := unmarshal(&raw); err != nil {
+		return err
+	}
+
+	*meta = MetaData(raw)
+	return nil
 }
