@@ -73,18 +73,6 @@ resources:
       space: ${space}
     version: ">=0.0.0"
 
-- name: myBackingService
-  type: org.cloudfoundry.managed-service
-  requires:
-    - name: external-configurations
-  parameters:
-    service: application-logs
-    service-plan: lite
-    service-name: ~{external-configurations/a-config-property}
-    customParamValue: ~{external-configurations/a-config-property}.customized_tag
-    service-tags:
-      - ${customParamValue}
-
 modules:
   - name: staticapp
     type: staticfile
@@ -99,12 +87,6 @@ modules:
     requires:
       - name: test1
       - name: external-configurations
-        parameters:
-          param-in-requires: ~{a-config-property}.inRequiresParam
-        properties: 
-          property-referencing-config-in-requires: ~{a-config-property}.inRequiresProperty
-          via-param-in-requires: ${param-in-requires}.inRequiresProperty
-      - name: myBackingService
 `)
 		mta, _ := mta.Unmarshal(mtaContent)
 		node, _ := getMtaNode(mtaContent)

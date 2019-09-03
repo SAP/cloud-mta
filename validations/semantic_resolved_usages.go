@@ -27,12 +27,12 @@ func ifRequiredDefined(mta *mta.MTA, mtaNode *yaml.Node, source string, strict b
 	}
 
 	// init set of all provided property sets with configuration type
-	configurationProvided := make(map[string]map[string]interface{})
+	configurationProvided := make(map[string]bool)
 
 	// add resources to provided property sets
 	for _, resource := range mta.Resources {
-		if resource.Type == "configuration" {
-			configurationProvided[resource.Name] = resource.Properties
+		if resource.Type == configuration {
+			configurationProvided[resource.Name] = true
 		}
 		provided[resource.Name] = resource.Properties
 	}
@@ -81,7 +81,7 @@ func structFieldToString(str interface{}) string {
 	return *strValue
 }
 
-func checkComponent(provided map[string]map[string]interface{}, configurationProvided map[string]map[string]interface{}, component interface{}, compNode *yaml.Node, compDesc string) []YamlValidationIssue {
+func checkComponent(provided map[string]map[string]interface{}, configurationProvided map[string]bool, component interface{}, compNode *yaml.Node, compDesc string) []YamlValidationIssue {
 	var issues []YamlValidationIssue
 
 	compName := structFieldToString(component)
@@ -120,7 +120,7 @@ func checkComponent(provided map[string]map[string]interface{}, configurationPro
 	return issues
 }
 
-func checkRequiredProperties(providedProps map[string]map[string]interface{}, configurationProvided map[string]map[string]interface{}, requiredPropSet string,
+func checkRequiredProperties(providedProps map[string]map[string]interface{}, configurationProvided map[string]bool, requiredPropSet string,
 	requiredEntities map[string]interface{}, requiringObject string, node *yaml.Node, entityKind string) []YamlValidationIssue {
 
 	var issues []YamlValidationIssue
@@ -134,7 +134,7 @@ func checkRequiredProperties(providedProps map[string]map[string]interface{}, co
 	return issues
 }
 
-func checkValue(providedProps map[string]map[string]interface{}, configurationProvided map[string]map[string]interface{},
+func checkValue(providedProps map[string]map[string]interface{}, configurationProvided map[string]bool,
 	entityName, entityKind, propSet, requiringObject string, entityValue interface{}, node *yaml.Node) []YamlValidationIssue {
 	var issues []YamlValidationIssue
 	propValueStr, ok := entityValue.(string)
@@ -155,7 +155,7 @@ func checkValue(providedProps map[string]map[string]interface{}, configurationPr
 	return issues
 }
 
-func checkStringEntityValue(providedProps map[string]map[string]interface{}, configurationProvided map[string]map[string]interface{},
+func checkStringEntityValue(providedProps map[string]map[string]interface{}, configurationProvided map[string]bool,
 	entityName, entityValue, entityKind, propSet, requiringObject string, entityNode *yaml.Node) []YamlValidationIssue {
 	var issues []YamlValidationIssue
 	r := regexp.MustCompile(`~{[^{}]+}`)
@@ -188,8 +188,8 @@ func checkStringEntityValue(providedProps map[string]map[string]interface{}, con
 	return issues
 }
 
-func checkRequiredProperty(providedProps map[string]map[string]interface{}, configurationProvided map[string]map[string]interface{}, entityName, entityKind,
-	requiredSet, requiredProp, requiringObject string) string {
+func checkRequiredProperty(providedProps map[string]map[string]interface{}, configurationProvided map[string]bool, entityName, entityKind,
+requiredSet, requiredProp, requiringObject string) string {
 	providedSet, ok := providedProps[requiredSet]
 	if ok {
 		_, ok = providedSet[requiredProp]

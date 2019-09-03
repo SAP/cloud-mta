@@ -10,6 +10,7 @@ import (
 type checkSemantic func(mta *mta.MTA, root *yaml.Node, source string, strict bool) (errors []YamlValidationIssue, warnings []YamlValidationIssue)
 
 const (
+	configuration               = "configuration"
 	pathYamlField               = "path"
 	nameYamlField               = "name"
 	modulesYamlField            = "modules"
