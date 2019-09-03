@@ -45,7 +45,7 @@ resources:
    type: org.cloudfoundry.managed-service
 `)
 		mta, _ := mta.Unmarshal(mtaContent)
-		node, _ := getMtaNode(mtaContent)
+		node, _ := getContentNode(mtaContent)
 		issues, _ := ifRequiredDefined(mta, node, "", true)
 		Ω(len(issues)).Should(Equal(2))
 		Ω(issues[0].Msg).Should(Equal(`the "test1" property set required by the "ui5app2" module is not defined`))
@@ -105,7 +105,7 @@ modules:
 `)
 		mta, err := mta.Unmarshal(mtaContent)
 		Ω(err).Should(HaveOccurred())
-		node, _ := getMtaNode(mtaContent)
+		node, _ := getContentNode(mtaContent)
 		issues, _ := ifRequiredDefined(mta, node, "", true)
 		Ω(len(issues)).Should(Equal(13))
 	})

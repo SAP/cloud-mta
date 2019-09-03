@@ -44,7 +44,7 @@ modules:
        - command1
 `)
 		mta, _ := mta.Unmarshal(mtaContent)
-		node, _ := getMtaNode(mtaContent)
+		node, _ := getContentNode(mtaContent)
 		issues := checkBuilderSchema(mta, node, "")
 		Ω(len(issues)).Should(Equal(3))
 		Ω(issues[0].Msg).Should(Equal(`the "commands" property is defined incorrectly; the property must be a sequence of strings`))

@@ -50,7 +50,7 @@ modules:
      build-result: dist1
 `)
 		mta, _ := mta.Unmarshal(mtaContent)
-		node, _ := getMtaNode(mtaContent)
+		node, _ := getContentNode(mtaContent)
 		errors, warn := checkDeployerConstraints(mta, node, "", true)
 		Ω(len(errors)).Should(Equal(4))
 		Ω(len(warn)).Should(Equal(0))
