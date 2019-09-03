@@ -93,7 +93,7 @@ modules:
 		issues, _ := ifRequiredDefined(mta, node, "", true)
 		Ω(len(issues)).Should(Equal(1))
 		Ω(issues[0].Msg).Should(Equal(`the "test1" property set required by the "staticapp" module is not defined`))
-		Ω(issues[0].Line).Should(Equal(43))
+		Ω(issues[0].Line).Should(Equal(31))
 	})
 
 	It("check required properties (placeholders usage)", func() {
