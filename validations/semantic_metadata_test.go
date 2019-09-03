@@ -2,11 +2,9 @@ package validate
 
 import (
 	"fmt"
+	"github.com/SAP/cloud-mta/mta"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/types"
-
-	"github.com/SAP/cloud-mta/mta"
 )
 
 var _ = Describe("metadata semantic validations", func() {
@@ -117,30 +115,20 @@ resources:
 			errors, warn := checkParamsAndPropertiesMetadata(mta, node, "", true)
 			Ω(len(warn)).Should(Equal(0))
 			Ω(errors).Should(ConsistOf(
-				matchValidationIssue(11, fmt.Sprintf(unknownNameInMetadataMsg, "b", "parameter")),
-				matchValidationIssue(18, fmt.Sprintf(emptyRequiredFieldMsg, "memory", "parameter")),
-				matchValidationIssue(27, fmt.Sprintf(unknownNameInMetadataMsg, "x", "property")),
-				matchValidationIssue(34, fmt.Sprintf(unknownNameInMetadataMsg, "b", "parameter")),
-				matchValidationIssue(41, fmt.Sprintf(unknownNameInMetadataMsg, "a", "parameter")),
-				matchValidationIssue(51, fmt.Sprintf(unknownNameInMetadataMsg, "b", "property")),
-				matchValidationIssue(56, fmt.Sprintf(unknownNameInMetadataMsg, "a", "parameter")),
-				matchValidationIssue(64, fmt.Sprintf(unknownNameInMetadataMsg, "b", "property")),
-				matchValidationIssue(73, fmt.Sprintf(unknownNameInMetadataMsg, "m", "parameter")),
-				matchValidationIssue(80, fmt.Sprintf(emptyRequiredFieldMsg, "b", "property")),
-				matchValidationIssue(93, fmt.Sprintf(unknownNameInMetadataMsg, "b", "property")),
-				matchValidationIssue(98, fmt.Sprintf(unknownNameInMetadataMsg, "a", "parameter")),
+				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "b", "parameter"), 11},
+				YamlValidationIssue{fmt.Sprintf(emptyRequiredFieldMsg, "memory", "parameter"), 18},
+				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "x", "property"), 27},
+				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "b", "parameter"), 34},
+				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "a", "parameter"), 41},
+				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "b", "property"), 51},
+				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "a", "parameter"), 56},
+				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "b", "property"), 64},
+				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "m", "parameter"), 73},
+				YamlValidationIssue{fmt.Sprintf(emptyRequiredFieldMsg, "b", "property"), 80},
+				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "b", "property"), 93},
+				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "a", "parameter"), 98},
 			))
 		})
 
 	})
 })
-
-func matchValidationIssue(line int, msg string) types.GomegaMatcher {
-	return SatisfyAll(
-		WithTransform(func(v YamlValidationIssue) int {
-			return v.Line
-		}, Equal(line)),
-		WithTransform(func(v YamlValidationIssue) string {
-			return v.Msg
-		}, Equal(msg)))
-}

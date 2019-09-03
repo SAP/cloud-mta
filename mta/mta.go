@@ -111,8 +111,34 @@ func Marshal(omta *MTA) ([]byte, error) {
 
 // UnmarshalYAML unmarshals a MetaData object, setting default values for fields not in the source
 func (meta *MetaData) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	// TODO this should ignore unknown fields according to the spec.
+	// However, trying to do so doesn't work properly using the Go yaml library (v2 or v3).
+	//
+	// The unmarshal function sent here returns errors for unknown fields and doesn't expose a way to set the KnownFields parameter in the internal decoder.
+	//
+	// Trying to "unmarshal" to a yaml.Node object (so we can then decode it without getting errors about unknown fields)
+	// doesn't work because unmarshal can only work on pointers (otherwise it panics), but sending a pointer to a yaml.Node
+	// tries to unmarshal the value as a yaml.Node object (with the fields of the yaml.Node), even though
+	// it seems there is logic there to handle this type (this looks like a bug).
+	//
+	// Another option is to use the new Unmarshaler interface that receives a node:
+	// func (meta *MetaData) UnmarshalYAML(node *yaml.Node) error) error {...}
+	// A yaml.Node can be decoded without getting errors about unknown fields, and this works when there are no other
+	// errors in the unmarshal. But if UnmarshalYaml returns an error (due to an error returned from node.Decode), several issues occur:
+	// 1. Only the first unmarshaling error is returned from node.Decode instead of all of them.
+	// 2. If we return an error from UnmarshalYaml, the error handling catches it too late and the MTA object is returned
+	//    wrong - e.g. if a parameters-metadata entry inside a module cannot be unmarshaled, the whole module is returned nil.
+	// (These 2 issues also look like bugs.)
+	//
+	// I also tried to use the unmarshal function (in the current method) to unmarshal the metadata to map[interface{}]interface{}
+	// and then marshal that to a []byte, and use a decoder with KnownFields=false to decode the []byte to a MetaData structure.
+	// This works but the line numbers returned for errors are wrong because we lose the original yaml.Node in the process.
+	//
+	// To check if this works un-ignore the test in mta_validate_test.go that mentions this method ("doesn't give errors on unknown fields in properties-metadata and parameters-metadata").
+
 	type rawMetadata MetaData
 	raw := rawMetadata{OverWritable: true, Optional: false} // Default values
+
 	if err := unmarshal(&raw); err != nil {
 		return err
 	}

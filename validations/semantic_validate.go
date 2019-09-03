@@ -29,6 +29,7 @@ const (
 	parametersMetadataField     = "parameters-metadata"
 	propertiesMetadataField     = "properties-metadata"
 	hooksYamlField              = "hooks"
+	datatypeYamlField           = "datatype"
 
 	npmOptsYamlField   = "npm-opts"
 	gruntOptsYamlField = "grunt-opts"

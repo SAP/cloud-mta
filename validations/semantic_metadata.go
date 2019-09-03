@@ -37,55 +37,12 @@ type mapTypeProps struct {
 }
 
 func checkParamsAndPropertiesMetadata(mta *mta.MTA, mtaNode *yaml.Node, source string, strict bool) (errors []YamlValidationIssue, warnings []YamlValidationIssue) {
-	var issues []YamlValidationIssue
-
-	issues = append(issues, checkMetadata(mta.Parameters, mta.ParametersMetaData, mtaNode, mapTypeParameters)...)
-
-	modulesNode := getPropContent(mtaNode, modulesYamlField)
-	for i, module := range mta.Modules {
-		issues = append(issues, checkMetadata(module.Parameters, module.ParametersMetaData, modulesNode[i], mapTypeParameters)...)
-		issues = append(issues, checkMetadata(module.Properties, module.PropertiesMetaData, modulesNode[i], mapTypeProperties)...)
-
-		providesNode := getPropContent(modulesNode[i], providesYamlField)
-		for i, provides := range module.Provides {
-			issues = append(issues, checkMetadata(provides.Properties, provides.PropertiesMetaData, providesNode[i], mapTypeProperties)...)
-		}
-
-		requiresNode := getPropContent(modulesNode[i], requiresYamlField)
-		issues = append(issues, checkRequiresParamsAndPropertiesMetadata(requiresNode, module.Requires)...)
-
-		hooksNode := getPropContent(modulesNode[i], hooksYamlField)
-		for i, hook := range module.Hooks {
-			issues = append(issues, checkMetadata(hook.Parameters, hook.ParametersMetaData, hooksNode[i], mapTypeParameters)...)
-
-			requiresNode = getPropContent(hooksNode[i], requiresYamlField)
-			issues = append(issues, checkRequiresParamsAndPropertiesMetadata(requiresNode, hook.Requires)...)
-		}
-	}
-
-	resourcesNode := getPropContent(mtaNode, resourcesYamlField)
-	for i, resource := range mta.Resources {
-		issues = append(issues, checkMetadata(resource.Parameters, resource.ParametersMetaData, resourcesNode[i], mapTypeParameters)...)
-		issues = append(issues, checkMetadata(resource.Properties, resource.PropertiesMetaData, resourcesNode[i], mapTypeProperties)...)
-
-		requiresNode := getPropContent(resourcesNode[i], requiresYamlField)
-		issues = append(issues, checkRequiresParamsAndPropertiesMetadata(requiresNode, resource.Requires)...)
-	}
+	issues := validateMetadata(mta, mtaNode, source, checkMetadata)
 
 	if strict {
 		return issues, nil
 	}
 	return nil, issues
-}
-
-func checkRequiresParamsAndPropertiesMetadata(requiresNodes []*yaml.Node, requiresList []mta.Requires) []YamlValidationIssue {
-	var issues []YamlValidationIssue
-
-	for i, requires := range requiresList {
-		issues = append(issues, checkMetadata(requires.Parameters, requires.ParametersMetaData, requiresNodes[i], mapTypeParameters)...)
-		issues = append(issues, checkMetadata(requires.Properties, requires.PropertiesMetaData, requiresNodes[i], mapTypeProperties)...)
-	}
-	return issues
 }
 
 // Check each property/parameter in the metadata is defined in the map, and that non-optional and non-overwritable property/parameter is not nil
@@ -111,6 +68,59 @@ func checkMetadata(m map[string]interface{}, metadata map[string]mta.MetaData, p
 				}
 			}
 		}
+	}
+	return issues
+}
+
+// Helper definitions and functions for iterating over all parameters-metadata and properties-metadata fields in the MTA
+
+type metadataValidator func(m map[string]interface{}, metadata map[string]mta.MetaData, parentNode *yaml.Node, mapType int) []YamlValidationIssue
+
+func validateMetadata(mta *mta.MTA, mtaNode *yaml.Node, source string, checkMetadata metadataValidator) []YamlValidationIssue {
+	var issues []YamlValidationIssue
+
+	issues = append(issues, checkMetadata(mta.Parameters, mta.ParametersMetaData, mtaNode, mapTypeParameters)...)
+
+	modulesNode := getPropContent(mtaNode, modulesYamlField)
+	for i, module := range mta.Modules {
+		issues = append(issues, checkMetadata(module.Parameters, module.ParametersMetaData, modulesNode[i], mapTypeParameters)...)
+		issues = append(issues, checkMetadata(module.Properties, module.PropertiesMetaData, modulesNode[i], mapTypeProperties)...)
+
+		providesNode := getPropContent(modulesNode[i], providesYamlField)
+		for i, provides := range module.Provides {
+			issues = append(issues, checkMetadata(provides.Properties, provides.PropertiesMetaData, providesNode[i], mapTypeProperties)...)
+		}
+
+		requiresNode := getPropContent(modulesNode[i], requiresYamlField)
+		issues = append(issues, checkRequiresParamsAndPropertiesMetadata(requiresNode, module.Requires, checkMetadata)...)
+
+		hooksNode := getPropContent(modulesNode[i], "hooks")
+		for i, hook := range module.Hooks {
+			issues = append(issues, checkMetadata(hook.Parameters, hook.ParametersMetaData, hooksNode[i], mapTypeParameters)...)
+
+			requiresNode = getPropContent(hooksNode[i], requiresYamlField)
+			issues = append(issues, checkRequiresParamsAndPropertiesMetadata(requiresNode, hook.Requires, checkMetadata)...)
+		}
+	}
+
+	resourcesNode := getPropContent(mtaNode, resourcesYamlField)
+	for i, resource := range mta.Resources {
+		issues = append(issues, checkMetadata(resource.Parameters, resource.ParametersMetaData, resourcesNode[i], mapTypeParameters)...)
+		issues = append(issues, checkMetadata(resource.Properties, resource.PropertiesMetaData, resourcesNode[i], mapTypeProperties)...)
+
+		requiresNode := getPropContent(resourcesNode[i], requiresYamlField)
+		issues = append(issues, checkRequiresParamsAndPropertiesMetadata(requiresNode, resource.Requires, checkMetadata)...)
+	}
+
+	return issues
+}
+
+func checkRequiresParamsAndPropertiesMetadata(requiresNodes []*yaml.Node, requiresList []mta.Requires, validateMetadata metadataValidator) []YamlValidationIssue {
+	var issues []YamlValidationIssue
+
+	for i, requires := range requiresList {
+		issues = append(issues, validateMetadata(requires.Parameters, requires.ParametersMetaData, requiresNodes[i], mapTypeParameters)...)
+		issues = append(issues, validateMetadata(requires.Properties, requires.PropertiesMetaData, requiresNodes[i], mapTypeProperties)...)
 	}
 	return issues
 }

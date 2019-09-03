@@ -111,7 +111,7 @@ _schema-version: '3.1'
 `), getTestPath("mtahtml5"), "ext.yaml",
 			false, true, true, "")
 		Ω(warn).Should(BeNil())
-		Ω(err).Should(ConsistOf(matchValidationIssue(0, badExtensionErrorMsg)))
+		Ω(err).Should(ConsistOf(YamlValidationIssue{badExtensionErrorMsg, 0}))
 	})
 
 	DescribeTable("validateExtFileName", func(filename string, expectedSuccess bool) {

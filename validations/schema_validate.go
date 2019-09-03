@@ -165,6 +165,38 @@ func forEach(checks ...YamlCheck) YamlCheck {
 	}
 }
 
+// DSL method to iterate over a YAML map values
+func forEachProperty(checks ...YamlCheck) YamlCheck {
+
+	return func(yPropNode, yParentNode *yaml.Node, path []string) YamlValidationIssues {
+		var issues YamlValidationIssues
+
+		if yPropNode == nil {
+			return issues
+		}
+
+		validation := sequence(checks...)
+
+		// Properties are listed in the Content of node as slice of key, value, key, value,...
+		isKeyNode := true
+		var key string
+		for _, child := range yPropNode.Content {
+			if isKeyNode {
+				// the current node is the key of the next node
+				key = child.Value
+			} else {
+				// current is the value => run the validation
+				elemErrors := validation(child, yPropNode, append(path, key))
+				issues = append(issues, elemErrors...)
+			}
+			// key->value, value->key
+			isKeyNode = !isKeyNode
+		}
+
+		return issues
+	}
+}
+
 // DSL method to ensure a property exists.
 // Note that this has no context, the property being checked is provided externally
 // via the "property" DSL method.

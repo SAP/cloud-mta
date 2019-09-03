@@ -39,8 +39,8 @@ resources:
 		root, _ := getContentNode(mtaContent)
 		issues, _ := runExtSemanticValidations(mtaExt, root, getTestPath("testproject"), "", true)
 		Ω(issues).Should(ConsistOf(
-			matchValidationIssue(14, fmt.Sprintf(nameAlreadyExtendedMsg, "ui5app", "module", "another", "module", 8)),
-			matchValidationIssue(21, fmt.Sprintf(nameAlreadyExtendedMsg, "test", "resource", "another", "resource", 17)),
+			YamlValidationIssue{fmt.Sprintf(nameAlreadyExtendedMsg, "ui5app", "module", "another", "module", 8), 14},
+			YamlValidationIssue{fmt.Sprintf(nameAlreadyExtendedMsg, "test", "resource", "another", "resource", 17), 21},
 		))
 		issues, _ = runExtSemanticValidations(mtaExt, root, getTestPath("testproject"), "names", true)
 		Ω(len(issues)).Should(Equal(0))

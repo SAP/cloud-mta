@@ -15,7 +15,7 @@ var _ = Describe("Schema tests Issues", func() {
 	var _ = DescribeTable("Schema issues",
 		func(schema string, message string) {
 			_, schemaIssues := buildValidationsFromSchemaText([]byte(schema))
-			expectSingleSchemaIssue(schemaIssues, message)
+			expectSingleValidationError(schemaIssues, message, 0) // We don't pass the line number to schema issues
 		},
 		Entry("Parsing", `
 type: map
@@ -32,12 +32,17 @@ type: seq
 sequence: NotASequence
 `, `invalid .yaml file schema: the sequence node must be an array`),
 
-		Entry("sequence One Item", `
+		Entry("sequence One Item - more than 1 item", `
 type: seq
 sequence:
 - 1
 - 2
-`, `invalid .yaml file schema: the sequence node can have only one item`),
+`, `invalid .yaml file schema: the sequence node must have exactly one item`),
+
+		Entry("sequence One Item - empty sequence", `
+type: seq
+sequence: []
+`, `invalid .yaml file schema: the sequence node must have exactly one item`),
 
 		Entry("required value not bool", `
 type: map
@@ -64,22 +69,15 @@ mapping:
 `, "invalid .yaml file schema: the pattern node is invalid because: error parsing regexp: missing closing ]: `[a-zA-Z+`"),
 
 		Entry("Enum NotString", `
-type: enum
-enums:
+type: str
+enum:
   duck : 1
   dog  : 2
 `, `invalid .yaml file schema: enums values must be listed as an array`),
 
-		Entry("Enum NoEnumsNode", `
-type: enum
-enumos:
-  - duck
-  - dog
-`, `invalid .yaml file schema: enums values must be listed`),
-
 		Entry("Enum ValueNotSimple", `
-type: enum
-enums:
+type: str
+enum:
   [duck, [dog, cat]]
 `, `invalid .yaml file schema: enum values must be simple`),
 	)
@@ -100,8 +98,7 @@ mapping:
 firstName: Donald
 lastName: duck`),
 		Entry("Enum value", `
-type: enum
-enums:
+enum:
   - duck
   - dog
 `, `duck`),
@@ -118,6 +115,51 @@ sequence:
 - name: Bugs
   lastName: Bunny
 
+`),
+		Entry("sequence of mapping with default value - value is sequence", `
+type: seq
+sequence:
+- type: map
+  mapping:
+    =:
+      type: seq
+      sequence:
+      - type: bool
+`, `
+- firstKey:
+  - true
+  - false
+  key2: []
+`),
+		Entry("mapping with default value - value is mapping", `
+type: map
+mapping:
+  =:
+    type: map
+    mapping:
+      name: {required: true}
+`, `
+firstKey:
+  name: Donald
+  lastName: duck
+key2:
+  name: Bugs
+  lastName: Bunny
+`),
+		Entry("mapping with default value - value is any", `
+type: map
+mapping:
+  =:
+    type: any
+`, `
+firstMapKey_map:
+  name: Donald
+  lastName: duck
+key2str: a
+key3int: 1
+key4seq:
+- 1
+- 2
 `),
 		Entry("Pattern", `
 type: map
@@ -162,8 +204,8 @@ lastName: duck
 `, `missing the "age" required property in the root .yaml node`, 2),
 
 		Entry("Enum", `
-type: enum
-enums:
+type: str
+enum:
    - duck
    - dog
    - cat
@@ -184,6 +226,38 @@ sequence:
 - age: 80
   lastName: Bunny
 `, `missing the "name" required property in the root[1] .yaml node`, 5),
+
+		Entry("sequence of mapping with default value - value is sequence", `
+type: seq
+sequence:
+- type: map
+  mapping:
+    =:
+      type: seq
+      sequence:
+      - type: bool
+`, `
+- firstKey:
+  - true
+  - b
+  key2: []
+`, `the "[0].firstKey[1]" property must be a boolean`, 4),
+
+		Entry("mapping with default value - value is mapping", `
+type: map
+mapping:
+  =:
+    type: map
+    mapping:
+      name: {required: true}
+`, `
+firstKey:
+  name: Donald
+  lastName: duck
+key2:
+  age: 30
+  lastName: Bunny
+`, `missing the "name" required property in the root.key2 .yaml node`, 6),
 
 		Entry("Pattern", `
 type: map
