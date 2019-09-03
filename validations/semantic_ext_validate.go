@@ -1,9 +1,10 @@
 package validate
 
 import (
-	"github.com/SAP/cloud-mta/mta"
 	"gopkg.in/yaml.v3"
 	"strings"
+
+	"github.com/SAP/cloud-mta/mta"
 )
 
 type checkExtSemantic func(mta *mta.EXT, root *yaml.Node, source string, strict bool) (errors []YamlValidationIssue, warnings []YamlValidationIssue)
