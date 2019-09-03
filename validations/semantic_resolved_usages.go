@@ -35,7 +35,6 @@ func ifRequiredDefined(mta *mta.MTA, mtaNode *yaml.Node, source string, strict b
 			configurationProvided[resource.Name] = true
 		} else {
 			provided[resource.Name] = resource.Properties
-
 		}
 	}
 
