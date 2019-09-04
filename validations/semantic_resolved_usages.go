@@ -101,7 +101,9 @@ func checkComponent(provided map[string]map[string]interface{}, configurationPro
 	// check that each required by resource property set was provided in mta.yaml
 	requiresNode := getPropValueByName(compNode, requiresYamlField)
 	for i, requires := range structFieldToRequires(component) {
-		if _, contains := provided[requires.Name]; !contains && !configurationProvided[requires.Name] {
+		_, contains := provided[requires.Name]
+		_, containsConfiguration := configurationProvided[requires.Name]
+		if !contains && !containsConfiguration {
 			line := getPropValueByName(requiresNode.Content[i], nameYamlField).Line
 			issues = appendIssue(issues,
 				fmt.Sprintf(`the "%s" property set required by the "%s" %s is not defined`,

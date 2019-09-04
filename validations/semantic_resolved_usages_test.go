@@ -89,7 +89,7 @@ modules:
       - name: external-configurations
 `)
 		mta, _ := mta.Unmarshal(mtaContent)
-		node, _ := getMtaNode(mtaContent)
+		node, _ := getContentNode(mtaContent)
 		issues, _ := ifRequiredDefined(mta, node, "", true)
 		Ω(len(issues)).Should(Equal(1))
 		Ω(issues[0].Msg).Should(Equal(`the "test1" property set required by the "staticapp" module is not defined`))
