@@ -10,7 +10,7 @@ import (
 var _ = Describe("MTAEXT validation tests", func() {
 	var _ = DescribeTable("validate Mtaext", func(projectRelPath string, fileName string,
 		validateSchema, validateSemantic, expectedSuccess bool) {
-		_, err := Mtaext(getTestPath(projectRelPath), fileName, validateSchema, validateSemantic, true, "")
+		_, err := Mtaext(getTestPath(projectRelPath), getTestPath(projectRelPath, fileName), validateSchema, validateSemantic, true, "")
 		if expectedSuccess {
 			Ω(err).Should(Succeed())
 		} else {
@@ -27,7 +27,7 @@ var _ = Describe("MTAEXT validation tests", func() {
 
 	var _ = Describe("validate Mtaext - strict flag checks", func() {
 		It("strict", func() {
-			warn, err := Mtaext(getTestPath("mtahtml5"), "myNotStrict.mtaext",
+			warn, err := Mtaext(getTestPath("mtahtml5"), getTestPath("mtahtml5", "myNotStrict.mtaext"),
 				true, true, true, "")
 			Ω(warn).Should(Equal(""))
 			Ω(err).Should(HaveOccurred())
@@ -40,7 +40,7 @@ var _ = Describe("MTAEXT validation tests", func() {
 			Ω(message).Should(ContainSubstring("line 15: %s", fmt.Sprintf(nameAlreadyExtendedMsg, "ui5app", "module", "another", "module", 7)))
 		})
 		It("not strict", func() {
-			warn, err := Mtaext(getTestPath("mtahtml5"), "myNotStrict.mtaext",
+			warn, err := Mtaext(getTestPath("mtahtml5"), getTestPath("mtahtml5", "myNotStrict.mtaext"),
 				true, true, false, "")
 			message := warn
 			Ω(message).Should(ContainSubstring("line 11: field parameters-metadata not found in type mta.ModuleExt"))
@@ -91,7 +91,7 @@ desc: MTA DESCRIPTOR SCHEMA
 # schema version must be extracted from here as there is no "version" element available to version schemas
   name: com.sap.mta.mta-schema_3.2.0 abc
 `)
-				_, err := Mtaext(getTestPath("mtahtml5"), "my.mtaext",
+				_, err := Mtaext(getTestPath("mtahtml5"), getTestPath("mtahtml5", "my.mtaext"),
 					true, false, true, "")
 				Ω(err).Should(HaveOccurred())
 				Ω(err.Error()).Should(ContainSubstring("validation failed when parsing the MTA schema file"))

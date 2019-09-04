@@ -125,10 +125,11 @@ func (meta *MetaData) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	// func (meta *MetaData) UnmarshalYAML(node *yaml.Node) error) error {...}
 	// A yaml.Node can be decoded without getting errors about unknown fields, and this works when there are no other
 	// errors in the unmarshal. But if UnmarshalYaml returns an error (due to an error returned from node.Decode), several issues occur:
-	// 1. Only the first unmarshaling error is returned from node.Decode instead of all of them.
-	// 2. If we return an error from UnmarshalYaml, the error handling catches it too late and the MTA object is returned
+	// 1. If we return an error from UnmarshalYaml, the error handling catches it too late and the MTA object is returned
 	//    wrong - e.g. if a parameters-metadata entry inside a module cannot be unmarshaled, the whole module is returned nil.
-	// (These 2 issues also look like bugs.)
+	// 2. After the error is returned, no further unmarhsaling is done on the Modules sequence. They're all returned as nil and only the errors
+	//    from the first UnmarshalYAML call are returned.
+	// I opened a bug on these 2 issues here: https://github.com/go-yaml/yaml/issues/499
 	//
 	// I also tried to use the unmarshal function (in the current method) to unmarshal the metadata to map[interface{}]interface{}
 	// and then marshal that to a []byte, and use a decoder with KnownFields=false to decode the []byte to a MetaData structure.

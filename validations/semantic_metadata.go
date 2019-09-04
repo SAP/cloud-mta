@@ -94,7 +94,7 @@ func validateMetadata(mta *mta.MTA, mtaNode *yaml.Node, source string, checkMeta
 		requiresNode := getPropContent(modulesNode[i], requiresYamlField)
 		issues = append(issues, checkRequiresParamsAndPropertiesMetadata(requiresNode, module.Requires, checkMetadata)...)
 
-		hooksNode := getPropContent(modulesNode[i], "hooks")
+		hooksNode := getPropContent(modulesNode[i], hooksYamlField)
 		for i, hook := range module.Hooks {
 			issues = append(issues, checkMetadata(hook.Parameters, hook.ParametersMetaData, hooksNode[i], mapTypeParameters)...)
 

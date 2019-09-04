@@ -18,12 +18,11 @@ const (
 )
 
 // Mtaext validates an MTA extension file.
-func Mtaext(projectPath, extFilename string,
+func Mtaext(projectPath, extPath string,
 	validateSchema, validateSemantic, strict bool, exclude string) (warning string, err error) {
 	if validateSemantic || validateSchema {
 		var errIssues, warnIssues YamlValidationIssues
 
-		extPath := filepath.Join(projectPath, extFilename)
 		// ParseFile contains MTA yaml content.
 		yamlContent, e := readFile(extPath)
 
@@ -35,7 +34,7 @@ func Mtaext(projectPath, extFilename string,
 		yamlContent = []byte(s)
 
 		// Validates MTA content.
-		contentErrIssues, contentWarnIssues := validateExt(yamlContent, projectPath, extFilename,
+		contentErrIssues, contentWarnIssues := validateExt(yamlContent, projectPath, extPath,
 			validateSchema, validateSemantic, strict, exclude)
 		errIssues = append(errIssues, contentErrIssues...)
 		warnIssues = append(warnIssues, contentWarnIssues...)
