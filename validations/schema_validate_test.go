@@ -13,7 +13,7 @@ import (
 var _ = Describe("runSchemaValidations Validation", func() {
 
 	DescribeTable("Valid runSchemaValidations", func(data string, validations ...YamlCheck) {
-		node, _ := getMtaNode([]byte(data))
+		node, _ := getContentNode([]byte(data))
 		validateIssues := runSchemaValidations(node, validations...)
 
 		assertNoValidationErrors(validateIssues)
@@ -89,7 +89,7 @@ lastName: duck
 	)
 
 	DescribeTable("Invalid runSchemaValidations", func(data, message string, line int, validations ...YamlCheck) {
-		node, _ := getMtaNode([]byte(data))
+		node, _ := getContentNode([]byte(data))
 		validateIssues := runSchemaValidations(node, validations...)
 
 		expectSingleValidationError(validateIssues, message, line)
@@ -164,7 +164,7 @@ lastName: duck
 firstName: Donald
   lastName: duck # invalid indentation
 		`)
-		node, _ := getMtaNode([]byte(data))
+		node, _ := getContentNode([]byte(data))
 		issues := runSchemaValidations(node, property("lastName", required()))
 		Ω(len(issues)).Should(Equal(1))
 	})
@@ -187,7 +187,7 @@ classes:
 				property("name", required()),
 				property("room", matchesRegExp("^[0-9]+$")))))
 
-		node, _ := getMtaNode([]byte(data))
+		node, _ := getContentNode([]byte(data))
 		validateIssues := runSchemaValidations(node, validations)
 
 		expectMultipleValidationError(validateIssues,
@@ -213,7 +213,7 @@ var _ = Describe("getPropByName", func() {
 firstName: Hello
 lastName: World`)
 	It("sanity", func() {
-		node, _ := getMtaNode([]byte(data))
+		node, _ := getContentNode([]byte(data))
 		node = getPropByName(node, "lastName")
 		Ω(node.Value).Should(Equal("lastName"))
 		Ω(node.Line).Should(Equal(3))
@@ -222,7 +222,7 @@ lastName: World`)
 		Ω(getPropByName(nil, "x")).Should(BeNil())
 	})
 	It("property not exists", func() {
-		node, _ := getMtaNode([]byte(data))
+		node, _ := getContentNode([]byte(data))
 		Ω(getPropByName(node, "x")).Should(BeNil())
 	})
 })

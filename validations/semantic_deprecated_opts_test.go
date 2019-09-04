@@ -36,7 +36,7 @@ modules:
      maven-opts: 1
 `)
 		mta, _ := mta.Unmarshal(mtaContent)
-		node, _ := getMtaNode(mtaContent)
+		node, _ := getContentNode(mtaContent)
 		errors, warn := checkDeprecatedOpts(mta, node, "", true)
 		Ω(len(errors)).Should(Equal(3))
 		Ω(len(warn)).Should(Equal(0))

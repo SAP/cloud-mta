@@ -80,7 +80,7 @@ func validate(yamlContent []byte, projectPath string,
 		warnIssues = append(warnIssues, convertError(err)...)
 	}
 
-	mtaNode, err := getMtaNode(yamlContent)
+	mtaNode, err := getContentNode(yamlContent)
 	if err != nil {
 		errIssues = convertError(err)
 	}

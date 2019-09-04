@@ -21,7 +21,7 @@ var _ = Describe("Schema tests Issues", func() {
 type: map
 # bad indentation
  mapping:
-   firstName:  {required: true}`, `validation failed when parsing the MTA file: unmarshal []byte to yaml failed: yaml: line 3: did not find expected key`),
+   firstName:  {required: true}`, `validation failed when parsing the MTA schema file: unmarshal []byte to yaml failed: yaml: line 3: did not find expected key`),
 
 		Entry("Mapping", `
 type: map
@@ -88,7 +88,7 @@ enums:
 		func(schema, input string) {
 			schemaValidations, schemaIssues := buildValidationsFromSchemaText([]byte(schema))
 			assertNoSchemaIssues(schemaIssues)
-			node, _ := getMtaNode([]byte(input))
+			node, _ := getContentNode([]byte(input))
 			validateIssues := runSchemaValidations(node, schemaValidations...)
 			assertNoValidationErrors(validateIssues)
 		},
@@ -148,7 +148,7 @@ isHappy: false
 		func(schema, input, message string, line int) {
 			schemaValidations, schemaIssues := buildValidationsFromSchemaText([]byte(schema))
 			assertNoSchemaIssues(schemaIssues)
-			node, _ := getMtaNode([]byte(input))
+			node, _ := getContentNode([]byte(input))
 			validateIssues := runSchemaValidations(node, schemaValidations...)
 			expectSingleValidationError(validateIssues, message, line)
 		},

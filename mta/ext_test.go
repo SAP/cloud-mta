@@ -14,11 +14,11 @@ var _ = Describe("Extension MTA", func() {
 		It("Sanity", func() {
 			wd, err := os.Getwd()
 			Ω(err).Should(Succeed())
-			content, err := readFile(filepath.Join(wd, "testdata", "mta.yaml"))
+			content, err := readFile(filepath.Join(wd, "testdata", "my.mtaext"))
 			Ω(err).Should(Succeed())
 			m, err := UnmarshalExt(content)
 			Ω(err).Should(Succeed())
-			Ω(len(m.Modules)).Should(Equal(2))
+			Ω(len(m.Modules)).Should(Equal(1))
 		})
 		It("Invalid content", func() {
 			_, err := UnmarshalExt([]byte("wrong mtaExt"))

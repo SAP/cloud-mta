@@ -36,29 +36,18 @@ func isNameUnique(mta *mta.MTA, mtaNode *yaml.Node, source string, strict bool) 
 }
 
 func getModuleLineByIndex(mtaNode *yaml.Node, index int) int {
-	modulesNode := getPropValueByName(mtaNode, modulesYamlField)
-	return getIndexedNodePropLine(modulesNode, index, nameYamlField)
+	return getNamedObjectLineByIndex(mtaNode, modulesYamlField, index)
 }
 
 func getResourceLineByIndex(mtaNode *yaml.Node, index int) int {
-	resourcesNode := getPropValueByName(mtaNode, resourcesYamlField)
-	return getIndexedNodePropLine(resourcesNode, index, nameYamlField)
+	return getNamedObjectLineByIndex(mtaNode, resourcesYamlField, index)
 }
 
 func getProvidedSetByIndex(mtaNode *yaml.Node, moduleIndex, providedSetIndex int) int {
-	modulesNode := getPropValueByName(mtaNode, modulesYamlField)
-	moduleNode := modulesNode.Content[moduleIndex]
+	moduleNode := getNamedObjectNodeByIndex(mtaNode, modulesYamlField, moduleIndex)
 	provided := getPropValueByName(moduleNode, providesYamlField)
-	return getIndexedNodePropLine(provided, providedSetIndex, nameYamlField)
-}
-
-func getIndexedNodePropLine(node *yaml.Node, index int, propName string) int {
-	indexedNode := node.Content[index]
-	nameNode := getPropValueByName(indexedNode, propName)
-	if nameNode == nil {
-		return 0
-	}
-	return nameNode.Line
+	line, _ := getIndexedNodePropLine(provided, providedSetIndex, nameYamlField)
+	return line
 }
 
 // validateNameUniqueness - validate that name not defined already (not exists in the 'names' map)

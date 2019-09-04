@@ -1,12 +1,12 @@
 package mta
 
 import (
+	"bytes"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 )
 
 const (
-	unmarshalExtErrorMsg   = "could not unmarshal the MTA extension file"
 	mergeModulesErrorMsg   = `could not merge modules from MTA extension with ID "%s"`
 	mergeResourcesErrorMsg = `could not merge resources from MTA extension with ID "%s"`
 
@@ -43,13 +43,11 @@ const (
 
 // UnmarshalExt returns a reference to the EXT object from a byte array.
 func UnmarshalExt(content []byte) (*EXT, error) {
-	var m EXT
-	// Unmarshal MTA file
-	err := yaml.Unmarshal(content, &m)
-	if err != nil {
-		err = errors.Wrap(err, unmarshalExtErrorMsg)
-	}
-	return &m, err
+	dec := yaml.NewDecoder(bytes.NewReader(content))
+	dec.KnownFields(true)
+	mtaExt := EXT{}
+	err := dec.Decode(&mtaExt)
+	return &mtaExt, err
 }
 
 // Merge merges mta object with mta extension object extension properties complement and overwrite mta properties
