@@ -54,6 +54,48 @@ resources:
 		Ω(issues[1].Line).Should(Equal(28))
 	})
 
+	It("Sanity - resource of type configuration", func() {
+		mtaContent := []byte(`
+ID: test.consumer
+_schema-version: 3.3.0
+version: 0.0.0
+
+parameters:
+  env: dev
+
+resources:
+- name: external-configurations
+  type: configuration
+  parameters: 
+    provider-id: test.provider:configuration_${env}
+    target: 
+      org: ${org}
+      space: ${space}
+    version: ">=0.0.0"
+
+modules:
+  - name: staticapp
+    type: staticfile
+    path: Staticfile.zip
+    parameters:
+      no-route: true
+      no-start: true
+      the-config-in-module-parameter: ~{external-configurations/a-config-property}.inModuleParameter
+    properties: 
+      property-directly-referencing-the-config: ~{external-configurations/a-config-property}.directly
+      via-module-parameter-value: ${the-config-in-module-parameter}
+    requires:
+      - name: test1
+      - name: external-configurations
+`)
+		mta, _ := mta.Unmarshal(mtaContent)
+		node, _ := getMtaNode(mtaContent)
+		issues, _ := ifRequiredDefined(mta, node, "", true)
+		Ω(len(issues)).Should(Equal(1))
+		Ω(issues[0].Msg).Should(Equal(`the "test1" property set required by the "staticapp" module is not defined`))
+		Ω(issues[0].Line).Should(Equal(31))
+	})
+
 	It("check required properties (placeholders usage)", func() {
 		mtaContent := []byte(`
 ID: mtahtml5
