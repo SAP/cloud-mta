@@ -324,7 +324,7 @@ var _ = Describe("Mta", func() {
 			Ω(err).Should(Succeed())
 			_, err = Unmarshal(content)
 			Ω(err).Should(HaveOccurred())
-			Ω(err.Error()).Should(ContainSubstring("line 23: cannot unmarshal !!bool `true` into mta.rawMetadata"))
+			Ω(err.Error()).Should(ContainSubstring("line 23: cannot unmarshal !!bool `true` into mta.metadata"))
 		})
 	})
 })

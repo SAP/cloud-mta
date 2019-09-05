@@ -101,6 +101,7 @@ desc: MTA DESCRIPTOR SCHEMA
 				extSchemaDef = originalSchema
 			})
 		})
+
 	})
 
 	It("bad file extension", func() {
@@ -138,4 +139,49 @@ _schema-version: '3.1'
 		Entry("file name has yaml extension", "ext.yaml", false),
 		Entry("file name is mtaext and has yaml extension", "mtaext.yaml", false),
 	)
+
+	It("Unallowed fields in extension file return errors", func() {
+		err, warn := validateExt([]byte(`
+ID: myext
+extends: mymta
+_schema-version: '3.1'
+
+modules:
+- name: mymodule
+  provides:
+  - name: myprovides
+    public: true
+  requires:
+  - name: myreq
+    list: destinations
+  hooks:
+  - name: myhook
+    requires:
+    - name: myhookreq
+      list: somelistname
+resources:
+- name: myresource
+  optional: true
+  requires:
+  - name: myresreq
+    list: abc
+- name: myresource1
+  requires:
+  - name: req1
+    properties-metadata:
+  - name: req2
+    parameters-metadata:
+`), getTestPath("mtahtml5"), "my.mtaext",
+			true, false, true, "")
+		Ω(warn).Should(BeNil())
+		Ω(err).Should(ConsistOf(
+			YamlValidationIssue{fmt.Sprintf(propertyExistsErrorMsg, "public", "modules[0].provides[0]"), 10},
+			YamlValidationIssue{fmt.Sprintf(propertyExistsErrorMsg, "list", "modules[0].requires[0]"), 13},
+			YamlValidationIssue{fmt.Sprintf(propertyExistsErrorMsg, "list", "modules[0].hooks[0].requires[0]"), 18},
+			YamlValidationIssue{`field optional not found in type mta.ResourceExt`, 21},
+			YamlValidationIssue{fmt.Sprintf(propertyExistsErrorMsg, "list", "resources[0].requires[0]"), 24},
+			YamlValidationIssue{fmt.Sprintf(propertyExistsErrorMsg, "properties-metadata", "resources[1].requires[0]"), 28},
+			YamlValidationIssue{fmt.Sprintf(propertyExistsErrorMsg, "parameters-metadata", "resources[1].requires[1]"), 30},
+		))
+	})
 })

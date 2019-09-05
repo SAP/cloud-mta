@@ -10,6 +10,10 @@ import (
 	"github.com/smallfish/simpleyaml"
 )
 
+const (
+	propertyExistsErrorMsg = `the "%s" property cannot be used in "%s"`
+)
+
 // YamlValidationIssue - specific issue
 type YamlValidationIssue struct {
 	// Msg - message content
@@ -208,6 +212,25 @@ func required() YamlCheck {
 					Msg: fmt.Sprintf(`missing the "%s" required property in the %s .yaml node`,
 						last(path), buildPathString(dropRight(path))),
 					Line: yParentNode.Line}}
+		}
+
+		return []YamlValidationIssue{}
+	}
+}
+
+// DSL method to ensure a property doesn't exist.
+// Useful for properties that exist in the structure but should not exist in the yaml, for example
+// in extensions.
+// Note that this has no context, the property being checked is provided externally
+// via the "property" DSL method.
+func doesNotExist() YamlCheck {
+	return func(yNode, yParentNode *yaml.Node, path []string) YamlValidationIssues {
+		if yNode != nil {
+			return []YamlValidationIssue{
+				{
+					Msg: fmt.Sprintf(propertyExistsErrorMsg,
+						last(path), buildPathString(dropRight(path))),
+					Line: yNode.Line}}
 		}
 
 		return []YamlValidationIssue{}

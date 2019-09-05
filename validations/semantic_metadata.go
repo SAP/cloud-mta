@@ -8,8 +8,9 @@ import (
 )
 
 const (
-	unknownNameInMetadataMsg = `metadata cannot be defined for the "%s" undefined %s`
-	emptyRequiredFieldMsg    = `the value for the required and non-overwritable "%s" %s cannot be empty`
+	unknownNameInMetadataMsg             = `metadata cannot be defined for the "%s" undefined %s`
+	emptyRequiredFieldMsg                = `the value for the required and non-overwritable "%s" %s cannot be empty`
+	propertiesMetadataWithListOrGroupMsg = `properties-metadata cannot be used in the context of list and group`
 
 	// Key for mapTypes map
 	mapTypeParameters = iota
@@ -45,19 +46,37 @@ func checkParamsAndPropertiesMetadata(mta *mta.MTA, mtaNode *yaml.Node, source s
 	return nil, issues
 }
 
-// Check each property/parameter in the metadata is defined in the map, and that non-optional and non-overwritable property/parameter is not nil
+// Check:
+// 1. Each property/parameter in the metadata is defined in the map
+// 2. Non-optional and non-overwritable property/parameter is not nil
+// 3. properties-metadata is not defined when list or group is defined
 func checkMetadata(m map[string]interface{}, metadata map[string]mta.MetaData, parentNode *yaml.Node, mapType int) []YamlValidationIssue {
-	metadataNode := getPropValueByName(parentNode, mapTypes[mapType].metadataNodeName)
-	mapNode := getPropValueByName(parentNode, mapTypes[mapType].mapNodeName)
-
 	var issues []YamlValidationIssue
+
+	metadataNodeValue := getPropValueByName(parentNode, mapTypes[mapType].metadataNodeName)
+	issues = checkMetadataKeyIsDefinedInMap(metadata, m, metadataNodeValue, issues, mapType)
+
+	mapNode := getPropValueByName(parentNode, mapTypes[mapType].mapNodeName)
+	issues = checkNoEmptyRequiredFields(metadata, m, mapNode, issues, mapType)
+
+	metadataNodeName := getPropByName(parentNode, mapTypes[mapType].metadataNodeName)
+	issues = checkPropertiesMetadataWithListOrGroup(mapType, metadataNodeName, parentNode, issues)
+
+	return issues
+}
+
+func checkMetadataKeyIsDefinedInMap(metadata map[string]mta.MetaData, m map[string]interface{}, metadataNodeValue *yaml.Node, issues []YamlValidationIssue, mapType int) []YamlValidationIssue {
 	for key := range metadata {
 		_, ok := m[key]
 		if !ok {
-			keyNode := getPropByName(metadataNode, key)
+			keyNode := getPropByName(metadataNodeValue, key)
 			issues = append(issues, YamlValidationIssue{Msg: fmt.Sprintf(unknownNameInMetadataMsg, key, mapTypes[mapType].entityKind), Line: keyNode.Line})
 		}
 	}
+	return issues
+}
+
+func checkNoEmptyRequiredFields(metadata map[string]mta.MetaData, m map[string]interface{}, mapNode *yaml.Node, issues []YamlValidationIssue, mapType int) []YamlValidationIssue {
 	if metadata != nil {
 		for key, value := range m {
 			// If there's no metadata for the key we don't perform this check (since it's overwritable by default)
@@ -67,6 +86,15 @@ func checkMetadata(m map[string]interface{}, metadata map[string]mta.MetaData, p
 					issues = append(issues, YamlValidationIssue{Msg: fmt.Sprintf(emptyRequiredFieldMsg, key, mapTypes[mapType].entityKind), Line: keyNode.Line})
 				}
 			}
+		}
+	}
+	return issues
+}
+
+func checkPropertiesMetadataWithListOrGroup(mapType int, metadataNodeName *yaml.Node, parentNode *yaml.Node, issues []YamlValidationIssue) []YamlValidationIssue {
+	if mapType == mapTypeProperties && metadataNodeName != nil {
+		if getPropByName(parentNode, listYamlField) != nil || getPropByName(parentNode, groupYamlField) != nil {
+			issues = append(issues, YamlValidationIssue{Msg: propertiesMetadataWithListOrGroupMsg, Line: metadataNodeName.Line})
 		}
 	}
 	return issues

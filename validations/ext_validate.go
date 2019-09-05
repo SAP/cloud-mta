@@ -1,6 +1,7 @@
 package validate
 
 import (
+	"gopkg.in/yaml.v3"
 	"path/filepath"
 	"strings"
 
@@ -84,12 +85,9 @@ func validateExt(yamlContent []byte, projectPath string, extFileName string,
 	}
 
 	if validateSchema {
-		validations, schemaValidationLog := buildValidationsFromSchemaText(extSchemaDef)
-		if len(schemaValidationLog) > 0 {
-			errIssues = append(errIssues, schemaValidationLog...)
-			return errIssues, warnIssues
-		}
-		errIssues = append(errIssues, runSchemaValidations(extNode, validations...)...)
+		errs, warns := validateExtSchema(mtaExt, extNode, strict)
+		errIssues = append(errIssues, errs...)
+		warnIssues = append(warnIssues, warns...)
 	}
 
 	if validateSemantic {
@@ -98,4 +96,39 @@ func validateExt(yamlContent []byte, projectPath string, extFileName string,
 		warnIssues = append(warnIssues, warns...)
 	}
 	return errIssues, warnIssues
+}
+
+func validateExtSchema(mtaExt *mta.EXT, extNode *yaml.Node, strict bool) (errIssues YamlValidationIssues, warnIssues YamlValidationIssues) {
+	validations, schemaValidationLog := buildValidationsFromSchemaText(extSchemaDef)
+	if len(schemaValidationLog) > 0 {
+		errIssues = append(errIssues, schemaValidationLog...)
+		return errIssues, warnIssues
+	}
+	errIssues = append(errIssues, runSchemaValidations(extNode, validations...)...)
+
+	issues := runAdditionalExtSchemaValidations(mtaExt, extNode, "")
+	if strict {
+		errIssues = append(errIssues, issues...)
+	} else {
+		warnIssues = append(warnIssues, issues...)
+	}
+	return errIssues, warnIssues
+}
+
+func runAdditionalExtSchemaValidations(mtaExt *mta.EXT, extNode *yaml.Node, source string) []YamlValidationIssue {
+	requiresCheck := property(requiresYamlField, forEach(
+		property(listYamlField, doesNotExist()),
+		property(propertiesMetadataField, doesNotExist()),
+		property(parametersMetadataField, doesNotExist()),
+	))
+	return runSchemaValidations(extNode, sequence(
+		property(modulesYamlField, forEach(
+			property(providesYamlField, forEach(
+				property(publicYamlField, doesNotExist()),
+			)),
+			requiresCheck,
+			property(hooksYamlField, forEach(requiresCheck)),
+		)),
+		property(resourcesYamlField, forEach(requiresCheck)),
+	))
 }

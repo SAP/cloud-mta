@@ -2,6 +2,7 @@ package validate
 
 import (
 	"fmt"
+
 	"github.com/SAP/cloud-mta/mta"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -67,6 +68,7 @@ modules:
        parameters-metadata:
          a:
            overwritable: true
+       group: a
 
  - name: ui5app4
    type: html5
@@ -109,8 +111,20 @@ resources:
        parameters-metadata:
          a:
            overwritable: true
+       list: "abc"
+
+ - name: res4
+   type: custom
+   requires:
+   - name: req2
+     properties-metadata:
+     group:
+   - name: req3
+     properties-metadata:
+     list:
 `)
-			mta, _ := mta.Unmarshal(mtaContent)
+			mta, err := mta.Unmarshal(mtaContent)
+			Ω(err).Should(Succeed())
 			node, _ := getContentNode(mtaContent)
 			errors, warn := checkParamsAndPropertiesMetadata(mta, node, "", true)
 			Ω(len(warn)).Should(Equal(0))
@@ -122,11 +136,15 @@ resources:
 				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "a", "parameter"), 41},
 				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "b", "property"), 51},
 				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "a", "parameter"), 56},
-				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "b", "property"), 64},
-				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "m", "parameter"), 73},
-				YamlValidationIssue{fmt.Sprintf(emptyRequiredFieldMsg, "b", "property"), 80},
-				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "b", "property"), 93},
-				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "a", "parameter"), 98},
+				YamlValidationIssue{propertiesMetadataWithListOrGroupMsg, 50},
+				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "b", "property"), 65},
+				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "m", "parameter"), 74},
+				YamlValidationIssue{fmt.Sprintf(emptyRequiredFieldMsg, "b", "property"), 81},
+				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "b", "property"), 94},
+				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "a", "parameter"), 99},
+				YamlValidationIssue{propertiesMetadataWithListOrGroupMsg, 93},
+				YamlValidationIssue{propertiesMetadataWithListOrGroupMsg, 107},
+				YamlValidationIssue{propertiesMetadataWithListOrGroupMsg, 110},
 			))
 		})
 

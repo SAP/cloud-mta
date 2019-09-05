@@ -203,8 +203,7 @@ modules:
 				))
 			})
 
-			// See long comment inside MetaData.UnmarshalYAML for details on why this test is disabled
-			XIt("doesn't give errors on unknown fields in properties-metadata and parameters-metadata", func() {
+			It("doesn't give errors on unknown fields in properties-metadata and parameters-metadata", func() {
 				err, warn := validate([]byte(`
 ID: mymta
 version: 1.0.0

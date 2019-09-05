@@ -30,6 +30,9 @@ const (
 	propertiesMetadataField     = "properties-metadata"
 	hooksYamlField              = "hooks"
 	datatypeYamlField           = "datatype"
+	publicYamlField             = "public"
+	listYamlField               = "list"
+	groupYamlField              = "group"
 
 	npmOptsYamlField   = "npm-opts"
 	gruntOptsYamlField = "grunt-opts"
