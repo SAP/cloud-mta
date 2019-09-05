@@ -3,9 +3,10 @@ package validate
 import (
 	"fmt"
 
-	"github.com/SAP/cloud-mta/mta"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/SAP/cloud-mta/mta"
 )
 
 var _ = Describe("metadata semantic validations", func() {
