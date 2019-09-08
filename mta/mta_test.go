@@ -273,8 +273,8 @@ var _ = Describe("Mta", func() {
 				Ω(mta.GetResourceByName("plugins")).Should(Equal(mta.Resources[1]))
 			})
 			It("GetResourceByName - Negative", func() {
-				_, err := mta.GetResourceByName("")
-				Ω(err).Should(HaveOccurred())
+				res := mta.GetResourceByName("")
+				Ω(res).Should(BeNil())
 			})
 			It("GetResources - Sanity ", func() {
 				Ω(mta.GetResources()).Should(Equal(mta.Resources))
@@ -284,7 +284,8 @@ var _ = Describe("Mta", func() {
 				Ω(mta.GetModuleByName("scheduler")).Should(Equal(modules[1]))
 			})
 			It("GetModuleByName - Negative ", func() {
-				_, err := mta.GetModuleByName("foo")
+				mod, err := mta.GetModuleByName("foo")
+				Ω(mod).Should(BeNil())
 				Ω(err).Should(HaveOccurred())
 			})
 		})

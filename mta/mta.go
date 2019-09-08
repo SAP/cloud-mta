@@ -30,13 +30,13 @@ func (mta *MTA) GetModuleByName(name string) (*Module, error) {
 }
 
 // GetResourceByName returns a specific resource by name.
-func (mta *MTA) GetResourceByName(name string) (*Resource, error) {
+func (mta *MTA) GetResourceByName(name string) *Resource {
 	for _, r := range mta.Resources {
 		if r.Name == name {
-			return r, nil
+			return r
 		}
 	}
-	return nil, fmt.Errorf("the %s resource is not defined ", name)
+	return nil
 }
 
 // GetProvidesByName returns a specific provide by name

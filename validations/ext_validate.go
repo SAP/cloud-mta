@@ -15,7 +15,9 @@ const (
 
 	mtaextExtension = ".mtaext"
 
-	badExtensionErrorMsg = `MTA extension descriptor file name must have the "mtaext" file extension`
+	badExtensionErrorMsg     = `MTA extension descriptor file name must have the "mtaext" file extension`
+	couldNotValidateErrorMsg = `could not validate the "%s" file`
+	validationErrorsMsg      = `the "%s" file is not valid:\n%s`
 )
 
 // Mtaext validates an MTA extension file.
@@ -28,7 +30,7 @@ func Mtaext(projectPath, extPath string,
 		yamlContent, e := readFile(extPath)
 
 		if e != nil {
-			return "", errors.Wrapf(e, `could not read the "%v" file; the validation failed`, extPath)
+			return "", errors.Wrapf(e, couldNotValidateErrorMsg, extPath)
 		}
 		s := string(yamlContent)
 		s = strings.Replace(s, "\r\n", "\r", -1)
@@ -40,8 +42,7 @@ func Mtaext(projectPath, extPath string,
 		errIssues = append(errIssues, contentErrIssues...)
 		warnIssues = append(warnIssues, contentWarnIssues...)
 		if len(errIssues) > 0 {
-			return warnIssues.String(), errors.Errorf(`the "%v" file is not valid: `+"\n%v",
-				extPath, errIssues.String())
+			return warnIssues.String(), errors.Errorf(validationErrorsMsg, extPath, errIssues.String())
 		}
 		return warnIssues.String(), nil
 	}
