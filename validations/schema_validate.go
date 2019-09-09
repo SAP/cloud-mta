@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/smallfish/simpleyaml"
@@ -31,6 +32,13 @@ func (issues YamlValidationIssues) String() string {
 		messages = append(messages, fmt.Sprintf("line %d: %s", issue.Line, issue.Msg))
 	}
 	return strings.Join(messages, "\n")
+}
+
+// Sort sorts the validation issues by line number
+func (issues YamlValidationIssues) Sort() {
+	sort.SliceStable(issues, func(i, j int) bool {
+		return issues[i].Line < issues[j].Line
+	})
 }
 
 // YamlCheck - validation check function type

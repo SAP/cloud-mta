@@ -2,6 +2,7 @@ package validate
 
 import (
 	"fmt"
+	"sort"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -267,3 +268,36 @@ lastName: World`)
 		Ω(getPropByName(node, "x")).Should(BeNil())
 	})
 })
+
+var _ = DescribeTable("sort validation issues", func(lines []int) {
+	var issues YamlValidationIssues
+	if lines == nil {
+		issues = nil
+	} else {
+		issues = make(YamlValidationIssues, len(lines))
+		for i, line := range lines {
+			issues[i] = YamlValidationIssue{Line: line, Msg: fmt.Sprintf("line %d issue", line)}
+		}
+
+		issues.Sort()
+
+		// Check it's sorted
+		isSorted := sort.SliceIsSorted(issues, func(i, j int) bool {
+			return issues[i].Line < issues[j].Line
+		})
+		Ω(isSorted).Should(Equal(true), fmt.Sprintf("slice is not sorted: %v", issues))
+
+		// Check the values are correct
+		for _, issue := range issues {
+			Ω(issue.Msg).Should(Equal(fmt.Sprintf("line %d issue", issue.Line)))
+		}
+	}
+},
+	Entry("nil slice", nil),
+	Entry("empty slice", []int{}),
+	Entry("slice with one value", []int{300}),
+	Entry("sorted slice", []int{1, 2, 3, 4, 12, 65}),
+	Entry("backwards sorted slice", []int{12, 2, 0}),
+	Entry("slice with equal values", []int{1, 1, 4, 23, 32, 5, 32}),
+	Entry("unsorted slice", []int{3, 84, 600, 2, 0, 5, 0, 7, 5, 12}),
+)

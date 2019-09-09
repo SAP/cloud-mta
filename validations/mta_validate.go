@@ -47,6 +47,8 @@ func MtaYaml(projectPath, mtaFilename string,
 		// Validates MTA content.
 		errIssues, warnIssues := validate(yamlContent, projectPath,
 			validateSchema, validateSemantic, strict, exclude)
+		errIssues.Sort()
+		warnIssues.Sort()
 		if len(errIssues) > 0 {
 			return warnIssues.String(), errors.Errorf(`the "%v" file is not valid: `+"\n%v",
 				mtaPath, errIssues.String())

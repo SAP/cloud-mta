@@ -40,7 +40,9 @@ func Mtaext(projectPath, extPath string,
 		contentErrIssues, contentWarnIssues := validateExt(yamlContent, projectPath, extPath,
 			validateSchema, validateSemantic, strict, exclude)
 		errIssues = append(errIssues, contentErrIssues...)
+		errIssues.Sort()
 		warnIssues = append(warnIssues, contentWarnIssues...)
+		warnIssues.Sort()
 		if len(errIssues) > 0 {
 			return warnIssues.String(), errors.Errorf(validationErrorsMsg, extPath, errIssues.String())
 		}
