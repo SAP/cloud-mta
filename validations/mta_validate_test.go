@@ -159,6 +159,125 @@ desc: MTA DESCRIPTOR SCHEMA
 				schemaDef = originalSchema
 			})
 		})
+
+		Context("metadata validations", func() {
+			It("validates the metadata schema", func() {
+				err, warn := validate([]byte(`
+ID: mymta
+version: 1.0.0
+_schema-version: '3.1'
+
+parameters:
+  param1: 1
+parameters-metadata:
+  param1:
+    overwritable: abc
+modules:
+- name: module1
+  type: html5
+  path: testapp
+  parameters:
+    memory: 1024M
+  parameters-metadata:
+    memory:
+      optional: 12
+  properties:
+    a: 1
+    b: true
+  properties-metadata:
+    a:
+      sensitive: "is it?"
+      datatype: some_type
+    b:
+      datatype: float
+`), getTestPath("mtahtml5"),
+					true, false, true, "")
+				Ω(warn).Should(BeNil())
+				Ω(err).Should(ConsistOf(
+					YamlValidationIssue{"cannot unmarshal !!str `abc` into bool", 10},
+					YamlValidationIssue{`the "parameters-metadata.param1.overwritable" property must be a boolean`, 10},
+					YamlValidationIssue{"cannot unmarshal !!int `12` into bool", 19},
+					YamlValidationIssue{`the "modules[0].parameters-metadata.memory.optional" property must be a boolean`, 19},
+					YamlValidationIssue{"cannot unmarshal !!str `is it?` into bool", 25},
+					YamlValidationIssue{`the "some_type" value of the "modules[0].properties-metadata.a.datatype" enum property is invalid; expected one of the following: str,int,float,bool`, 26},
+				))
+			})
+
+			It("doesn't give errors on unknown fields in properties-metadata and parameters-metadata", func() {
+				err, warn := validate([]byte(`
+ID: mymta
+version: 1.0.0
+_schema-version: '3.1'
+
+parameters:
+  param1: 1
+parameters-metadata:
+  param1:
+    overwritable1: abc
+modules:
+- name: module1
+  type: html5
+  path: testapp
+  properties:
+    a: 1
+    b: true
+  properties-metadata:
+    a:
+      unknown_metadata_key: "not handled by the MBT"
+      datatype: int
+    b:
+      datatype: bool
+`), getTestPath("mtahtml5"),
+					true, false, true, "")
+				Ω(warn).Should(BeNil())
+				Ω(err).Should(BeNil())
+			})
+
+			It("gives an error for datatype field in parameters-metadata", func() {
+				err, warn := validate([]byte(`
+ID: mtahtml5
+_schema-version: '2.1'
+version: 0.0.1
+
+parameters:
+  a: 1
+parameters-metadata:
+  a:
+    datatype: str
+    optional: false
+
+modules:
+- name: ui5app1
+  type: html5
+  parameters:
+    memory:
+    env: abc
+  parameters-metadata:
+    memory:
+      overwritable: false
+      datatype: str
+    env:
+      optional: true
+resources:
+- name: res1
+  type: custom
+  parameters:
+    m:
+  parameters-metadata:
+    m:
+      overwritable: false
+      datatype: float
+`), getTestPath("mtahtml5"),
+					true, false, true, "")
+				Ω(warn).Should(BeNil())
+				Ω(err).Should(ConsistOf(
+					YamlValidationIssue{datatypeNotAllowedForParametersMetadata, 10},
+					YamlValidationIssue{datatypeNotAllowedForParametersMetadata, 22},
+					YamlValidationIssue{datatypeNotAllowedForParametersMetadata, 33},
+				))
+			})
+
+		})
 	})
 
 	It("convertError", func() {

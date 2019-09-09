@@ -39,7 +39,6 @@ func buildValidationsFromSchema(schema *simpleyaml.Yaml) ([]YamlCheck, []YamlVal
 		switch typeNodeValue {
 		// type: map
 		// mapping:
-		//   firstName:  {required: true}
 		//   ...
 		case "map":
 			mappingNode := schema.Get("mapping")
@@ -47,14 +46,15 @@ func buildValidationsFromSchema(schema *simpleyaml.Yaml) ([]YamlCheck, []YamlVal
 				schemaIssues = appendIssue(schemaIssues, "invalid .yaml file schema: the mapping node must be a map", 0)
 				return validations, schemaIssues
 			}
-			newValidations, newSchemaIssues := buildValidationsFromMap(mappingNode)
-			schemaIssues = append(schemaIssues, newSchemaIssues...)
-			validations = append(validations, newValidations...)
+			mappingValidations, mappingSchemaIssues := buildValidationsForMapping(mappingNode)
+			schemaIssues = append(schemaIssues, mappingSchemaIssues...)
+			validations = append(validations, mappingValidations...)
+
 			// type: seq
 			// sequence:
 			//  - type: map
-			//  mapping:
-			//    name: {required: true}
+			//    mapping:
+			//      name: {required: true}
 			//    ...
 		case "seq":
 			sequenceNode := schema.Get("sequence")
@@ -64,12 +64,12 @@ func buildValidationsFromSchema(schema *simpleyaml.Yaml) ([]YamlCheck, []YamlVal
 			}
 
 			seqSize, _ := sequenceNode.GetArraySize()
-			if seqSize > 1 {
-				schemaIssues = appendIssue(schemaIssues, "invalid .yaml file schema: the sequence node can have only one item", 0)
+			if seqSize != 1 {
+				schemaIssues = appendIssue(schemaIssues, "invalid .yaml file schema: the sequence node must have exactly one item", 0)
 				return validations, schemaIssues
 			}
 
-			// A sequence schema node has exactly only 1 element
+			// A sequence schema node has exactly 1 element
 			sequenceItemNode := sequenceNode.GetIndex(0)
 			sequenceValidations, newSchemaIssues := buildValidationsFromSequence(sequenceItemNode)
 			schemaIssues = append(schemaIssues, newSchemaIssues...)
@@ -80,6 +80,35 @@ func buildValidationsFromSchema(schema *simpleyaml.Yaml) ([]YamlCheck, []YamlVal
 		return buildLeafValidations(schema)
 	}
 
+	return validations, schemaIssues
+}
+
+func buildValidationsForMapping(mappingNode *simpleyaml.Yaml) ([]YamlCheck, []YamlValidationIssue) {
+	var validations []YamlCheck
+	var schemaIssues []YamlValidationIssue
+
+	// Default rule for unknown keys - normally unmarshalled to Go map
+	if keys, _ := mappingNode.GetMapKeys(); len(keys) == 1 && keys[0] == "=" {
+		// type: map
+		// mapping:
+		//   =:
+		//     type: ...
+		value := mappingNode.Get(keys[0])
+		propInnerValidations, newSchemaIssues := buildValidationsFromSchema(value)
+		propWrapperValidation := forEachProperty(propInnerValidations...)
+		newValidations := append(validations, propWrapperValidation)
+
+		schemaIssues = append(schemaIssues, newSchemaIssues...)
+		validations = append(validations, newValidations...)
+	} else {
+		// type: map
+		// mapping:
+		//   firstName:  {required: true}
+		//   ...
+		newValidations, newSchemaIssues := buildValidationsFromMap(mappingNode)
+		schemaIssues = append(schemaIssues, newSchemaIssues...)
+		validations = append(validations, newValidations...)
+	}
 	return validations, schemaIssues
 }
 
@@ -171,33 +200,32 @@ func buildTypeValidation(y *simpleyaml.Yaml) ([]YamlCheck, []YamlValidationIssue
 		}
 		if typeValue == "bool" {
 			validations = append(validations, typeIsBoolean())
-		} else if typeValue == "enum" {
-			enumValidations, enumSchemaIssues := buildEnumValidation(y)
-			validations = append(validations, enumValidations...)
-			schemaIssues = append(schemaIssues, enumSchemaIssues...)
 		}
+	}
+
+	enumNode := y.Get("enum")
+	if enumNode.IsFound() {
+		enumValidations, enumSchemaIssues := buildEnumValidation(enumNode)
+		validations = append(validations, enumValidations...)
+		schemaIssues = append(schemaIssues, enumSchemaIssues...)
 	}
 	return validations, schemaIssues
 }
 
-func buildEnumValidation(y *simpleyaml.Yaml) ([]YamlCheck, []YamlValidationIssue) {
-	enumsNode := y.Get("enums")
-	if !enumsNode.IsFound() {
-		return []YamlCheck{}, []YamlValidationIssue{{"invalid .yaml file schema: enums values must be listed", 0}}
-	}
-	if !enumsNode.IsArray() {
+func buildEnumValidation(enumNode *simpleyaml.Yaml) ([]YamlCheck, []YamlValidationIssue) {
+	if !enumNode.IsArray() {
 		return []YamlCheck{}, []YamlValidationIssue{{"invalid .yaml file schema: enums values must be listed as an array", 0}}
 	}
 
-	enumsNumber, _ := enumsNode.GetArraySize()
+	enumsNumber, _ := enumNode.GetArraySize()
 
 	var enumValues []string
 	for i := 0; i < enumsNumber; i++ {
-		enumNode := enumsNode.GetIndex(i)
-		if enumNode.IsArray() || enumNode.IsMap() {
+		enumValueNode := enumNode.GetIndex(i)
+		if enumValueNode.IsArray() || enumValueNode.IsMap() {
 			return []YamlCheck{}, []YamlValidationIssue{{"invalid .yaml file schema: enum values must be simple", 0}}
 		}
-		enumValue := getLiteralStringValue(enumNode)
+		enumValue := getLiteralStringValue(enumValueNode)
 		enumValues = append(enumValues, enumValue)
 	}
 

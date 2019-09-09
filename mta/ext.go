@@ -7,8 +7,7 @@ import (
 )
 
 const (
-	mergeModulesErrorMsg   = `could not merge modules from MTA extension with ID "%s"`
-	mergeResourcesErrorMsg = `could not merge resources from MTA extension with ID "%s"`
+	mergeExtErrorMsg = `could not merge MTA extension with ID "%s"`
 
 	mergeRootParametersErrorMsg = `could not merge parameters from MTA extension with ID "%s"`
 
@@ -60,11 +59,11 @@ func Merge(mta *MTA, mtaExt *EXT) error {
 	}
 
 	if err = mergeModules(*mta, mtaExt.Modules); err != nil {
-		return errors.Wrapf(err, mergeModulesErrorMsg, mtaExt.ID)
+		return errors.Wrapf(err, mergeExtErrorMsg, mtaExt.ID)
 	}
 
 	if err = mergeResources(*mta, mtaExt.Resources); err != nil {
-		return errors.Wrapf(err, mergeResourcesErrorMsg, mtaExt.ID)
+		return errors.Wrapf(err, mergeExtErrorMsg, mtaExt.ID)
 	}
 
 	return nil
@@ -73,8 +72,8 @@ func Merge(mta *MTA, mtaExt *EXT) error {
 // mergeModules is responsible for handling the rules of merging modules
 func mergeModules(mtaObj MTA, mtaExtModules []*ModuleExt) error {
 	for _, extModule := range mtaExtModules {
-		if module, err := mtaObj.GetModuleByName(extModule.Name); err == nil {
-			err = chain().
+		if module, _ := mtaObj.GetModuleByName(extModule.Name); module != nil {
+			err := chain().
 				extendMap(&module.Properties, module.PropertiesMetaData, extModule.Properties, mergeModulePropertiesErrorMsg, module.Name).
 				extendMap(&module.Parameters, module.ParametersMetaData, extModule.Parameters, mergeModuleParametersErrorMsg, module.Name).
 				extendMap(&module.BuildParams, nil, extModule.BuildParams, mergeModuleBuildParametersErrorMsg, module.Name).
@@ -98,7 +97,7 @@ func mergeModules(mtaObj MTA, mtaExtModules []*ModuleExt) error {
 				return err
 			}
 		} else {
-			return errors.Wrapf(err, unknownModuleErrorMsg, extModule.Name)
+			return errors.Errorf(unknownModuleErrorMsg, extModule.Name)
 		}
 	}
 
@@ -146,8 +145,8 @@ func mergeModuleHooks(module *Module, extModule *ModuleExt) error {
 // mergeResources is responsible for handling the rules of merging resources
 func mergeResources(mtaObj MTA, mtaExtResources []*ResourceExt) error {
 	for _, extResource := range mtaExtResources {
-		if resource, err := mtaObj.GetResourceByName(extResource.Name); err == nil {
-			err = chain().
+		if resource := mtaObj.GetResourceByName(extResource.Name); resource != nil {
+			err := chain().
 				extendBool(&resource.Active, &extResource.Active, mergeResourceActiveErrorMsg, resource.Name).
 				extendMap(&resource.Properties, resource.PropertiesMetaData, extResource.Properties, mergeResourcePropertiesErrorMsg, resource.Name).
 				extendMap(&resource.Parameters, resource.ParametersMetaData, extResource.Parameters, mergeResourceParametersErrorMsg, resource.Name).
@@ -162,7 +161,7 @@ func mergeResources(mtaObj MTA, mtaExtResources []*ResourceExt) error {
 				return err
 			}
 		} else {
-			return errors.Wrapf(err, unknownResourceErrorMsg, extResource.Name)
+			return errors.Errorf(unknownResourceErrorMsg, extResource.Name)
 		}
 	}
 

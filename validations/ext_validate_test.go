@@ -10,7 +10,7 @@ import (
 var _ = Describe("MTAEXT validation tests", func() {
 	var _ = DescribeTable("validate Mtaext", func(projectRelPath string, fileName string,
 		validateSchema, validateSemantic, expectedSuccess bool) {
-		_, err := Mtaext(getTestPath(projectRelPath), fileName, validateSchema, validateSemantic, true, "")
+		_, err := Mtaext(getTestPath(projectRelPath), getTestPath(projectRelPath, fileName), validateSchema, validateSemantic, true, "")
 		if expectedSuccess {
 			Ω(err).Should(Succeed())
 		} else {
@@ -27,7 +27,7 @@ var _ = Describe("MTAEXT validation tests", func() {
 
 	var _ = Describe("validate Mtaext - strict flag checks", func() {
 		It("strict", func() {
-			warn, err := Mtaext(getTestPath("mtahtml5"), "myNotStrict.mtaext",
+			warn, err := Mtaext(getTestPath("mtahtml5"), getTestPath("mtahtml5", "myNotStrict.mtaext"),
 				true, true, true, "")
 			Ω(warn).Should(Equal(""))
 			Ω(err).Should(HaveOccurred())
@@ -40,7 +40,7 @@ var _ = Describe("MTAEXT validation tests", func() {
 			Ω(message).Should(ContainSubstring("line 15: %s", fmt.Sprintf(nameAlreadyExtendedMsg, "ui5app", "module", "another", "module", 7)))
 		})
 		It("not strict", func() {
-			warn, err := Mtaext(getTestPath("mtahtml5"), "myNotStrict.mtaext",
+			warn, err := Mtaext(getTestPath("mtahtml5"), getTestPath("mtahtml5", "myNotStrict.mtaext"),
 				true, true, false, "")
 			message := warn
 			Ω(message).Should(ContainSubstring("line 11: field parameters-metadata not found in type mta.ModuleExt"))
@@ -91,7 +91,7 @@ desc: MTA DESCRIPTOR SCHEMA
 # schema version must be extracted from here as there is no "version" element available to version schemas
   name: com.sap.mta.mta-schema_3.2.0 abc
 `)
-				_, err := Mtaext(getTestPath("mtahtml5"), "my.mtaext",
+				_, err := Mtaext(getTestPath("mtahtml5"), getTestPath("mtahtml5", "my.mtaext"),
 					true, false, true, "")
 				Ω(err).Should(HaveOccurred())
 				Ω(err.Error()).Should(ContainSubstring("validation failed when parsing the MTA schema file"))
@@ -101,6 +101,7 @@ desc: MTA DESCRIPTOR SCHEMA
 				extSchemaDef = originalSchema
 			})
 		})
+
 	})
 
 	It("bad file extension", func() {
@@ -111,7 +112,7 @@ _schema-version: '3.1'
 `), getTestPath("mtahtml5"), "ext.yaml",
 			false, true, true, "")
 		Ω(warn).Should(BeNil())
-		Ω(err).Should(ConsistOf(matchValidationIssue(0, badExtensionErrorMsg)))
+		Ω(err).Should(ConsistOf(YamlValidationIssue{badExtensionErrorMsg, 0}))
 	})
 
 	DescribeTable("validateExtFileName", func(filename string, expectedSuccess bool) {
@@ -138,4 +139,49 @@ _schema-version: '3.1'
 		Entry("file name has yaml extension", "ext.yaml", false),
 		Entry("file name is mtaext and has yaml extension", "mtaext.yaml", false),
 	)
+
+	It("Unallowed fields in extension file return errors", func() {
+		err, warn := validateExt([]byte(`
+ID: myext
+extends: mymta
+_schema-version: '3.1'
+
+modules:
+- name: mymodule
+  provides:
+  - name: myprovides
+    public: true
+  requires:
+  - name: myreq
+    list: destinations
+  hooks:
+  - name: myhook
+    requires:
+    - name: myhookreq
+      list: somelistname
+resources:
+- name: myresource
+  optional: true
+  requires:
+  - name: myresreq
+    list: abc
+- name: myresource1
+  requires:
+  - name: req1
+    properties-metadata:
+  - name: req2
+    parameters-metadata:
+`), getTestPath("mtahtml5"), "my.mtaext",
+			true, false, true, "")
+		Ω(warn).Should(BeNil())
+		Ω(err).Should(ConsistOf(
+			YamlValidationIssue{fmt.Sprintf(propertyExistsErrorMsg, "public", "modules[0].provides[0]"), 10},
+			YamlValidationIssue{fmt.Sprintf(propertyExistsErrorMsg, "list", "modules[0].requires[0]"), 13},
+			YamlValidationIssue{fmt.Sprintf(propertyExistsErrorMsg, "list", "modules[0].hooks[0].requires[0]"), 18},
+			YamlValidationIssue{`field optional not found in type mta.ResourceExt`, 21},
+			YamlValidationIssue{fmt.Sprintf(propertyExistsErrorMsg, "list", "resources[0].requires[0]"), 24},
+			YamlValidationIssue{fmt.Sprintf(propertyExistsErrorMsg, "properties-metadata", "resources[1].requires[0]"), 28},
+			YamlValidationIssue{fmt.Sprintf(propertyExistsErrorMsg, "parameters-metadata", "resources[1].requires[1]"), 30},
+		))
+	})
 })

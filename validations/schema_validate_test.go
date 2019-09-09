@@ -28,6 +28,11 @@ firstName: Donald
 lastName: duck
 `, property("firstName", required())),
 
+		Entry("doesNotExist", `
+firstName: Donald
+lastName: duck
+`, property("middleName", doesNotExist())),
+
 		Entry("Type Is String", `
 firstName: Donald
 lastName: duck
@@ -78,6 +83,28 @@ classes:
 				property("name", required()),
 				property("room", matchesRegExp("^MR[0-9]+$")))))),
 
+		Entry("For Each Property", `
+firstName: Hello
+lastName: World
+classes:
+  biology:
+    grade: 90
+    optional: true
+    room: MR113
+
+  history:
+    grade: 83
+    optional: false
+    room: MR225
+
+`, property("classes", sequence(
+			required(),
+			typeIsMap(),
+			forEachProperty(
+				property("grade", required()),
+				property("optional", typeIsBoolean()),
+				property("room", matchesRegExp("^MR[0-9]+$")))))),
+
 		Entry("optional Exists", `
 firstName: Donald
 lastName: duck
@@ -105,6 +132,12 @@ firstName: Donald
 lastName: duck
 `, `missing the "age" required property in the root .yaml node`, 2,
 			property("age", required())),
+
+		Entry("doesNotExist", `
+firstName: Donald
+lastName: duck
+`, fmt.Sprintf(propertyExistsErrorMsg, "lastName", "root"), 3,
+			property("lastName", doesNotExist())),
 
 		Entry("TypeIsString", `
 firstName:
@@ -179,21 +212,29 @@ classes:
 
  - room: 225
 
+optionalClasses:
+  biology: true
+  history: false
+  english: unknown
 `)
-		validations := property("classes", sequence(
-			required(),
-			typeIsArray(),
-			forEach(
-				property("name", required()),
-				property("room", matchesRegExp("^[0-9]+$")))))
+		validations := sequence(
+			property("classes", sequence(
+				required(),
+				typeIsArray(),
+				forEach(
+					property("name", required()),
+					property("room", matchesRegExp("^[0-9]+$"))))),
+			property("optionalClasses",
+				forEachProperty(typeIsBoolean())))
 
 		node, _ := getContentNode([]byte(data))
 		validateIssues := runSchemaValidations(node, validations)
 
-		expectMultipleValidationError(validateIssues,
-			[]string{
-				`the "oops" value of the "classes[0].room" property does not match the "^[0-9]+$" pattern`,
-				`missing the "name" required property in the classes[1] .yaml node`})
+		Ω(validateIssues).Should(ConsistOf(
+			YamlValidationIssue{`the "oops" value of the "classes[0].room" property does not match the "^[0-9]+$" pattern`, 6},
+			YamlValidationIssue{`missing the "name" required property in the classes[1] .yaml node`, 8},
+			YamlValidationIssue{`the "optionalClasses.english" property must be a boolean`, 13},
+		))
 	})
 })
 

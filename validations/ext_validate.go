@@ -1,6 +1,7 @@
 package validate
 
 import (
+	"gopkg.in/yaml.v3"
 	"path/filepath"
 	"strings"
 
@@ -14,34 +15,34 @@ const (
 
 	mtaextExtension = ".mtaext"
 
-	badExtensionErrorMsg = `MTA extension descriptor file name must have the "mtaext" file extension`
+	badExtensionErrorMsg     = `MTA extension descriptor file name must have the "mtaext" file extension`
+	couldNotValidateErrorMsg = `could not validate the "%s" file`
+	validationErrorsMsg      = `the "%s" file is not valid:\n%s`
 )
 
 // Mtaext validates an MTA extension file.
-func Mtaext(projectPath, extFilename string,
+func Mtaext(projectPath, extPath string,
 	validateSchema, validateSemantic, strict bool, exclude string) (warning string, err error) {
 	if validateSemantic || validateSchema {
 		var errIssues, warnIssues YamlValidationIssues
 
-		extPath := filepath.Join(projectPath, extFilename)
 		// ParseFile contains MTA yaml content.
 		yamlContent, e := readFile(extPath)
 
 		if e != nil {
-			return "", errors.Wrapf(e, `could not read the "%v" file; the validation failed`, extPath)
+			return "", errors.Wrapf(e, couldNotValidateErrorMsg, extPath)
 		}
 		s := string(yamlContent)
 		s = strings.Replace(s, "\r\n", "\r", -1)
 		yamlContent = []byte(s)
 
 		// Validates MTA content.
-		contentErrIssues, contentWarnIssues := validateExt(yamlContent, projectPath, extFilename,
+		contentErrIssues, contentWarnIssues := validateExt(yamlContent, projectPath, extPath,
 			validateSchema, validateSemantic, strict, exclude)
 		errIssues = append(errIssues, contentErrIssues...)
 		warnIssues = append(warnIssues, contentWarnIssues...)
 		if len(errIssues) > 0 {
-			return warnIssues.String(), errors.Errorf(`the "%v" file is not valid: `+"\n%v",
-				extPath, errIssues.String())
+			return warnIssues.String(), errors.Errorf(validationErrorsMsg, extPath, errIssues.String())
 		}
 		return warnIssues.String(), nil
 	}
@@ -85,12 +86,9 @@ func validateExt(yamlContent []byte, projectPath string, extFileName string,
 	}
 
 	if validateSchema {
-		validations, schemaValidationLog := buildValidationsFromSchemaText(extSchemaDef)
-		if len(schemaValidationLog) > 0 {
-			errIssues = append(errIssues, schemaValidationLog...)
-			return errIssues, warnIssues
-		}
-		errIssues = append(errIssues, runSchemaValidations(extNode, validations...)...)
+		errs, warns := validateExtSchema(mtaExt, extNode, strict)
+		errIssues = append(errIssues, errs...)
+		warnIssues = append(warnIssues, warns...)
 	}
 
 	if validateSemantic {
@@ -99,4 +97,39 @@ func validateExt(yamlContent []byte, projectPath string, extFileName string,
 		warnIssues = append(warnIssues, warns...)
 	}
 	return errIssues, warnIssues
+}
+
+func validateExtSchema(mtaExt *mta.EXT, extNode *yaml.Node, strict bool) (errIssues YamlValidationIssues, warnIssues YamlValidationIssues) {
+	validations, schemaValidationLog := buildValidationsFromSchemaText(extSchemaDef)
+	if len(schemaValidationLog) > 0 {
+		errIssues = append(errIssues, schemaValidationLog...)
+		return errIssues, warnIssues
+	}
+	errIssues = append(errIssues, runSchemaValidations(extNode, validations...)...)
+
+	issues := runAdditionalExtSchemaValidations(mtaExt, extNode, "")
+	if strict {
+		errIssues = append(errIssues, issues...)
+	} else {
+		warnIssues = append(warnIssues, issues...)
+	}
+	return errIssues, warnIssues
+}
+
+func runAdditionalExtSchemaValidations(mtaExt *mta.EXT, extNode *yaml.Node, source string) []YamlValidationIssue {
+	requiresCheck := property(requiresYamlField, forEach(
+		property(listYamlField, doesNotExist()),
+		property(propertiesMetadataField, doesNotExist()),
+		property(parametersMetadataField, doesNotExist()),
+	))
+	return runSchemaValidations(extNode, sequence(
+		property(modulesYamlField, forEach(
+			property(providesYamlField, forEach(
+				property(publicYamlField, doesNotExist()),
+			)),
+			requiresCheck,
+			property(hooksYamlField, forEach(requiresCheck)),
+		)),
+		property(resourcesYamlField, forEach(requiresCheck)),
+	))
 }

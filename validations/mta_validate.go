@@ -99,6 +99,13 @@ func validate(yamlContent []byte, projectPath string,
 		} else {
 			warnIssues = append(warnIssues, issues...)
 		}
+
+		issues = checkMetadataSchema(mtaStr, mtaNode, "")
+		if strict {
+			errIssues = append(errIssues, issues...)
+		} else {
+			warnIssues = append(warnIssues, issues...)
+		}
 	}
 
 	if validateSemantic {

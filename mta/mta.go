@@ -30,13 +30,13 @@ func (mta *MTA) GetModuleByName(name string) (*Module, error) {
 }
 
 // GetResourceByName returns a specific resource by name.
-func (mta *MTA) GetResourceByName(name string) (*Resource, error) {
+func (mta *MTA) GetResourceByName(name string) *Resource {
 	for _, r := range mta.Resources {
 		if r.Name == name {
-			return r, nil
+			return r
 		}
 	}
-	return nil, fmt.Errorf("the %s resource is not defined ", name)
+	return nil
 }
 
 // GetProvidesByName returns a specific provide by name
@@ -110,10 +110,11 @@ func Marshal(omta *MTA) ([]byte, error) {
 }
 
 // UnmarshalYAML unmarshals a MetaData object, setting default values for fields not in the source
-func (meta *MetaData) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	type rawMetadata MetaData
-	raw := rawMetadata{OverWritable: true, Optional: false} // Default values
-	if err := unmarshal(&raw); err != nil {
+func (meta *MetaData) UnmarshalYAML(node *yaml.Node) error {
+	type metadata MetaData
+	raw := metadata{OverWritable: true, Optional: false} // Default values
+
+	if err := node.Decode(&raw); err != nil {
 		return err
 	}
 

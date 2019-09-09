@@ -10,6 +10,10 @@ import (
 	"github.com/smallfish/simpleyaml"
 )
 
+const (
+	propertyExistsErrorMsg = `the "%s" property cannot be used in "%s"`
+)
+
 // YamlValidationIssue - specific issue
 type YamlValidationIssue struct {
 	// Msg - message content
@@ -165,6 +169,38 @@ func forEach(checks ...YamlCheck) YamlCheck {
 	}
 }
 
+// DSL method to iterate over a YAML map values
+func forEachProperty(checks ...YamlCheck) YamlCheck {
+
+	return func(yPropNode, yParentNode *yaml.Node, path []string) YamlValidationIssues {
+		var issues YamlValidationIssues
+
+		if yPropNode == nil {
+			return issues
+		}
+
+		validation := sequence(checks...)
+
+		// Properties are listed in the Content of node as slice of key, value, key, value,...
+		isKeyNode := true
+		var key string
+		for _, child := range yPropNode.Content {
+			if isKeyNode {
+				// the current node is the key of the next node
+				key = child.Value
+			} else {
+				// current is the value => run the validation
+				elemErrors := validation(child, yPropNode, append(path, key))
+				issues = append(issues, elemErrors...)
+			}
+			// key->value, value->key
+			isKeyNode = !isKeyNode
+		}
+
+		return issues
+	}
+}
+
 // DSL method to ensure a property exists.
 // Note that this has no context, the property being checked is provided externally
 // via the "property" DSL method.
@@ -176,6 +212,25 @@ func required() YamlCheck {
 					Msg: fmt.Sprintf(`missing the "%s" required property in the %s .yaml node`,
 						last(path), buildPathString(dropRight(path))),
 					Line: yParentNode.Line}}
+		}
+
+		return []YamlValidationIssue{}
+	}
+}
+
+// DSL method to ensure a property doesn't exist.
+// Useful for properties that exist in the structure but should not exist in the yaml, for example
+// in extensions.
+// Note that this has no context, the property being checked is provided externally
+// via the "property" DSL method.
+func doesNotExist() YamlCheck {
+	return func(yNode, yParentNode *yaml.Node, path []string) YamlValidationIssues {
+		if yNode != nil {
+			return []YamlValidationIssue{
+				{
+					Msg: fmt.Sprintf(propertyExistsErrorMsg,
+						last(path), buildPathString(dropRight(path))),
+					Line: yNode.Line}}
 		}
 
 		return []YamlValidationIssue{}
