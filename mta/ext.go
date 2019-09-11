@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	mergeExtErrorMsg = `could not merge MTA extension with ID "%s"`
+	mergeExtErrorMsg = `could not merge MTA extension with the "%s" ID`
 
 	mergeRootParametersErrorMsg = `could not merge parameters from MTA extension with ID "%s"`
 

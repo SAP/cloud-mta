@@ -270,6 +270,8 @@ resources:
 `), getTestPath("mtahtml5"),
 					true, false, true, "")
 				Ω(warn).Should(BeNil())
+
+				datatypeNotAllowedForParametersMetadata := fmt.Sprintf(propertyExistsErrorMsg, datatypeYamlField, parametersMetadataField)
 				Ω(err).Should(ConsistOf(
 					YamlValidationIssue{datatypeNotAllowedForParametersMetadata, 10},
 					YamlValidationIssue{datatypeNotAllowedForParametersMetadata, 22},

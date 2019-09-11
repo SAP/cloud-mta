@@ -2,6 +2,7 @@ package validate
 
 import (
 	"fmt"
+	"sort"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -28,10 +29,15 @@ firstName: Donald
 lastName: duck
 `, property("firstName", required())),
 
-		Entry("doesNotExist", `
+		Entry("doesNotExist on property value", `
 firstName: Donald
 lastName: duck
 `, property("middleName", doesNotExist())),
+
+		Entry("doesNotExist on property name", `
+firstName: Donald
+lastName: duck
+`, propertyName("middleName", doesNotExist())),
 
 		Entry("Type Is String", `
 firstName: Donald
@@ -133,10 +139,18 @@ lastName: duck
 `, `missing the "age" required property in the root .yaml node`, 2,
 			property("age", required())),
 
-		Entry("doesNotExist", `
+		Entry("doesNotExist on property name", `
 firstName: Donald
-lastName: duck
+lastName: 
+  - duck
 `, fmt.Sprintf(propertyExistsErrorMsg, "lastName", "root"), 3,
+			propertyName("lastName", doesNotExist())),
+
+		Entry("doesNotExist on property value", `
+firstName: Donald
+lastName: 
+  - duck
+`, fmt.Sprintf(propertyExistsErrorMsg, "lastName", "root"), 4,
 			property("lastName", doesNotExist())),
 
 		Entry("TypeIsString", `
@@ -267,3 +281,36 @@ lastName: World`)
 		Ω(getPropByName(node, "x")).Should(BeNil())
 	})
 })
+
+var _ = DescribeTable("sort validation issues", func(lines []int) {
+	var issues YamlValidationIssues
+	if lines == nil {
+		issues = nil
+	} else {
+		issues = make(YamlValidationIssues, len(lines))
+		for i, line := range lines {
+			issues[i] = YamlValidationIssue{Line: line, Msg: fmt.Sprintf("line %d issue", line)}
+		}
+
+		issues.Sort()
+
+		// Check it's sorted
+		isSorted := sort.SliceIsSorted(issues, func(i, j int) bool {
+			return issues[i].Line < issues[j].Line
+		})
+		Ω(isSorted).Should(Equal(true), fmt.Sprintf("slice is not sorted: %v", issues))
+
+		// Check the values are correct
+		for _, issue := range issues {
+			Ω(issue.Msg).Should(Equal(fmt.Sprintf("line %d issue", issue.Line)))
+		}
+	}
+},
+	Entry("nil slice", nil),
+	Entry("empty slice", []int{}),
+	Entry("slice with one value", []int{300}),
+	Entry("sorted slice", []int{1, 2, 3, 4, 12, 65}),
+	Entry("backwards sorted slice", []int{12, 2, 0}),
+	Entry("slice with equal values", []int{1, 1, 4, 23, 32, 5, 32}),
+	Entry("unsorted slice", []int{3, 84, 600, 2, 0, 5, 0, 7, 5, 12}),
+)

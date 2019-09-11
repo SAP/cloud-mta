@@ -171,6 +171,11 @@ resources:
     properties-metadata:
   - name: req2
     parameters-metadata:
+- name: myresource2
+  requires:
+  - name: req1
+    properties-metadata:
+      a:
 `), getTestPath("mtahtml5"), "my.mtaext",
 			true, false, true, "")
 		Ω(warn).Should(BeNil())
@@ -182,6 +187,7 @@ resources:
 			YamlValidationIssue{fmt.Sprintf(propertyExistsErrorMsg, "list", "resources[0].requires[0]"), 24},
 			YamlValidationIssue{fmt.Sprintf(propertyExistsErrorMsg, "properties-metadata", "resources[1].requires[0]"), 28},
 			YamlValidationIssue{fmt.Sprintf(propertyExistsErrorMsg, "parameters-metadata", "resources[1].requires[1]"), 30},
+			YamlValidationIssue{fmt.Sprintf(propertyExistsErrorMsg, "properties-metadata", "resources[2].requires[0]"), 34},
 		))
 	})
 })

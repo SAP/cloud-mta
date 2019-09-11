@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/smallfish/simpleyaml"
 )
 
 const (
-	propertyExistsErrorMsg = `the "%s" property cannot be used in "%s"`
+	propertyExistsErrorMsg = `the "%s" key is not allowed inside "%s"`
 )
 
 // YamlValidationIssue - specific issue
@@ -33,6 +34,13 @@ func (issues YamlValidationIssues) String() string {
 	return strings.Join(messages, "\n")
 }
 
+// Sort sorts the validation issues by line number
+func (issues YamlValidationIssues) Sort() {
+	sort.SliceStable(issues, func(i, j int) bool {
+		return issues[i].Line < issues[j].Line
+	})
+}
+
 // YamlCheck - validation check function type
 type YamlCheck func(yNode, yParentNode *yaml.Node, path []string) YamlValidationIssues
 
@@ -42,6 +50,23 @@ func property(propName string, checks ...YamlCheck) YamlCheck {
 	return func(yNode, yParentNode *yaml.Node, path []string) YamlValidationIssues {
 		var issues YamlValidationIssues
 		yPropNode := getPropValueByName(yNode, propName)
+
+		// Will perform all the validations without stopping
+		for _, check := range checks {
+			newIssues := check(yPropNode, yNode, append(path, propName))
+			issues = append(issues, newIssues...)
+		}
+
+		return issues
+	}
+}
+
+// DSL method to execute validations on the name of a sub node(property) of a YAML tree.
+// Can be nested to check properties farther and farther down the tree.
+func propertyName(propName string, checks ...YamlCheck) YamlCheck {
+	return func(yNode, yParentNode *yaml.Node, path []string) YamlValidationIssues {
+		var issues YamlValidationIssues
+		yPropNode := getPropByName(yNode, propName)
 
 		// Will perform all the validations without stopping
 		for _, check := range checks {

@@ -17,7 +17,7 @@ const (
 
 	badExtensionErrorMsg     = `MTA extension descriptor file name must have the "mtaext" file extension`
 	couldNotValidateErrorMsg = `could not validate the "%s" file`
-	validationErrorsMsg      = `the "%s" file is not valid:\n%s`
+	validationErrorsMsg      = "the \"%s\" file is not valid:\n%s"
 )
 
 // Mtaext validates an MTA extension file.
@@ -40,7 +40,9 @@ func Mtaext(projectPath, extPath string,
 		contentErrIssues, contentWarnIssues := validateExt(yamlContent, projectPath, extPath,
 			validateSchema, validateSemantic, strict, exclude)
 		errIssues = append(errIssues, contentErrIssues...)
+		errIssues.Sort()
 		warnIssues = append(warnIssues, contentWarnIssues...)
+		warnIssues.Sort()
 		if len(errIssues) > 0 {
 			return warnIssues.String(), errors.Errorf(validationErrorsMsg, extPath, errIssues.String())
 		}
@@ -118,14 +120,14 @@ func validateExtSchema(mtaExt *mta.EXT, extNode *yaml.Node, strict bool) (errIss
 
 func runAdditionalExtSchemaValidations(mtaExt *mta.EXT, extNode *yaml.Node, source string) []YamlValidationIssue {
 	requiresCheck := property(requiresYamlField, forEach(
-		property(listYamlField, doesNotExist()),
-		property(propertiesMetadataField, doesNotExist()),
-		property(parametersMetadataField, doesNotExist()),
+		propertyName(listYamlField, doesNotExist()),
+		propertyName(propertiesMetadataField, doesNotExist()),
+		propertyName(parametersMetadataField, doesNotExist()),
 	))
 	return runSchemaValidations(extNode, sequence(
 		property(modulesYamlField, forEach(
 			property(providesYamlField, forEach(
-				property(publicYamlField, doesNotExist()),
+				propertyName(publicYamlField, doesNotExist()),
 			)),
 			requiresCheck,
 			property(hooksYamlField, forEach(requiresCheck)),
