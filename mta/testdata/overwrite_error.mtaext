@@ -1,0 +1,1 @@
+_schema-version: "3.3"ID: com.acme.scheduling.extextends: com.acme.schedulingversion: 1.132.1-edfsd+ewfemodules:- name: backend  hooks:  - name: hook    parameters:      name:        a: 1        b: 2

@@ -174,6 +174,13 @@ var _ = Describe("Extension MTA", func() {
 					},
 					"a": "aa",
 				}
+				interfaceMapWithOneKey := map[string]interface{}{
+					"b": map[string]interface{}{
+						"d": map[interface{}]interface{}{
+							"e": "xx",
+						},
+					},
+				}
 
 				for desc, metadata := range overwritableScenarios {
 					DescribeTable(desc, func(mta map[string]interface{}, ext map[string]interface{}, expected map[string]interface{}) {
@@ -191,7 +198,20 @@ var _ = Describe("Extension MTA", func() {
 							},
 							"a": "aa",
 						}),
+						Entry("overrides inner values - with interface keys", mapWithTwoKeys, interfaceMapWithOneKey, map[string]interface{}{
+							"b": map[string]interface{}{
+								"d": map[string]interface{}{
+									"e": "xx",
+									"m": "mm",
+								},
+								"f": map[string]interface{}{
+									"l": "ll",
+								},
+							},
+							"a": "aa",
+						}),
 						Entry("overrides inner values, adds inner values and adds new values", mapWithOneKey, mapWithTwoKeys, mapWithTwoKeys),
+						Entry("overrides inner values, adds inner values and adds new values - with interface keys", interfaceMapWithOneKey, mapWithTwoKeys, mapWithTwoKeys),
 						Entry("copies ext map when original map is nil", nil, mapWithTwoKeys, mapWithTwoKeys),
 						Entry("doesn't change original when ext is nil", mapWithTwoKeys, nil, mapWithTwoKeys),
 						Entry("returns nil when original and ext are nil", nil, nil, nil),
@@ -319,6 +339,15 @@ var _ = Describe("Extension MTA", func() {
 					},
 					"a": "aa",
 				}
+				interfaceMapWithOneKey := map[string]interface{}{
+					"b": map[string]interface{}{
+						"d": map[string]interface{}{
+							"e": map[interface{}]interface{}{
+								"r": "rr",
+							},
+						},
+					},
+				}
 
 				for desc, metadata := range overwritableScenarios {
 					DescribeTable(desc, func(mta map[string]interface{}, ext map[string]interface{}, err string, args ...interface{}) {
@@ -326,6 +355,8 @@ var _ = Describe("Extension MTA", func() {
 					},
 						Entry("fails when overriding scalar with map", mapWithTwoKeys, mapWithOneKey, overwriteScalarWithStructuredErrorMsg, "e"),
 						Entry("fails when overriding map with scalar", mapWithOneKey, mapWithTwoKeys, overwriteStructuredWithScalarErrorMsg, "e"),
+						Entry("fails when overriding scalar with map", mapWithTwoKeys, interfaceMapWithOneKey, overwriteScalarWithStructuredErrorMsg, "e"),
+						Entry("fails when overriding map with scalar", interfaceMapWithOneKey, mapWithTwoKeys, overwriteStructuredWithScalarErrorMsg, "e"),
 					)
 				}
 			})
@@ -1179,7 +1210,7 @@ var _ = Describe("Extension MTA", func() {
 								Name: "p1",
 								Properties: map[string]interface{}{
 									"provp1": "changed",
-									"provep2": map[string]interface{}{
+									"provep2": map[interface{}]interface{}{
 										"provep2t1": "added",
 									},
 								},
@@ -2202,6 +2233,23 @@ var _ = Describe("Extension MTA", func() {
 				},
 			}))
 		})
+
+		It("returns error when merge fails on overwriting scalar with structured value", func() {
+			content, err := readFile(getTestPath("mta.yaml"))
+			Ω(err).Should(Succeed())
+			mta, err := Unmarshal(content)
+			Ω(err).Should(Succeed())
+
+			// The map in lines 12-13 is returned as map[interface{}]interface{} instead of map[string]interface{}
+			extContent, err := readFile(getTestPath("overwrite_error.mtaext"))
+			Ω(err).Should(Succeed())
+			ext, err := UnmarshalExt(extContent)
+			Ω(err).Should(Succeed())
+
+			err = Merge(mta, ext)
+			Ω(err).Should(HaveOccurred())
+			Ω(err.Error()).Should(ContainSubstring(overwriteScalarWithStructuredErrorMsg, "name"))
+		})
 	})
 })
 
@@ -2283,7 +2331,7 @@ func checkExtendMap(m map[string]interface{}, ext map[string]interface{}, meta m
 	err := extendMap(&mCopy, meta, ext)
 	Ω(err).Should(Succeed())
 	Ω(meta).Should(Equal(metaBeforeExtendMap))
-	Ω(ext).Should(Equal(extBeforeExtendMap))
+	Ω(copyMap(ext)).Should(Equal(extBeforeExtendMap)) // Using copyMap on both because it converts map[interface{}]interface{} to map[string]interface{} internally
 	Ω(mCopy).Should(Equal(expected))
 }
 
@@ -2297,7 +2345,7 @@ func checkExtendMapFails(m map[string]interface{}, ext map[string]interface{}, m
 	Ω(err).ShouldNot(Succeed())
 	Ω(err.Error()).Should(ContainSubstring(errorMsg, args...))
 	Ω(meta).Should(Equal(metaBeforeExtendMap))
-	Ω(ext).Should(Equal(extBeforeExtendMap))
+	Ω(copyMap(ext)).Should(Equal(extBeforeExtendMap)) // Using copyMap on both because it converts map[interface{}]interface{} to map[string]interface{} internally
 	// Note: mCopy might be changed even if extendMap fails, since the map is merged in-place
 }
 
@@ -2307,7 +2355,7 @@ func copyMap(source map[string]interface{}) map[string]interface{} {
 	}
 	result := make(map[string]interface{})
 	for key, value := range source {
-		if mValue, ok := value.(map[string]interface{}); ok {
+		if mValue, ok := getMapValue(value); ok {
 			result[key] = copyMap(mValue)
 		} else {
 			result[key] = value
