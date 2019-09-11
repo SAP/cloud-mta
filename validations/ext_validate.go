@@ -120,14 +120,14 @@ func validateExtSchema(mtaExt *mta.EXT, extNode *yaml.Node, strict bool) (errIss
 
 func runAdditionalExtSchemaValidations(mtaExt *mta.EXT, extNode *yaml.Node, source string) []YamlValidationIssue {
 	requiresCheck := property(requiresYamlField, forEach(
-		property(listYamlField, doesNotExist()),
-		property(propertiesMetadataField, doesNotExist()),
-		property(parametersMetadataField, doesNotExist()),
+		propertyName(listYamlField, doesNotExist()),
+		propertyName(propertiesMetadataField, doesNotExist()),
+		propertyName(parametersMetadataField, doesNotExist()),
 	))
 	return runSchemaValidations(extNode, sequence(
 		property(modulesYamlField, forEach(
 			property(providesYamlField, forEach(
-				property(publicYamlField, doesNotExist()),
+				propertyName(publicYamlField, doesNotExist()),
 			)),
 			requiresCheck,
 			property(hooksYamlField, forEach(requiresCheck)),

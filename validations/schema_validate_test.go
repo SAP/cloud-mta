@@ -29,10 +29,15 @@ firstName: Donald
 lastName: duck
 `, property("firstName", required())),
 
-		Entry("doesNotExist", `
+		Entry("doesNotExist on property value", `
 firstName: Donald
 lastName: duck
 `, property("middleName", doesNotExist())),
+
+		Entry("doesNotExist on property name", `
+firstName: Donald
+lastName: duck
+`, propertyName("middleName", doesNotExist())),
 
 		Entry("Type Is String", `
 firstName: Donald
@@ -134,10 +139,18 @@ lastName: duck
 `, `missing the "age" required property in the root .yaml node`, 2,
 			property("age", required())),
 
-		Entry("doesNotExist", `
+		Entry("doesNotExist on property name", `
 firstName: Donald
-lastName: duck
+lastName: 
+  - duck
 `, fmt.Sprintf(propertyExistsErrorMsg, "lastName", "root"), 3,
+			propertyName("lastName", doesNotExist())),
+
+		Entry("doesNotExist on property value", `
+firstName: Donald
+lastName: 
+  - duck
+`, fmt.Sprintf(propertyExistsErrorMsg, "lastName", "root"), 4,
 			property("lastName", doesNotExist())),
 
 		Entry("TypeIsString", `

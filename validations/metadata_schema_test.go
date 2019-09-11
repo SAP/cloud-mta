@@ -1,6 +1,8 @@
 package validate
 
 import (
+	"fmt"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -90,6 +92,7 @@ resources:
 		node, _ := getContentNode(mtaContent)
 		issues := checkMetadataSchema(mta, node, "")
 
+		datatypeNotAllowedForParametersMetadata := fmt.Sprintf(propertyExistsErrorMsg, datatypeYamlField, parametersMetadataField)
 		Ω(issues).Should(ConsistOf(
 			YamlValidationIssue{datatypeNotAllowedForParametersMetadata, 10},
 			YamlValidationIssue{datatypeNotAllowedForParametersMetadata, 22},

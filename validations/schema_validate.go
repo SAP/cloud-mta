@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	propertyExistsErrorMsg = `the "%s" property cannot be used in "%s"`
+	propertyExistsErrorMsg = `the "%s" key is not allowed inside "%s"`
 )
 
 // YamlValidationIssue - specific issue
@@ -50,6 +50,23 @@ func property(propName string, checks ...YamlCheck) YamlCheck {
 	return func(yNode, yParentNode *yaml.Node, path []string) YamlValidationIssues {
 		var issues YamlValidationIssues
 		yPropNode := getPropValueByName(yNode, propName)
+
+		// Will perform all the validations without stopping
+		for _, check := range checks {
+			newIssues := check(yPropNode, yNode, append(path, propName))
+			issues = append(issues, newIssues...)
+		}
+
+		return issues
+	}
+}
+
+// DSL method to execute validations on the name of a sub node(property) of a YAML tree.
+// Can be nested to check properties farther and farther down the tree.
+func propertyName(propName string, checks ...YamlCheck) YamlCheck {
+	return func(yNode, yParentNode *yaml.Node, path []string) YamlValidationIssues {
+		var issues YamlValidationIssues
+		yPropNode := getPropByName(yNode, propName)
 
 		// Will perform all the validations without stopping
 		for _, check := range checks {
