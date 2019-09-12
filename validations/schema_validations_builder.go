@@ -48,6 +48,8 @@ func buildValidationsFromSchema(schema *simpleyaml.Yaml) ([]YamlCheck, []YamlVal
 			}
 			mappingValidations, mappingSchemaIssues := buildValidationsForMapping(mappingNode)
 			schemaIssues = append(schemaIssues, mappingSchemaIssues...)
+			// Only perform validations on the mapping value when it isn't null, unless specified as required
+			mappingValidations, schemaIssues = buildOptionalOrRequiredValidation(schema, mappingValidations, schemaIssues)
 			validations = append(validations, mappingValidations...)
 
 			// type: seq
@@ -73,6 +75,8 @@ func buildValidationsFromSchema(schema *simpleyaml.Yaml) ([]YamlCheck, []YamlVal
 			sequenceItemNode := sequenceNode.GetIndex(0)
 			sequenceValidations, newSchemaIssues := buildValidationsFromSequence(sequenceItemNode)
 			schemaIssues = append(schemaIssues, newSchemaIssues...)
+			// Only perform validations on the sequence values when they aren't null, unless specified as required
+			sequenceValidations, schemaIssues = buildOptionalOrRequiredValidation(schema, sequenceValidations, schemaIssues)
 			validations = append(validations, sequenceValidations...)
 		}
 		// {required: true, pattern: /^[a-z]+$/}
@@ -177,13 +181,13 @@ func buildOptionalOrRequiredValidation(y *simpleyaml.Yaml, validations []YamlChe
 			// The required check must be performed first in the sequence.
 			validationsWithRequiredFirst := append([]YamlCheck{required()}, validations...)
 			validations = []YamlCheck{sequenceFailFast(validationsWithRequiredFirst...)}
-			// When "required" is false, we must only perform additional validations
-			// if the property actually exists, thus we use "optional"
-		} else {
-			// An optional wraps all our other validations.
-			validations = []YamlCheck{optional(validations...)}
+			return validations, schemaIssues
 		}
 	}
+	// When "required" is false or doesn't exist, we must only perform additional validations
+	// if the property actually exists, thus we use "optional"
+	// An optional wraps all our other validations.
+	validations = []YamlCheck{optional(validations...)}
 	return validations, schemaIssues
 }
 
