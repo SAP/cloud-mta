@@ -97,11 +97,27 @@ mapping:
 `, `
 firstName: Donald
 lastName: duck`),
+		Entry("required field inside mapping, when parent is null", `
+type: map
+mapping:
+  inner:
+    type: map
+    mapping:
+      firstName:  {required: true}
+`, `{}`),
 		Entry("Enum value", `
 enum:
   - duck
   - dog
 `, `duck`),
+		Entry("null enum value", `
+type: map
+mapping:
+  animal:
+   enum:
+    - duck
+    - dog
+`, `{}`),
 		Entry("sequence", `
 type: seq
 sequence:
@@ -169,6 +185,13 @@ mapping:
 firstName: Donald
 lastName: duck
 `),
+		Entry("Pattern when value is null", `
+type: map
+mapping:
+   firstName:  {pattern: '/^[a-zA-Z]+$/'}
+`, `
+lastName: duck
+`),
 		Entry("optional", `
 type: map
 mapping:
@@ -202,6 +225,26 @@ mapping:
 firstName: Donald
 lastName: duck
 `, `missing the "age" required property in the root .yaml node`, 2),
+
+		Entry("required mapping field", `
+type: map
+mapping:
+  inner:
+    type: map
+    required: true
+    mapping:
+      firstName: {type: string}
+`, `{}`, `missing the "inner" required property in the root .yaml node`, 1),
+
+		Entry("required mapping field with inner required field", `
+type: map
+mapping:
+  inner:
+    type: map
+    required: true
+    mapping:
+      firstName: {required: true}
+`, `{}`, `missing the "inner" required property in the root .yaml node`, 1),
 
 		Entry("Enum", `
 type: str

@@ -44,6 +44,10 @@ firstName: Donald
 lastName: duck
 `, property("firstName", typeIsNotMapArray())),
 
+		Entry("Type is String when property doesn't exist", `
+lastName: duck
+`, property("firstName", typeIsNotMapArray())),
+
 		Entry("Type Is Bool", `
 name: bisli
 registered: false

@@ -285,6 +285,9 @@ func optional(checks ...YamlCheck) YamlCheck {
 
 func typeIsNotMapArray() YamlCheck {
 	return func(yNode, yParentNode *yaml.Node, path []string) YamlValidationIssues {
+		if yNode == nil {
+			return []YamlValidationIssue{}
+		}
 
 		if yNode.Kind == yaml.SequenceNode || yNode.Kind == yaml.MappingNode {
 			return []YamlValidationIssue{
@@ -355,6 +358,10 @@ func matchesRegExp(pattern string) YamlCheck {
 	regExp, _ := regexp.Compile(pattern)
 
 	return func(yNode, yParentNode *yaml.Node, path []string) YamlValidationIssues {
+		if yNode == nil {
+			return []YamlValidationIssue{}
+		}
+
 		strValue := yNode.Value
 
 		if !regExp.MatchString(strValue) {
@@ -387,6 +394,10 @@ func matchesEnumValues(enumValues []string) YamlCheck {
 	}
 
 	return func(yNode, yParentNode *yaml.Node, path []string) YamlValidationIssues {
+		if yNode == nil {
+			return []YamlValidationIssue{}
+		}
+
 		value := yNode.Value
 		found := false
 		for _, enumValue := range enumValues {
