@@ -1,17 +1,20 @@
 {
-  "name": "mta-services",
+  "name": "mta",
   "version": "0.0.5",
   "description": "[![CircleCI](https://circleci.com/gh/SAP/cloud-mta.svg?style=svg&circle-token=ecedd1dce3592adcd72ee4c61481972c32dcfad7)](https://circleci.com/gh/SAP/cloud-mta) [![Go Report Card](https://goreportcard.com/badge/github.com/SAP/cloud-mta)](https://goreportcard.com/report/github.com/SAP/cloud-mta) [![Coverage Status](https://coveralls.io/repos/github/SAP/cloud-mta/badge.svg?branch=cover)](https://coveralls.io/github/SAP/cloud-mta?branch=cover) ![GitHub license](https://img.shields.io/badge/license-Apache_2.0-blue.svg) ![pre-alpha](https://img.shields.io/badge/Release-pre--alpha-orange.svg)",
   "main": "index.js",
-  "files": [],
-  "goBinary": {
-    "name": "mta",
-    "path": "./bin",
-    "url": "https://github.com/SAP/cloud-mta/releases/download/v{{version}}/cloud-mta_{{version}}_{{platform}}_{{arch}}.tar.gz"
+  "files": [
+    "index.js",
+    "bin"
+  ],
+  "bin": {
+    "mbt": "bin/mta"
   },
   "scripts": {
-    "postinstall": "go-npm install",
-    "preuninstall": "go-npm uninstall"
+    "install": "binwrap-install",
+    "prepare": "binwrap-prepare",
+    "test": "binwrap-test",
+    "prepublish": "npm test"
   },
   "repository": {
     "type": "git",
@@ -24,6 +27,6 @@
   },
   "homepage": "https://github.com/SAP/cloud-mta#readme",
   "dependencies": {
-    "go-npm": "^0.1.9"
+    "binwrap": "^0.2.2"
   }
 }
