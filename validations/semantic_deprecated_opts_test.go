@@ -8,8 +8,7 @@ import (
 )
 
 var _ = Describe("SemanticDeprecatedOpts", func() {
-	It("Sanity", func() {
-		mtaContent := []byte(`
+	mtaContent := []byte(`
 ID: mtahtml5
 _schema-version: '2.1'
 version: 0.0.1
@@ -35,9 +34,23 @@ modules:
      builder: mvn
      maven-opts: 1
 `)
+	It("checkDeprecatedOpts - Sanity", func() {
+
 		mta, _ := mta.Unmarshal(mtaContent)
 		node, _ := getContentNode(mtaContent)
 		errors, warn := checkDeprecatedOpts(mta, node, "", true)
+		Ω(len(errors)).Should(Equal(3))
+		Ω(len(warn)).Should(Equal(0))
+		checkDeprecatedOptError(errors[0], npmOptsYamlField, 11)
+		checkDeprecatedOptError(errors[1], gruntOptsYamlField, 17)
+		checkDeprecatedOptError(errors[2], mavenOptsYamlField, 25)
+	})
+
+	It("checkExtDeprecatedOpts - Sanity", func() {
+
+		mta, _ := mta.UnmarshalExt(mtaContent)
+		node, _ := getContentNode(mtaContent)
+		errors, warn := checkExtDeprecatedOpts(mta, node, "", true)
 		Ω(len(errors)).Should(Equal(3))
 		Ω(len(warn)).Should(Equal(0))
 		checkDeprecatedOptError(errors[0], npmOptsYamlField, 11)
