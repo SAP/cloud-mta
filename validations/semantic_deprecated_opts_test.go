@@ -59,7 +59,7 @@ modules:
      builder: mvn
      maven-opts: 1
 `)
-	
+
 	It("checkDeprecatedOpts - Sanity", func() {
 
 		mta, err := mta.Unmarshal(mtaContent)
