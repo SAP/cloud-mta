@@ -229,13 +229,17 @@ func extendMap(m *map[string]interface{}, meta map[string]MetaData, ext map[stri
 }
 
 func mergeMapKey(m *map[string]interface{}, key string, value interface{}) error {
-	extMapValue, extIsMap := getMapValue(value)
-	mMapValue, mIsMap := getMapValue((*m)[key])
+	extMapValue, extIsMap, _ := getMapValue(value)
+	mMapValue, mIsMap, converted := getMapValue((*m)[key])
 
 	if (*m)[key] == nil || value == nil || (!extIsMap && !mIsMap) {
 		(*m)[key] = value
 	} else if mIsMap && extIsMap {
-		if err := extendMap(&mMapValue, nil, extMapValue); err != nil {
+		err := extendMap(&mMapValue, nil, extMapValue)
+		if converted {
+			(*m)[key] = mMapValue
+		}
+		if err != nil {
 			return errors.Wrapf(err, `"%s"`, key)
 		}
 	} else {
@@ -301,15 +305,17 @@ func (v *chainError) extendBool(m *bool, ext *bool, msg string, args ...interfac
 	return v
 }
 
-func getMapValue(value interface{}) (map[string]interface{}, bool) {
+func getMapValue(value interface{}) (ret map[string]interface{}, isMap bool, converted bool) {
+	converted = false
 	mapValue, isMap := value.(map[string]interface{})
 	if !isMap {
 		interfaceMap, isInterfaceMap := value.(map[interface{}]interface{})
 		if isInterfaceMap {
 			mapValue, isMap = convertMap(interfaceMap)
+			converted = isMap
 		}
 	}
-	return mapValue, isMap
+	return mapValue, isMap, converted
 }
 
 // convertMap converts type map[interface{}]interface{} to map[string]interface{}
