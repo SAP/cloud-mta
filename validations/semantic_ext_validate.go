@@ -29,5 +29,8 @@ func getExtSemanticValidations(exclude string) []checkExtSemantic {
 	if !strings.Contains(exclude, namesValidation) {
 		validations = append(validations, checkSingleExtendNames)
 	}
+	if !strings.Contains(exclude, deprecatedOptsValidation) {
+		validations = append(validations, checkExtDeprecatedOpts)
+	}
 	return validations
 }

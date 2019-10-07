@@ -12,9 +12,9 @@ const (
 	customBuilderDocLink = "https://sap.github.io/cloud-mta-build-tool/configuration/#configuring-the-custom-builder"
 )
 
-func checkDeprecatedOpt(module *mta.Module, buildParamsNode *yaml.Node, optFieldName string) []YamlValidationIssue {
+func checkDeprecatedOpt(buildParams map[string]interface{}, buildParamsNode *yaml.Node, optFieldName string) []YamlValidationIssue {
 
-	if module.BuildParams[optFieldName] != nil {
+	if buildParams[optFieldName] != nil {
 		optsNode := getPropByName(buildParamsNode, optFieldName)
 		return []YamlValidationIssue{{Msg: fmt.Sprintf(deprecatedOptMsg, optFieldName, customBuilderDocLink), Line: optsNode.Line}}
 	}
@@ -29,10 +29,31 @@ func checkDeprecatedOpts(mta *mta.MTA, mtaNode *yaml.Node, source string, strict
 	opts := []string{npmOptsYamlField, gruntOptsYamlField, mavenOptsYamlField}
 
 	for i, module := range mta.Modules {
-		if module.BuildParams != nil {
+		buildParams := module.BuildParams
+		if buildParams != nil {
 			buildParamsNode := getPropValueByName(modulesNode[i], buildParametersYamlField)
 			for _, opt := range opts {
-				issues = append(issues, checkDeprecatedOpt(module, buildParamsNode, opt)...)
+				issues = append(issues, checkDeprecatedOpt(buildParams, buildParamsNode, opt)...)
+			}
+		}
+	}
+
+	return issues, nil
+}
+
+func checkExtDeprecatedOpts(mta *mta.EXT, mtaNode *yaml.Node, source string, strict bool) ([]YamlValidationIssue, []YamlValidationIssue) {
+	var issues []YamlValidationIssue
+
+	modulesNode := getPropContent(mtaNode, modulesYamlField)
+
+	opts := []string{npmOptsYamlField, gruntOptsYamlField, mavenOptsYamlField}
+
+	for i, module := range mta.Modules {
+		buildParams := module.BuildParams
+		if buildParams != nil {
+			buildParamsNode := getPropValueByName(modulesNode[i], buildParametersYamlField)
+			for _, opt := range opts {
+				issues = append(issues, checkDeprecatedOpt(buildParams, buildParamsNode, opt)...)
 			}
 		}
 	}
