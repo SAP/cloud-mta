@@ -36,8 +36,10 @@ modules:
 `)
 	It("checkDeprecatedOpts - Sanity", func() {
 
-		mta, _ := mta.Unmarshal(mtaContent)
-		node, _ := getContentNode(mtaContent)
+		mta, err := mta.Unmarshal(mtaContent)
+		Ω(err).Should(Succeed())
+		node, err := getContentNode(mtaContent)
+		Ω(err).Should(Succeed())
 		errors, warn := checkDeprecatedOpts(mta, node, "", true)
 		Ω(len(errors)).Should(Equal(3))
 		Ω(len(warn)).Should(Equal(0))
@@ -48,8 +50,10 @@ modules:
 
 	It("checkExtDeprecatedOpts - Sanity", func() {
 
-		mta, _ := mta.UnmarshalExt(mtaContent)
-		node, _ := getContentNode(mtaContent)
+		mta, err := mta.UnmarshalExt(mtaContent)
+		Ω(err).Should(Succeed())
+		node, err := getContentNode(mtaContent)
+		Ω(err).Should(Succeed())
 		errors, warn := checkExtDeprecatedOpts(mta, node, "", true)
 		Ω(len(errors)).Should(Equal(3))
 		Ω(len(warn)).Should(Equal(0))
