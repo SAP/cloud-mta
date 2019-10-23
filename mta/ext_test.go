@@ -175,7 +175,7 @@ var _ = Describe("Extension MTA", func() {
 					"a": "aa",
 				}
 				interfaceMapWithOneKey := map[string]interface{}{
-					"b": map[string]interface{}{
+					"b": map[interface{}]interface{}{
 						"d": map[interface{}]interface{}{
 							"e": "xx",
 						},
@@ -2250,6 +2250,7 @@ var _ = Describe("Extension MTA", func() {
 			Ω(err).Should(HaveOccurred())
 			Ω(err.Error()).Should(ContainSubstring(overwriteScalarWithStructuredErrorMsg, "name"))
 		})
+
 	})
 })
 
@@ -2331,7 +2332,7 @@ func checkExtendMap(m map[string]interface{}, ext map[string]interface{}, meta m
 	err := extendMap(&mCopy, meta, ext)
 	Ω(err).Should(Succeed())
 	Ω(meta).Should(Equal(metaBeforeExtendMap))
-	Ω(copyMap(ext)).Should(Equal(extBeforeExtendMap)) // Using copyMap on both because it converts map[interface{}]interface{} to map[string]interface{} internally
+	Ω(ext).Should(Equal(extBeforeExtendMap))
 	Ω(mCopy).Should(Equal(expected))
 }
 
@@ -2345,7 +2346,7 @@ func checkExtendMapFails(m map[string]interface{}, ext map[string]interface{}, m
 	Ω(err).ShouldNot(Succeed())
 	Ω(err.Error()).Should(ContainSubstring(errorMsg, args...))
 	Ω(meta).Should(Equal(metaBeforeExtendMap))
-	Ω(copyMap(ext)).Should(Equal(extBeforeExtendMap)) // Using copyMap on both because it converts map[interface{}]interface{} to map[string]interface{} internally
+	Ω(ext).Should(Equal(extBeforeExtendMap))
 	// Note: mCopy might be changed even if extendMap fails, since the map is merged in-place
 }
 
@@ -2355,8 +2356,31 @@ func copyMap(source map[string]interface{}) map[string]interface{} {
 	}
 	result := make(map[string]interface{})
 	for key, value := range source {
-		if mValue, ok := getMapValue(value); ok {
-			result[key] = copyMap(mValue)
+		if mValue, ok, converted := getMapValue(value); ok {
+			if converted {
+				result[key] = copyInterfaceMap(value.(map[interface{}]interface{}))
+			} else {
+				result[key] = copyMap(mValue)
+			}
+		} else {
+			result[key] = value
+		}
+	}
+	return result
+}
+
+func copyInterfaceMap(source map[interface{}]interface{}) map[interface{}]interface{} {
+	if source == nil {
+		return nil
+	}
+	result := make(map[interface{}]interface{})
+	for key, value := range source {
+		if mValue, ok, converted := getMapValue(value); ok {
+			if converted {
+				result[key] = copyInterfaceMap(value.(map[interface{}]interface{}))
+			} else {
+				result[key] = copyMap(mValue)
+			}
 		} else {
 			result[key] = value
 		}
