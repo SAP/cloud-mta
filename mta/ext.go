@@ -27,7 +27,7 @@ const (
 	unknownModuleHookErrorMsg                 = `the "%s" hook in the "%s" module is defined in the MTA extension but not in the "mta.yaml" file`
 	unknownModuleErrorMsg                     = `the "%s" module is defined in the MTA extension but not in the "mta.yaml" file`
 
-	mergeResourceActiveErrorMsg             = `could not merge the "active" property of the "%s" resource`
+	mergeResourceActiveErrorMsg             = `could not merge the 'active' property of the "%s" resource`
 	mergeResourcePropertiesErrorMsg         = `could not merge the properties of the "%s" resource`
 	mergeResourceParametersErrorMsg         = `could not merge the parameters of the "%s" resource`
 	mergeResourceRequiresPropertiesErrorMsg = `could not merge the properties of "%s" in the 'requires' section of the "%s" resource`
