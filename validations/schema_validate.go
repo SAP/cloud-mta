@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	propertyExistsErrorMsg = `the "%s" key is not allowed inside "%s"`
+	propertyExistsErrorMsg = `the "%s" key is not allowed inside the "%s"`
 )
 
 // YamlValidationIssue - specific issue

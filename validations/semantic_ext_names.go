@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	nameAlreadyExtendedMsg = `the "%s" %s is already extended in this file; %s %s was found with the same name on line %d`
+	nameAlreadyExtendedMsg = `the "%s" %s has already been extended in this file; %s %s with the same name was found on line %d`
 )
 
 // checkSingleExtendNames validates that each object (module, resource, hook inside module, provides inside module, requires inside parent wherever used) is extended only once

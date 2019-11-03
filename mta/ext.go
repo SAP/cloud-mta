@@ -7,37 +7,37 @@ import (
 )
 
 const (
-	mergeExtErrorMsg = `could not merge MTA extension with the "%s" ID`
+	mergeExtErrorMsg = `could not merge the MTA extension with the "%s" ID`
 
 	mergeRootParametersErrorMsg = `could not merge parameters from MTA extension with ID "%s"`
 
 	mergeModulePropertiesErrorMsg             = `could not merge the properties of the "%s" module`
 	mergeModuleParametersErrorMsg             = `could not merge the parameters of the "%s" module`
 	mergeModuleBuildParametersErrorMsg        = `could not merge the build parameters of the "%s" module`
-	mergeModuleIncludesErrorMsg               = `could not merge the includes of the "%s" module`
-	mergeModuleProvidesPropertiesErrorMsg     = `could not merge the properties of the "%s" provides in the "%s" module`
-	mergeModuleRequiresPropertiesErrorMsg     = `could not merge the properties of the "%s" requires in the "%s" module`
-	mergeModuleRequiresParametersErrorMsg     = `could not merge the parameters of the "%s" requires in the "%s" module`
+	mergeModuleIncludesErrorMsg               = `could not merge the 'includes' of the "%s" module`
+	mergeModuleProvidesPropertiesErrorMsg     = `could not merge the properties for "%s" in the 'provides' section of the "%s" module`
+	mergeModuleRequiresPropertiesErrorMsg     = `could not merge the properties for "%s" in the 'requires' section of the "%s" module`
+	mergeModuleRequiresParametersErrorMsg     = `could not merge the parameters for "%s" in the 'requires' section of the "%s" module`
 	mergeModuleHookParametersErrorMsg         = `could not merge the parameters of the "%s" hook in the "%s" module`
-	mergeModuleHookRequiresPropertiesErrorMsg = `could not merge the properties of the "%s" requires in the "%s" hook of the "%s" module`
-	mergeModuleHookRequiresParametersErrorMsg = `could not merge the parameters of the "%s" requires in the "%s" hook of the "%s" module`
-	unknownModuleHookRequiresErrorMsg         = `the "%s" requires in the "%s" hook of the "%s" module is defined in the MTA extension but not in the "mta.yaml" file`
-	unknownModuleProvidesErrorMsg             = `the "%s" provides in the "%s" module is defined in the MTA extension but not in the "mta.yaml" file`
-	unknownModuleRequiresErrorMsg             = `the "%s" requires in the "%s" module is defined in the MTA extension but not in the "mta.yaml" file`
+	mergeModuleHookRequiresPropertiesErrorMsg = `could not merge the properties for "%s" in the 'requires' section of the "%s" hook of the "%s" module`
+	mergeModuleHookRequiresParametersErrorMsg = `could not merge the parameters for "%s" in the 'requires' section of the "%s" hook of the "%s" module`
+	unknownModuleHookRequiresErrorMsg         = `"%s" in the 'requires' section of the "%s" hook of the "%s" module is defined in the MTA extension but not in the "mta.yaml" file`
+	unknownModuleProvidesErrorMsg             = `"%s" in the 'provides' section of the "%s" module is defined in the MTA extension but not in the "mta.yaml" file`
+	unknownModuleRequiresErrorMsg             = `"%s" in the 'requires' section of the "%s" module is defined in the MTA extension but not in the "mta.yaml" file`
 	unknownModuleHookErrorMsg                 = `the "%s" hook in the "%s" module is defined in the MTA extension but not in the "mta.yaml" file`
 	unknownModuleErrorMsg                     = `the "%s" module is defined in the MTA extension but not in the "mta.yaml" file`
 
-	mergeResourceActiveErrorMsg             = `could not merge the active property of the "%s" resource`
+	mergeResourceActiveErrorMsg             = `could not merge the 'active' property of the "%s" resource`
 	mergeResourcePropertiesErrorMsg         = `could not merge the properties of the "%s" resource`
 	mergeResourceParametersErrorMsg         = `could not merge the parameters of the "%s" resource`
-	mergeResourceRequiresPropertiesErrorMsg = `could not merge the properties of the "%s" requires in the "%s" resource`
-	mergeResourceRequiresParametersErrorMsg = `could not merge the parameters of the "%s" requires in the "%s" resource`
-	unknownResourceRequiresErrorMsg         = `the "%s" requires in the "%s" resource is defined in the MTA extension but not in the "mta.yaml" file`
+	mergeResourceRequiresPropertiesErrorMsg = `could not merge the properties of "%s" in the 'requires' section of the "%s" resource`
+	mergeResourceRequiresParametersErrorMsg = `could not merge the parameters of "%s" in the 'requires' section of the "%s" resource`
+	unknownResourceRequiresErrorMsg         = `"%s" in the 'requires' section of the "%s" resource is defined in the MTA extension but not in the "mta.yaml" file`
 	unknownResourceErrorMsg                 = `the "%s" resource is defined in the MTA extension but not in the "mta.yaml" file`
 
-	overwriteStructuredWithScalarErrorMsg = `"%s": cannot overwrite a structured value with a scalar value`
-	overwriteScalarWithStructuredErrorMsg = `"%s": cannot overwrite a scalar value with a structured value`
-	overwriteNonOverwritableErrorMsg      = `the "%s" field is not overwritable`
+	overwriteStructuredWithScalarErrorMsg = `"%s": could not overwrite a structured value with a scalar value`
+	overwriteScalarWithStructuredErrorMsg = `"%s": could not overwrite a scalar value with a structured value`
+	overwriteNonOverwritableErrorMsg      = `the "%s" field cannot be overwritten`
 )
 
 // UnmarshalExt returns a reference to the EXT object from a byte array.

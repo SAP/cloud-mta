@@ -10,7 +10,7 @@ import (
 const (
 	unknownNameInMetadataMsg             = `metadata cannot be defined for the "%s" undefined %s`
 	emptyRequiredFieldMsg                = `the value for the required and non-overwritable "%s" %s cannot be empty`
-	propertiesMetadataWithListOrGroupMsg = `properties-metadata cannot be used in the context of list and group`
+	propertiesMetadataWithListOrGroupMsg = `the "properties-metadata" cannot be used in the context of list and group`
 
 	// Key for mapTypes map
 	mapTypeParameters = iota

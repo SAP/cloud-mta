@@ -15,7 +15,7 @@ const (
 
 	mtaextExtension = ".mtaext"
 
-	badExtensionErrorMsg     = `MTA extension descriptor file name must have the "mtaext" file extension`
+	badExtensionErrorMsg     = `the MTA extension descriptor file name must have the "mtaext" file extension`
 	couldNotValidateErrorMsg = `could not validate the "%s" file`
 	validationErrorsMsg      = "the \"%s\" file is not valid:\n%s"
 )
