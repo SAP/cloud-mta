@@ -85,7 +85,7 @@ func getPropByName(node *yaml.Node, name string) *yaml.Node {
 
 	content := node.Content
 	if content == nil && node.Alias != nil {
-	   content = node.Alias.Content
+		content = node.Alias.Content
 	}
 
 	if content == nil {
