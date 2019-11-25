@@ -270,7 +270,12 @@ var _ = DescribeTable("GetLiteralStringValue", func(data string, matcher GomegaM
 var _ = Describe("getPropByName", func() {
 	var data = []byte(`
 firstName: Hello
-lastName: World`)
+lastName: World
+aliases:
+  - &alias1
+    veryLastName: Bye
+prop1: *alias1
+   `)
 	It("sanity", func() {
 		node, _ := getContentNode([]byte(data))
 		node = getPropByName(node, "lastName")
@@ -283,6 +288,21 @@ lastName: World`)
 	It("property not exists", func() {
 		node, _ := getContentNode([]byte(data))
 		Ω(getPropByName(node, "x")).Should(BeNil())
+	})
+	It("aliases usage", func() {
+		node, _ := getContentNode([]byte(data))
+		prop1 := getPropValueByName(node, "prop1")
+		Ω(prop1).ShouldNot(BeNil())
+		Ω(getPropByName(prop1, "veryLastName")).ShouldNot(BeNil())
+		Ω(getPropByName(prop1, "y")).Should(BeNil())
+	})
+	It("aliases usage; aliases content is nil", func() {
+		node, _ := getContentNode([]byte(data))
+		prop := getPropValueByName(node, "prop1")
+		Ω(prop).ShouldNot(BeNil())
+		prop.Alias = nil
+		prop.Content = nil
+		Ω(getPropByName(prop, "veryLastName")).Should(BeNil())
 	})
 })
 

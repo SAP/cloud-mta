@@ -79,7 +79,16 @@ func propertyName(propName string, checks ...YamlCheck) YamlCheck {
 }
 
 func getPropByName(node *yaml.Node, name string) *yaml.Node {
-	if node == nil || node.Content == nil {
+	if node == nil {
+		return nil
+	}
+
+	content := node.Content
+	if content == nil && node.Alias != nil {
+	   content = node.Alias.Content
+	}
+
+	if content == nil {
 		return nil
 	}
 
@@ -87,7 +96,7 @@ func getPropByName(node *yaml.Node, name string) *yaml.Node {
 	key := true
 
 	// properties are listed in the Content of node as slice of key, value, key, value,...
-	for _, propNode := range node.Content {
+	for _, propNode := range content {
 		// current is key and its value equals to searched name => key found
 		if key && propNode.Value == name {
 			return propNode
