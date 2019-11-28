@@ -87,6 +87,32 @@ modules:
 		checkDeprecatedOptError(errors[1], gruntOptsYamlField, 16)
 		checkDeprecatedOptError(errors[2], mavenOptsYamlField, 23)
 	})
+
+	It("aliases usage", func() {
+		mtaContent := []byte(`
+_schema1-version: 3.1.0
+ID: app
+version: 1.0.0
+
+parameters:
+  defaults:
+    - &build-parameters-app
+      npm-opts:
+        pre-param: ci
+
+modules:
+  - name: mod1
+    type: html5
+    path: path1
+    build-parameters: *build-parameters-app
+`)
+		mta, _ := mta.Unmarshal(mtaContent)
+		node, _ := getContentNode(mtaContent)
+		errors, warn := checkDeprecatedOpts(mta, node, "", true)
+		Ω(len(errors)).Should(Equal(1))
+		Ω(len(warn)).Should(Equal(0))
+		checkDeprecatedOptError(errors[0], npmOptsYamlField, 9)
+	})
 })
 
 func checkDeprecatedOptError(issue YamlValidationIssue, optName string, line int) {
