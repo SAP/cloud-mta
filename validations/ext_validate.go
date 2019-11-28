@@ -2,7 +2,6 @@ package validate
 
 import (
 	"gopkg.in/yaml.v3"
-	"path/filepath"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -11,11 +10,6 @@ import (
 )
 
 const (
-	filenameValidation = "filename"
-
-	mtaextExtension = ".mtaext"
-
-	badExtensionErrorMsg     = `the MTA extension descriptor file name must have the "mtaext" file extension`
 	couldNotValidateErrorMsg = `could not validate the "%s" file`
 	validationErrorsMsg      = "the \"%s\" file is not valid:\n%s"
 )
@@ -52,39 +46,20 @@ func Mtaext(projectPath, extPath string,
 	return "", nil
 }
 
-func validateExtFileName(name string, strict bool) (errIssues YamlValidationIssues, warnIssues YamlValidationIssues) {
-	var issues YamlValidationIssues
-
-	if filepath.Ext(name) != mtaextExtension {
-		issues = append(issues, YamlValidationIssue{Msg: badExtensionErrorMsg, Line: 0})
-	}
-
-	if strict {
-		return issues, nil
-	}
-	return nil, issues
-}
-
 // validateExt validates the MTA extension descriptor
 func validateExt(yamlContent []byte, projectPath string, extFileName string,
 	validateSchema, validateSemantic, strict bool, exclude string) (errIssues YamlValidationIssues, warnIssues YamlValidationIssues) {
-
-	// This is a special case semantic validation, on the file name and not its content
-	if validateSemantic && !strings.Contains(exclude, filenameValidation) {
-		errIssues, warnIssues = validateExtFileName(extFileName, strict)
-	}
-
 	mtaExt, err := mta.UnmarshalExt(yamlContent)
 
 	if strict && err != nil {
-		errIssues = append(errIssues, convertError(err)...)
+		errIssues = convertError(err)
 	} else if err != nil {
-		warnIssues = append(warnIssues, convertError(err)...)
+		warnIssues = convertError(err)
 	}
 
 	extNode, err := getContentNode(yamlContent)
 	if err != nil {
-		errIssues = convertError(err)
+		errIssues = append(errIssues, convertError(err)...)
 	}
 
 	if validateSchema {
