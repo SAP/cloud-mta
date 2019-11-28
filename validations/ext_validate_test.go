@@ -104,7 +104,7 @@ desc: MTA DESCRIPTOR SCHEMA
 
 	})
 
-	It("bad file extension", func() {
+	It("file extension which is not mtaext does not cause an error", func() {
 		err, warn := validateExt([]byte(`
 ID: mymtaext
 extends: somemta
@@ -112,33 +112,8 @@ _schema-version: '3.1'
 `), getTestPath("mtahtml5"), "ext.yaml",
 			false, true, true, "")
 		Ω(warn).Should(BeNil())
-		Ω(err).Should(ConsistOf(YamlValidationIssue{badExtensionErrorMsg, 0}))
+		Ω(err).Should(BeNil())
 	})
-
-	DescribeTable("validateExtFileName", func(filename string, expectedSuccess bool) {
-		if expectedSuccess {
-			errIssues, warnIssues := validateExtFileName(filename, true)
-			Ω(errIssues).Should(BeNil())
-			Ω(warnIssues).Should(BeNil())
-			errIssues, warnIssues = validateExtFileName(filename, false)
-			Ω(errIssues).Should(BeNil())
-			Ω(warnIssues).Should(BeNil())
-		} else {
-			errIssues, warnIssues := validateExtFileName(filename, true)
-			Ω(errIssues).ShouldNot(BeNil())
-			Ω(len(errIssues)).Should(Equal(1))
-			Ω(warnIssues).Should(BeNil())
-			errIssues, warnIssues = validateExtFileName(filename, false)
-			Ω(errIssues).Should(BeNil())
-			Ω(warnIssues).ShouldNot(BeNil())
-			Ω(len(warnIssues)).Should(Equal(1))
-		}
-	},
-		Entry("file name is mtaext", "mtaext", false),
-		Entry("file name has mtaext extension", "a.mtaext", true),
-		Entry("file name has yaml extension", "ext.yaml", false),
-		Entry("file name is mtaext and has yaml extension", "mtaext.yaml", false),
-	)
 
 	It("Unallowed fields in extension file return errors", func() {
 		err, warn := validateExt([]byte(`
