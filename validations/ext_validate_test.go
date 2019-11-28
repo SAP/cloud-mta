@@ -71,6 +71,23 @@ var _ = Describe("MTAEXT validation tests", func() {
 			Ω(err[0].Msg).Should(ContainSubstring("cannot unmarshal"))
 		})
 
+		It("Only returns unmarshaling error once", func() {
+			err, warn := validateExt([]byte(`- bad Yaml
+a b`), getTestPath("mtahtml5"), "my.mtaext",
+				true, false, true, "")
+			Ω(warn).Should(BeNil())
+			Ω(err).ShouldNot(BeNil())
+
+			// Check we don't get the same error twice
+			errorsMap := make(map[string]interface{})
+			for _, value := range err {
+				if _, ok := errorsMap[value.Msg]; ok {
+					Ω(ok).Should(BeFalse(), fmt.Sprintf("Got the same message twice: %s", value.Msg))
+				}
+				errorsMap[value.Msg] = nil
+			}
+		})
+
 		It("Empty mta content", func() {
 			err, warn := validateExt([]byte(""), "a.mtaext", getTestPath("mtahtml5"),
 				true, false, true, "")

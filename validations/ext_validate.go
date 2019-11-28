@@ -49,17 +49,18 @@ func Mtaext(projectPath, extPath string,
 // validateExt validates the MTA extension descriptor
 func validateExt(yamlContent []byte, projectPath string, extFileName string,
 	validateSchema, validateSemantic, strict bool, exclude string) (errIssues YamlValidationIssues, warnIssues YamlValidationIssues) {
-	mtaExt, err := mta.UnmarshalExt(yamlContent)
+	extNode, err := getContentNode(yamlContent)
+	if err != nil {
+		errIssues = convertError(err)
+	}
 
+	// Errors from this unmarshal include those from getContentNode and have more validations, so they should override
+	// the previous errors
+	mtaExt, err := mta.UnmarshalExt(yamlContent)
 	if strict && err != nil {
 		errIssues = convertError(err)
 	} else if err != nil {
 		warnIssues = convertError(err)
-	}
-
-	extNode, err := getContentNode(yamlContent)
-	if err != nil {
-		errIssues = append(errIssues, convertError(err)...)
 	}
 
 	if validateSchema {
