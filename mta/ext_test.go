@@ -9,7 +9,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func boolPtr(b bool) *bool{
+func boolPtr(b bool) *bool {
 	return &b
 }
 func falsePtr() *bool {
@@ -18,6 +18,7 @@ func falsePtr() *bool {
 func truePtr() *bool {
 	return boolPtr(true)
 }
+
 var _ = Describe("Extension MTA", func() {
 	var _ = Describe("UnmarshalExt", func() {
 		It("Sanity", func() {
@@ -1749,7 +1750,7 @@ var _ = Describe("Extension MTA", func() {
 					},
 				}))
 			})
-			FIt("overrides the active field when one of the fields is nil", func() {
+			It("overrides the active field when one of the fields is nil", func() {
 				mtaObj := MTA{
 					Resources: []*Resource{
 						{
