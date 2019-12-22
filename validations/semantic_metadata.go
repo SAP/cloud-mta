@@ -81,7 +81,7 @@ func checkNoEmptyRequiredFields(metadata map[string]mta.MetaData, m map[string]i
 		for key, value := range m {
 			// If there's no metadata for the key we don't perform this check (since it's overwritable by default)
 			if meta, ok := metadata[key]; ok {
-				if !meta.Optional && !meta.OverWritable && value == nil {
+				if !isPropertyOptional(meta.Optional) && !isPropertyOverWritable(meta.OverWritable) && value == nil {
 					keyNode := getPropByName(mapNode, key)
 					issues = append(issues, YamlValidationIssue{Msg: fmt.Sprintf(emptyRequiredFieldMsg, key, mapTypes[mapType].entityKind), Line: keyNode.Line})
 				}
@@ -89,6 +89,20 @@ func checkNoEmptyRequiredFields(metadata map[string]mta.MetaData, m map[string]i
 		}
 	}
 	return issues
+}
+
+func isPropertyOverWritable(value *bool) bool {
+	if value == nil {
+		return true
+	}
+	return *value
+}
+
+func isPropertyOptional(value *bool) bool {
+	if value == nil {
+		return false
+	}
+	return *value
 }
 
 func checkPropertiesMetadataWithListOrGroup(mapType int, metadataNodeName *yaml.Node, parentNode *yaml.Node, issues []YamlValidationIssue) []YamlValidationIssue {

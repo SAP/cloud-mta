@@ -202,7 +202,10 @@ func mergeRequires(requires []Requires, extRequiresProvider requiresProvider, un
 func isFieldOverWritable(field string, meta map[string]MetaData, m map[string]interface{}) bool {
 	if meta != nil && m[field] != nil {
 		if metaData, exists := meta[field]; exists {
-			return metaData.OverWritable
+			if metaData.OverWritable == nil {
+				return true
+			}
+			return *metaData.OverWritable
 		}
 	}
 	return true
