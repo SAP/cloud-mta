@@ -147,7 +147,7 @@ func mergeResources(mtaObj MTA, mtaExtResources []*ResourceExt) error {
 	for _, extResource := range mtaExtResources {
 		if resource := mtaObj.GetResourceByName(extResource.Name); resource != nil {
 			err := chain().
-				extendBool(&resource.Active, &extResource.Active, mergeResourceActiveErrorMsg, resource.Name).
+				extendBoolPtr(&resource.Active, &extResource.Active, mergeResourceActiveErrorMsg, resource.Name).
 				extendMap(&resource.Properties, resource.PropertiesMetaData, extResource.Properties, mergeResourcePropertiesErrorMsg, resource.Name).
 				extendMap(&resource.Parameters, resource.ParametersMetaData, extResource.Parameters, mergeResourceParametersErrorMsg, resource.Name).
 				err
@@ -262,9 +262,9 @@ func extendIncludes(m *[]Includes, ext []Includes) {
 	}
 }
 
-// extendBool extends bool with element of mta extension bool
-func extendBool(m *bool, ext *bool) {
-	if ext != nil {
+// extendBoolPtr extends *bool with element of mta extension *bool
+func extendBoolPtr(m **bool, ext **bool) {
+	if ext != nil && *ext != nil {
 		*m = *ext
 	}
 }
@@ -297,11 +297,11 @@ func (v *chainError) extendIncludes(m *[]Includes, ext []Includes, msg string, a
 	return v
 }
 
-func (v *chainError) extendBool(m *bool, ext *bool, msg string, args ...interface{}) *chainError {
+func (v *chainError) extendBoolPtr(m **bool, ext **bool, msg string, args ...interface{}) *chainError {
 	if v.err != nil {
 		return v
 	}
-	extendBool(m, ext)
+	extendBoolPtr(m, ext)
 	return v
 }
 

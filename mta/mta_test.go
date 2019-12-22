@@ -1,7 +1,6 @@
 package mta
 
 import (
-	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -168,7 +167,7 @@ var _ = Describe("Mta", func() {
 				Name:     "plugins",
 				Type:     "configuration",
 				Optional: true,
-				Active:   false,
+				Active:   falsePtr(),
 				Requires: []Requires{
 					{
 						Name: "scheduler_api",
@@ -253,15 +252,32 @@ var _ = Describe("Mta", func() {
 
 		var _ = Describe("Parsing", func() {
 			It("Modules parsing - sanity", func() {
-				mtaFile, _ := ioutil.ReadFile("./testdata/mta.yaml")
+				mtaFile, err := ioutil.ReadFile("./testdata/mta.yaml")
+				Ω(err).Should(Succeed())
 				// Unmarshal file
-				oMta := &MTA{}
-				Ω(yaml.Unmarshal(mtaFile, oMta)).Should(Succeed())
+				oMta, err := Unmarshal(mtaFile)
+				Ω(err).Should(Succeed())
 				Ω(oMta.Modules).Should(HaveLen(2))
 				Ω(oMta.GetModules()).Should(Equal(modules))
-
 			})
+			It("Resource parsing - active", func() {
+				mtaFile, err := ioutil.ReadFile("./testdata/mtaResourceActive.yaml")
+				Ω(err).Should(Succeed())
+				// Unmarshal file
+				oMta, err := Unmarshal(mtaFile)
+				Ω(err).Should(Succeed())
+				resources := oMta.GetResources()
+				Ω(resources).Should(HaveLen(3))
 
+				Ω(resources[0].Name).Should(Equal("defaultActive"))
+				Ω(resources[0].Active).Should(BeNil())
+				Ω(resources[1].Name).Should(Equal("activeIsFalse"))
+				Ω(resources[1].Active).ShouldNot(BeNil())
+				Ω(*resources[1].Active).Should(BeFalse())
+				Ω(resources[2].Name).Should(Equal("activeIsTrue"))
+				Ω(resources[2].Active).ShouldNot(BeNil())
+				Ω(*resources[2].Active).Should(BeTrue())
+			})
 		})
 
 		var _ = Describe("Get methods on MTA", func() {

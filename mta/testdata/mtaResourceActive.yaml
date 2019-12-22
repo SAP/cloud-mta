@@ -1,0 +1,1 @@
+_schema-version: "3.3"ID: com.acme.schedulingversion: 1.0.0resources:- name: defaultActive  type: postgresql- name: activeIsFalse  type: configuration  optional: true  active: false- name: activeIsTrue  type: configuration  optional: true  active: true
