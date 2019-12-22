@@ -1,7 +1,6 @@
 package mta
 
 import (
-	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -27,8 +26,8 @@ var _ = Describe("Mta", func() {
 			},
 			PropertiesMetaData: map[string]MetaData{
 				"backend_type": {
-					Optional:     &falseVar,
-					OverWritable: &trueVar,
+					Optional:     falsePtr(),
+					OverWritable: truePtr(),
 					Datatype:     "str",
 				},
 			},
@@ -38,8 +37,8 @@ var _ = Describe("Mta", func() {
 			},
 			ParametersMetaData: map[string]MetaData{
 				"domain": {
-					Optional:     &falseVar,
-					OverWritable: &trueVar,
+					Optional:     falsePtr(),
+					OverWritable: truePtr(),
 				},
 			},
 			Includes: []Includes{
@@ -57,8 +56,8 @@ var _ = Describe("Mta", func() {
 					},
 					PropertiesMetaData: map[string]MetaData{
 						"url": {
-							Optional:     &trueVar,
-							OverWritable: &trueVar,
+							Optional:     truePtr(),
+							OverWritable: truePtr(),
 						},
 					},
 				},
@@ -70,8 +69,8 @@ var _ = Describe("Mta", func() {
 					},
 					PropertiesMetaData: map[string]MetaData{
 						"url": {
-							Optional:     &trueVar,
-							OverWritable: &falseVar,
+							Optional:     truePtr(),
+							OverWritable: falsePtr(),
 						},
 					},
 				},
@@ -88,7 +87,7 @@ var _ = Describe("Mta", func() {
 					},
 					PropertiesMetaData: map[string]MetaData{
 						"scheduler_url": {
-							Optional: &falseVar,
+							Optional: falsePtr(),
 						},
 					},
 					Includes: []Includes{
@@ -167,7 +166,7 @@ var _ = Describe("Mta", func() {
 				Name:     "plugins",
 				Type:     "configuration",
 				Optional: true,
-				Active:   false,
+				Active:   falsePtr(),
 				Requires: []Requires{
 					{
 						Name: "scheduler_api",
@@ -196,8 +195,8 @@ var _ = Describe("Mta", func() {
 				},
 				ParametersMetaData: map[string]MetaData{
 					"filter": {
-						Optional:     &falseVar,
-						OverWritable: &falseVar,
+						Optional:     falsePtr(),
+						OverWritable: falsePtr(),
 					},
 				},
 				Properties: map[string]interface{}{
@@ -206,7 +205,7 @@ var _ = Describe("Mta", func() {
 				},
 				PropertiesMetaData: map[string]MetaData{
 					"plugin_name": {
-						Optional: &trueVar,
+						Optional: truePtr(),
 					},
 				},
 			},
@@ -221,7 +220,7 @@ var _ = Describe("Mta", func() {
 				},
 				ParametersMetaData: map[string]MetaData{
 					"buildpack": {
-						Optional:     &falseVar,
+						Optional:     falsePtr(),
 						OverWritable: nil,
 					},
 				},
@@ -240,7 +239,7 @@ var _ = Describe("Mta", func() {
 				},
 				ParametersMetaData: map[string]MetaData{
 					"service-plan": {
-						Optional:     &falseVar,
+						Optional:     falsePtr(),
 						OverWritable: nil,
 					},
 				},
@@ -251,15 +250,32 @@ var _ = Describe("Mta", func() {
 
 		var _ = Describe("Parsing", func() {
 			It("Modules parsing - sanity", func() {
-				mtaFile, _ := ioutil.ReadFile("./testdata/mta.yaml")
+				mtaFile, err := ioutil.ReadFile("./testdata/mta.yaml")
+				Ω(err).Should(Succeed())
 				// Unmarshal file
-				oMta := &MTA{}
-				Ω(yaml.Unmarshal(mtaFile, oMta)).Should(Succeed())
+				oMta, err := Unmarshal(mtaFile)
+				Ω(err).Should(Succeed())
 				Ω(oMta.Modules).Should(HaveLen(2))
 				Ω(oMta.GetModules()).Should(Equal(modules))
-
 			})
+			It("Resource parsing - active", func() {
+				mtaFile, err := ioutil.ReadFile("./testdata/mtaResourceActive.yaml")
+				Ω(err).Should(Succeed())
+				// Unmarshal file
+				oMta, err := Unmarshal(mtaFile)
+				Ω(err).Should(Succeed())
+				resources := oMta.GetResources()
+				Ω(resources).Should(HaveLen(3))
 
+				Ω(resources[0].Name).Should(Equal("defaultActive"))
+				Ω(resources[0].Active).Should(BeNil())
+				Ω(resources[1].Name).Should(Equal("activeIsFalse"))
+				Ω(resources[1].Active).ShouldNot(BeNil())
+				Ω(*resources[1].Active).Should(BeFalse())
+				Ω(resources[2].Name).Should(Equal("activeIsTrue"))
+				Ω(resources[2].Active).ShouldNot(BeNil())
+				Ω(*resources[2].Active).Should(BeTrue())
+			})
 		})
 
 		var _ = Describe("Get methods on MTA", func() {
