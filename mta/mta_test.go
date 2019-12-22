@@ -88,8 +88,7 @@ var _ = Describe("Mta", func() {
 					},
 					PropertiesMetaData: map[string]MetaData{
 						"scheduler_url": {
-							Optional:     &falseVar,
-							OverWritable: &trueVar,
+							Optional: &falseVar,
 						},
 					},
 					Includes: []Includes{
@@ -207,8 +206,7 @@ var _ = Describe("Mta", func() {
 				},
 				PropertiesMetaData: map[string]MetaData{
 					"plugin_name": {
-						Optional:     &trueVar,
-						OverWritable: &trueVar,
+						Optional: &trueVar,
 					},
 				},
 			},
@@ -224,7 +222,7 @@ var _ = Describe("Mta", func() {
 				ParametersMetaData: map[string]MetaData{
 					"buildpack": {
 						Optional:     &falseVar,
-						OverWritable: &trueVar,
+						OverWritable: nil,
 					},
 				},
 				Properties: map[string]interface{}{
@@ -243,7 +241,7 @@ var _ = Describe("Mta", func() {
 				ParametersMetaData: map[string]MetaData{
 					"service-plan": {
 						Optional:     &falseVar,
-						OverWritable: &trueVar,
+						OverWritable: nil,
 					},
 				},
 			},
