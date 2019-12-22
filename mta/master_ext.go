@@ -50,7 +50,7 @@ type ResourceExt struct {
 	// property names and values make up the configuration data which is to be provided to requiring modules at runtime
 	Properties map[string]interface{} `yaml:"properties,omitempty"`
 	// If a resource is declared to be active, it is allocated and bound according to declared requirements
-	Active bool `yaml:"active,omitempty"`
+	Active *bool `yaml:"active,omitempty"`
 	// list of names either matching a resource name or a name provided by another module within the same MTA
 	Requires []Requires `yaml:"requires,omitempty" json:"requires,omitempty"`
 }

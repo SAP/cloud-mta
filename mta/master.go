@@ -121,7 +121,7 @@ type Resource struct {
 	// A resource can be declared to be optional, if the MTA can compensate for its non-existence
 	Optional bool `yaml:"optional,omitempty" json:"optional,omitempty"`
 	// If a resource is declared to be active, it is allocated and bound according to declared requirements
-	Active bool `yaml:"active,omitempty" json:"active,omitempty"`
+	Active *bool `yaml:"active,omitempty" json:"active,omitempty"`
 	// list of names either matching a resource name or a name provided by another module within the same MTA
 	Requires []Requires `yaml:"requires,omitempty" json:"requires,omitempty"`
 }

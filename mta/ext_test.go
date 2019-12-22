@@ -9,6 +9,15 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+func boolPtr(b bool) *bool{
+	return &b
+}
+func falsePtr() *bool {
+	return boolPtr(false)
+}
+func truePtr() *bool {
+	return boolPtr(true)
+}
 var _ = Describe("Extension MTA", func() {
 	var _ = Describe("UnmarshalExt", func() {
 		It("Sanity", func() {
@@ -19,6 +28,9 @@ var _ = Describe("Extension MTA", func() {
 			m, err := UnmarshalExt(content)
 			Ω(err).Should(Succeed())
 			Ω(len(m.Modules)).Should(Equal(1))
+			Ω(len(m.Resources)).Should(Equal(1))
+			Ω(m.Resources[0].Active).ShouldNot(BeNil())
+			Ω(*m.Resources[0].Active).Should(BeFalse())
 		})
 		It("Invalid content", func() {
 			_, err := UnmarshalExt([]byte("wrong mtaExt"))
@@ -1688,11 +1700,11 @@ var _ = Describe("Extension MTA", func() {
 					Resources: []*Resource{
 						{
 							Name:   "rb",
-							Active: false,
+							Active: falsePtr(),
 						},
 						{
 							Name:   "rc",
-							Active: true,
+							Active: truePtr(),
 						},
 					},
 				}
@@ -1700,11 +1712,11 @@ var _ = Describe("Extension MTA", func() {
 					Resources: []*ResourceExt{
 						{
 							Name:   "rc",
-							Active: false,
+							Active: falsePtr(),
 						},
 						{
 							Name:   "rb",
-							Active: true,
+							Active: truePtr(),
 						},
 					},
 				}
@@ -1716,11 +1728,11 @@ var _ = Describe("Extension MTA", func() {
 					Resources: []*Resource{
 						{
 							Name:   "rb",
-							Active: true,
+							Active: truePtr(),
 						},
 						{
 							Name:   "rc",
-							Active: false,
+							Active: falsePtr(),
 						},
 					},
 				}))
@@ -1728,11 +1740,113 @@ var _ = Describe("Extension MTA", func() {
 					Resources: []*ResourceExt{
 						{
 							Name:   "rc",
-							Active: false,
+							Active: falsePtr(),
 						},
 						{
 							Name:   "rb",
-							Active: true,
+							Active: truePtr(),
+						},
+					},
+				}))
+			})
+			FIt("overrides the active field when one of the fields is nil", func() {
+				mtaObj := MTA{
+					Resources: []*Resource{
+						{
+							Name:   "rb",
+							Active: nil,
+						},
+						{
+							Name:   "rc",
+							Active: nil,
+						},
+						{
+							Name:   "rd",
+							Active: falsePtr(),
+						},
+						{
+							Name:   "re",
+							Active: truePtr(),
+						},
+						{
+							Name:   "rf",
+							Active: nil,
+						},
+					},
+				}
+				extMta := EXT{
+					Resources: []*ResourceExt{
+						{
+							Name:   "rc",
+							Active: falsePtr(),
+						},
+						{
+							Name:   "rb",
+							Active: truePtr(),
+						},
+						{
+							Name:   "rd",
+							Active: nil,
+						},
+						{
+							Name:   "re",
+							Active: nil,
+						},
+						{
+							Name:   "rf",
+							Active: nil,
+						},
+					},
+				}
+
+				err := Merge(&mtaObj, &extMta)
+
+				Ω(err).Should(Succeed())
+				Ω(mtaObj).Should(Equal(MTA{
+					Resources: []*Resource{
+						{
+							Name:   "rb",
+							Active: truePtr(),
+						},
+						{
+							Name:   "rc",
+							Active: falsePtr(),
+						},
+						{
+							Name:   "rd",
+							Active: falsePtr(),
+						},
+						{
+							Name:   "re",
+							Active: truePtr(),
+						},
+						{
+							Name:   "rf",
+							Active: nil,
+						},
+					},
+				}))
+				Ω(extMta).Should(Equal(EXT{
+					Resources: []*ResourceExt{
+						{
+							Name:   "rc",
+							Active: falsePtr(),
+						},
+						{
+							Name:   "rb",
+							Active: truePtr(),
+						},
+						{
+							Name:   "rd",
+							Active: nil,
+						},
+						{
+							Name:   "re",
+							Active: nil,
+						},
+						{
+							Name:   "rf",
+							Active: nil,
 						},
 					},
 				}))
@@ -2073,10 +2187,10 @@ var _ = Describe("Extension MTA", func() {
 			It("fails if there is a resource in the extension that doesn't exist in the original MTA", func() {
 				checkResourceMergeFails(Resource{
 					Name:   "rb",
-					Active: false,
+					Active: falsePtr(),
 				}, ResourceExt{
 					Name:   "ra",
-					Active: true,
+					Active: truePtr(),
 				}, unknownResourceErrorMsg, "ra")
 			})
 			It("fails if it can't merge resource properties", func() {
@@ -2164,11 +2278,11 @@ var _ = Describe("Extension MTA", func() {
 				Resources: []*Resource{
 					{
 						Name:   "rb",
-						Active: false,
+						Active: falsePtr(),
 					},
 					{
 						Name:   "rd",
-						Active: true,
+						Active: truePtr(),
 					},
 				},
 			}
@@ -2185,7 +2299,7 @@ var _ = Describe("Extension MTA", func() {
 				Resources: []*ResourceExt{
 					{
 						Name:   "rb",
-						Active: true,
+						Active: truePtr(),
 					},
 				},
 			}
@@ -2206,11 +2320,11 @@ var _ = Describe("Extension MTA", func() {
 				Resources: []*Resource{
 					{
 						Name:   "rb",
-						Active: true,
+						Active: truePtr(),
 					},
 					{
 						Name:   "rd",
-						Active: true,
+						Active: truePtr(),
 					},
 				},
 			}))
@@ -2228,7 +2342,7 @@ var _ = Describe("Extension MTA", func() {
 				Resources: []*ResourceExt{
 					{
 						Name:   "rb",
-						Active: true,
+						Active: truePtr(),
 					},
 				},
 			}))
