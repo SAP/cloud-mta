@@ -201,10 +201,8 @@ func mergeRequires(requires []Requires, extRequiresProvider requiresProvider, un
 // isFieldOverWritable test is the current field allowed to be overwritten in mta file
 func isFieldOverWritable(field string, meta map[string]MetaData, m map[string]interface{}) bool {
 	if meta != nil && m[field] != nil {
-		if metaData, exists := meta[field]; exists {
-			if metaData.OverWritable != nil {
-				return *metaData.OverWritable
-			}
+		if metaData, exists := meta[field]; exists && metaData.OverWritable != nil {
+			return *metaData.OverWritable
 		}
 	}
 	return true
