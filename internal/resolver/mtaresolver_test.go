@@ -16,7 +16,7 @@ import (
 	"github.com/SAP/cloud-mta/mta"
 )
 
-func callResolveAndGetOutput(wd, moduleName, yamlPath string) string {
+func callResolveAndGetOutput(wd, moduleName, yamlPath string, envFileName string) string {
 	reader, writer, err := os.Pipe()
 	Ω(err).Should(Succeed())
 	stdout := os.Stdout
@@ -39,7 +39,7 @@ func callResolveAndGetOutput(wd, moduleName, yamlPath string) string {
 		out <- buf.String()
 	}()
 	wg.Wait()
-	err = Resolve(wd, moduleName, yamlPath)
+	err = Resolve(wd, moduleName, yamlPath, envFileName)
 	Ω(err).Should(Succeed())
 	writer.Close()
 	return <-out
@@ -71,8 +71,12 @@ func getExpected(expected []string) string {
 	return <-out
 }
 
-func callResolveAndValidateOutput(wd, moduleName, yamlPath string, expected []string) {
-	actualStr := callResolveAndGetOutput(wd, moduleName, yamlPath)
+func callResolveAndValidateOutput(wd, moduleName, yamlPath string, expected []string, envFileNameOps ...string) {
+	envFileName := ".env"
+	if len(envFileNameOps) > 0 {
+		envFileName = envFileNameOps[0]
+	}
+	actualStr := callResolveAndGetOutput(wd, moduleName, yamlPath, envFileName)
 	expectedStr := getExpected(expected)
 	Ω(len(actualStr)).Should(Equal(len(expectedStr)))
 	for _, exp := range expected {
@@ -109,6 +113,12 @@ var _ = Describe("Resolve", func() {
 		envGetter = mockEnvGetterExtWithVcapServices
 		callResolveAndValidateOutput("", "eb-java", yamlPath, expected)
 
+	})
+	It("Sanity - environment file name different from the default name (.env)", func() {
+		wd := getTestPath("test-project2")
+		yamlPath := getTestPath("test-project2", "mta.yaml")
+		envGetter = mockEnvGetterWithVcapServices
+		callResolveAndValidateOutput(wd, "eb-java", yamlPath, expected, ".env2")
 	})
 	It("Sanity - working dir not provided, no VCAP services", func() {
 		yamlPath := getTestPath("test-project", "mta.yaml")

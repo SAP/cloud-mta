@@ -27,7 +27,7 @@ const (
 var envGetter = os.Environ
 
 // Resolve - resolve module's parameters
-func Resolve(workspaceDir, moduleName, modulePath string) error {
+func Resolve(workspaceDir, moduleName, modulePath string, envFileNameOps ...string) error {
 	if len(moduleName) == 0 {
 		return errors.New(emptyModuleNameMsg)
 	}
@@ -43,11 +43,18 @@ func Resolve(workspaceDir, moduleName, modulePath string) error {
 	if len(workspaceDir) == 0 {
 		workspaceDir = path.Dir(modulePath)
 	}
+
+	// If environment file name is not provided - set the default file name to .env
+	envFileName := ".env"
+	if len(envFileNameOps) > 0 {
+		envFileName = envFileNameOps[0]
+	}
+
 	m := NewMTAResolver(mtaRaw, workspaceDir)
 
 	for _, module := range m.GetModules() {
 		if module.Name == moduleName {
-			m.ResolveProperies(module)
+			m.ResolveProperies(module, envFileName)
 
 			propVarMap, err := getPropertiesAsEnvVar(module)
 			if err != nil {
@@ -154,7 +161,7 @@ func NewMTAResolver(m *mta.MTA, workspaceDir string) *MTAResolver {
 }
 
 // ResolveProperies is the main function to trigger the resolution
-func (m *MTAResolver) ResolveProperies(module *mta.Module) {
+func (m *MTAResolver) ResolveProperies(module *mta.Module, envFileName string) {
 
 	if m.Parameters == nil {
 		m.Parameters = map[string]interface{}{}
@@ -172,7 +179,7 @@ func (m *MTAResolver) ResolveProperies(module *mta.Module) {
 
 	//add .env file in module's path to the module context
 	if len(module.Path) > 0 {
-		envFile := path.Join(m.WorkingDir, module.Path, ".env")
+		envFile := path.Join(m.WorkingDir, module.Path, envFileName)
 		envMap, err := godotenv.Read(envFile)
 		if err == nil {
 			for key, value := range envMap {
