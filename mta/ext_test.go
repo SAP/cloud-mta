@@ -1127,8 +1127,7 @@ var _ = Describe("Extension MTA", func() {
 									"provp1": "the prop",
 								},
 								PropertiesMetaData: map[string]MetaData{
-									"provp1": {
-									},
+									"provp1": {},
 								},
 							},
 							{
@@ -1166,8 +1165,7 @@ var _ = Describe("Extension MTA", func() {
 									},
 								},
 								PropertiesMetaData: map[string]MetaData{
-									"provp1": {
-									},
+									"provp1": {},
 								},
 							},
 							{
