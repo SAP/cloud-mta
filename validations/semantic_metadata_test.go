@@ -96,7 +96,7 @@ resources:
    properties-metadata:
      b:
         overwritable: false
-        optional: false
+        optional: null
 
  - name: res3
    type: custom
