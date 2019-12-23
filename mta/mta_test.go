@@ -26,8 +26,8 @@ var _ = Describe("Mta", func() {
 			},
 			PropertiesMetaData: map[string]MetaData{
 				"backend_type": {
-					Optional:     false,
-					OverWritable: true,
+					Optional:     falsePtr(),
+					OverWritable: truePtr(),
 					Datatype:     "str",
 				},
 			},
@@ -37,8 +37,8 @@ var _ = Describe("Mta", func() {
 			},
 			ParametersMetaData: map[string]MetaData{
 				"domain": {
-					Optional:     false,
-					OverWritable: true,
+					Optional:     falsePtr(),
+					OverWritable: truePtr(),
 				},
 			},
 			Includes: []Includes{
@@ -56,8 +56,8 @@ var _ = Describe("Mta", func() {
 					},
 					PropertiesMetaData: map[string]MetaData{
 						"url": {
-							Optional:     true,
-							OverWritable: true,
+							Optional:     truePtr(),
+							OverWritable: truePtr(),
 						},
 					},
 				},
@@ -69,8 +69,8 @@ var _ = Describe("Mta", func() {
 					},
 					PropertiesMetaData: map[string]MetaData{
 						"url": {
-							Optional:     true,
-							OverWritable: false,
+							Optional:     truePtr(),
+							OverWritable: falsePtr(),
 						},
 					},
 				},
@@ -87,8 +87,7 @@ var _ = Describe("Mta", func() {
 					},
 					PropertiesMetaData: map[string]MetaData{
 						"scheduler_url": {
-							Optional:     false,
-							OverWritable: true,
+							Optional: falsePtr(),
 						},
 					},
 					Includes: []Includes{
@@ -196,8 +195,8 @@ var _ = Describe("Mta", func() {
 				},
 				ParametersMetaData: map[string]MetaData{
 					"filter": {
-						Optional:     false,
-						OverWritable: false,
+						Optional:     falsePtr(),
+						OverWritable: falsePtr(),
 					},
 				},
 				Properties: map[string]interface{}{
@@ -206,8 +205,7 @@ var _ = Describe("Mta", func() {
 				},
 				PropertiesMetaData: map[string]MetaData{
 					"plugin_name": {
-						Optional:     true,
-						OverWritable: true,
+						Optional: truePtr(),
 					},
 				},
 			},
@@ -222,8 +220,8 @@ var _ = Describe("Mta", func() {
 				},
 				ParametersMetaData: map[string]MetaData{
 					"buildpack": {
-						Optional:     false,
-						OverWritable: true,
+						Optional:     falsePtr(),
+						OverWritable: nil,
 					},
 				},
 				Properties: map[string]interface{}{
@@ -241,8 +239,8 @@ var _ = Describe("Mta", func() {
 				},
 				ParametersMetaData: map[string]MetaData{
 					"service-plan": {
-						Optional:     false,
-						OverWritable: true,
+						Optional:     falsePtr(),
+						OverWritable: nil,
 					},
 				},
 			},

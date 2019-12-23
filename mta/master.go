@@ -177,9 +177,9 @@ type Hook struct {
 // MetaData - The properties-metadata and the parameters-metadata structure
 type MetaData struct {
 	// If set to true, the value can be overwritten by an extension descriptor.
-	OverWritable bool `yaml:"overwritable,omitempty" json:"overwritable,omitempty"`
+	OverWritable *bool `yaml:"overwritable,omitempty" json:"overwritable,omitempty"`
 	// If set to false, a value must be present in the final deployment configuration.
-	Optional bool `yaml:"optional,omitempty" json:"optional,omitempty"`
+	Optional *bool `yaml:"optional,omitempty" json:"optional,omitempty"`
 	// An interface with which a UI-tool can query for possible parameter names together with the expected datatypes and default values.
 	Datatype interface{} `yaml:"datatype,omitempty" json:"datatype,omitempty"`
 	// Indicate sensitive information to a UI-tool which it can use, e.g., for masking a value

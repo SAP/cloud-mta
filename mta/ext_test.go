@@ -43,12 +43,12 @@ var _ = Describe("Extension MTA", func() {
 		overwritableScenarios := map[string]map[string]MetaData{
 			"overwritable is true": {
 				"b": {
-					OverWritable: true,
+					OverWritable: truePtr(),
 				},
 			},
 			"metadata is not specified for the keys": {
 				"c": {
-					OverWritable: false,
+					OverWritable: falsePtr(),
 				},
 			},
 			"metadata does not exists": nil,
@@ -82,7 +82,7 @@ var _ = Describe("Extension MTA", func() {
 				DescribeTable("overwritable is false (valid cases)", func(mta map[string]interface{}, ext map[string]interface{}, expected map[string]interface{}) {
 					var meta = map[string]MetaData{
 						"b": {
-							OverWritable: false,
+							OverWritable: falsePtr(),
 						},
 					}
 					checkExtendMap(mta, ext, meta, expected)
@@ -102,7 +102,7 @@ var _ = Describe("Extension MTA", func() {
 				It("fails when trying to override non-overwritable field", func() {
 					var meta = map[string]MetaData{
 						"b": {
-							OverWritable: false,
+							OverWritable: falsePtr(),
 						},
 					}
 					checkExtendMapFails(mapWithTwoKeys, mapWithOneKey, meta, overwriteNonOverwritableErrorMsg, "b")
@@ -138,7 +138,7 @@ var _ = Describe("Extension MTA", func() {
 					DescribeTable("overwritable is false", func(mta map[string]interface{}, ext map[string]interface{}, expected map[string]interface{}) {
 						var meta = map[string]MetaData{
 							"b": {
-								OverWritable: false,
+								OverWritable: falsePtr(),
 							},
 						}
 						checkExtendMap(mta, ext, meta, expected)
@@ -160,7 +160,7 @@ var _ = Describe("Extension MTA", func() {
 				It("fails when trying to override non-overwritable field", func() {
 					var meta = map[string]MetaData{
 						"b": {
-							OverWritable: false,
+							OverWritable: falsePtr(),
 						},
 					}
 					checkExtendMapFails(mapWithTwoKeys, mapWithOneKey, meta, overwriteNonOverwritableErrorMsg, "b")
@@ -234,7 +234,7 @@ var _ = Describe("Extension MTA", func() {
 				DescribeTable("overwritable is false", func(mta map[string]interface{}, ext map[string]interface{}, expected map[string]interface{}) {
 					var meta = map[string]MetaData{
 						"b": {
-							OverWritable: false,
+							OverWritable: falsePtr(),
 						},
 					}
 					checkExtendMap(mta, ext, meta, expected)
@@ -257,7 +257,7 @@ var _ = Describe("Extension MTA", func() {
 				It("fails when trying to override non-overwritable field", func() {
 					var meta = map[string]MetaData{
 						"b": {
-							OverWritable: false,
+							OverWritable: falsePtr(),
 						},
 					}
 					checkExtendMapFails(mapWithTwoKeys, mapWithOneKey, meta, overwriteNonOverwritableErrorMsg, "b")
@@ -440,7 +440,7 @@ var _ = Describe("Extension MTA", func() {
 				},
 				ParametersMetaData: map[string]MetaData{
 					"p1p1": {
-						OverWritable: false,
+						OverWritable: falsePtr(),
 					},
 				},
 			}
@@ -579,7 +579,7 @@ var _ = Describe("Extension MTA", func() {
 								},
 								ParametersMetaData: map[string]MetaData{
 									"provp1": {
-										OverWritable: true,
+										OverWritable: truePtr(),
 									},
 								},
 							},
@@ -619,7 +619,7 @@ var _ = Describe("Extension MTA", func() {
 								},
 								ParametersMetaData: map[string]MetaData{
 									"provp1": {
-										OverWritable: true,
+										OverWritable: truePtr(),
 									},
 								},
 							},
@@ -693,7 +693,7 @@ var _ = Describe("Extension MTA", func() {
 								},
 								ParametersMetaData: map[string]MetaData{
 									"provp1": {
-										OverWritable: false,
+										OverWritable: falsePtr(),
 									},
 								},
 							},
@@ -724,7 +724,7 @@ var _ = Describe("Extension MTA", func() {
 										},
 										ParametersMetaData: map[string]MetaData{
 											"provp1": {
-												OverWritable: true,
+												OverWritable: truePtr(),
 											},
 										},
 									},
@@ -774,7 +774,7 @@ var _ = Describe("Extension MTA", func() {
 										},
 										ParametersMetaData: map[string]MetaData{
 											"provp1": {
-												OverWritable: true,
+												OverWritable: truePtr(),
 											},
 										},
 									},
@@ -803,7 +803,7 @@ var _ = Describe("Extension MTA", func() {
 										},
 										PropertiesMetaData: map[string]MetaData{
 											"provp1": {
-												OverWritable: true,
+												OverWritable: truePtr(),
 											},
 										},
 									},
@@ -853,7 +853,7 @@ var _ = Describe("Extension MTA", func() {
 										},
 										PropertiesMetaData: map[string]MetaData{
 											"provp1": {
-												OverWritable: true,
+												OverWritable: truePtr(),
 											},
 										},
 									},
@@ -952,7 +952,7 @@ var _ = Describe("Extension MTA", func() {
 										},
 										PropertiesMetaData: map[string]MetaData{
 											"provp1": {
-												OverWritable: false,
+												OverWritable: falsePtr(),
 											},
 										},
 									},
@@ -1027,7 +1027,7 @@ var _ = Describe("Extension MTA", func() {
 										},
 										ParametersMetaData: map[string]MetaData{
 											"provp1": {
-												OverWritable: false,
+												OverWritable: falsePtr(),
 											},
 										},
 									},
@@ -1064,7 +1064,7 @@ var _ = Describe("Extension MTA", func() {
 								},
 								ParametersMetaData: map[string]MetaData{
 									"provp1": {
-										OverWritable: true,
+										OverWritable: truePtr(),
 									},
 								},
 							},
@@ -1104,7 +1104,7 @@ var _ = Describe("Extension MTA", func() {
 								},
 								ParametersMetaData: map[string]MetaData{
 									"provp1": {
-										OverWritable: true,
+										OverWritable: truePtr(),
 									},
 								},
 							},
@@ -1127,9 +1127,7 @@ var _ = Describe("Extension MTA", func() {
 									"provp1": "the prop",
 								},
 								PropertiesMetaData: map[string]MetaData{
-									"provp1": {
-										OverWritable: true,
-									},
+									"provp1": {},
 								},
 							},
 							{
@@ -1167,9 +1165,7 @@ var _ = Describe("Extension MTA", func() {
 									},
 								},
 								PropertiesMetaData: map[string]MetaData{
-									"provp1": {
-										OverWritable: true,
-									},
+									"provp1": {},
 								},
 							},
 							{
@@ -1242,7 +1238,7 @@ var _ = Describe("Extension MTA", func() {
 								},
 								PropertiesMetaData: map[string]MetaData{
 									"provp1": {
-										OverWritable: false,
+										OverWritable: falsePtr(),
 									},
 								},
 							},
@@ -1297,7 +1293,7 @@ var _ = Describe("Extension MTA", func() {
 								},
 								ParametersMetaData: map[string]MetaData{
 									"provp1": {
-										OverWritable: false,
+										OverWritable: falsePtr(),
 									},
 								},
 							},
@@ -1442,7 +1438,7 @@ var _ = Describe("Extension MTA", func() {
 							},
 							PropertiesMetaData: map[string]MetaData{
 								"provp1": {
-									OverWritable: true,
+									OverWritable: truePtr(),
 								},
 							},
 						},
@@ -1484,7 +1480,7 @@ var _ = Describe("Extension MTA", func() {
 							},
 							PropertiesMetaData: map[string]MetaData{
 								"provp1": {
-									OverWritable: true,
+									OverWritable: truePtr(),
 								},
 							},
 						},
@@ -1546,7 +1542,7 @@ var _ = Describe("Extension MTA", func() {
 					},
 					PropertiesMetaData: map[string]MetaData{
 						"p1": {
-							OverWritable: false,
+							OverWritable: falsePtr(),
 						},
 					},
 				}, ModuleExt{
@@ -1582,7 +1578,7 @@ var _ = Describe("Extension MTA", func() {
 					},
 					ParametersMetaData: map[string]MetaData{
 						"p1p1": {
-							OverWritable: false,
+							OverWritable: falsePtr(),
 						},
 					},
 				}, ModuleExt{
@@ -1675,7 +1671,7 @@ var _ = Describe("Extension MTA", func() {
 							},
 							PropertiesMetaData: map[string]MetaData{
 								"provp1": {
-									OverWritable: false,
+									OverWritable: falsePtr(),
 								},
 							},
 						},
@@ -1934,7 +1930,7 @@ var _ = Describe("Extension MTA", func() {
 								},
 								ParametersMetaData: map[string]MetaData{
 									"provp1": {
-										OverWritable: true,
+										OverWritable: nil,
 									},
 								},
 							},
@@ -1974,7 +1970,7 @@ var _ = Describe("Extension MTA", func() {
 								},
 								ParametersMetaData: map[string]MetaData{
 									"provp1": {
-										OverWritable: true,
+										OverWritable: nil,
 									},
 								},
 							},
@@ -1998,7 +1994,7 @@ var _ = Describe("Extension MTA", func() {
 								},
 								PropertiesMetaData: map[string]MetaData{
 									"provp1": {
-										OverWritable: true,
+										OverWritable: truePtr(),
 									},
 								},
 							},
@@ -2038,7 +2034,7 @@ var _ = Describe("Extension MTA", func() {
 								},
 								PropertiesMetaData: map[string]MetaData{
 									"provp1": {
-										OverWritable: true,
+										OverWritable: truePtr(),
 									},
 								},
 							},
@@ -2112,7 +2108,7 @@ var _ = Describe("Extension MTA", func() {
 								},
 								PropertiesMetaData: map[string]MetaData{
 									"provp1": {
-										OverWritable: false,
+										OverWritable: falsePtr(),
 									},
 								},
 							},
@@ -2167,7 +2163,7 @@ var _ = Describe("Extension MTA", func() {
 								},
 								ParametersMetaData: map[string]MetaData{
 									"provp1": {
-										OverWritable: false,
+										OverWritable: falsePtr(),
 									},
 								},
 							},
@@ -2218,7 +2214,7 @@ var _ = Describe("Extension MTA", func() {
 					},
 					PropertiesMetaData: map[string]MetaData{
 						"p1": {
-							OverWritable: false,
+							OverWritable: falsePtr(),
 						},
 					},
 				}, ResourceExt{
@@ -2254,7 +2250,7 @@ var _ = Describe("Extension MTA", func() {
 					},
 					ParametersMetaData: map[string]MetaData{
 						"p1p1": {
-							OverWritable: false,
+							OverWritable: falsePtr(),
 						},
 					},
 				}, ResourceExt{

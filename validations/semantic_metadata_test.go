@@ -96,7 +96,7 @@ resources:
    properties-metadata:
      b:
         overwritable: false
-        optional: false
+        optional: null
 
  - name: res3
    type: custom
@@ -149,5 +149,25 @@ resources:
 			))
 		})
 
+	})
+})
+
+var _ = Describe("isPropertyOverWritable", func() {
+	It("default value", func() {
+		Ω(isPropertyOverWritable(nil)).Should(BeTrue())
+	})
+	It("non default", func() {
+		falseValue := false
+		Ω(isPropertyOverWritable(&falseValue)).Should(BeFalse())
+	})
+})
+
+var _ = Describe("isPropertyOptional", func() {
+	It("default value", func() {
+		Ω(isPropertyOptional(nil)).Should(BeFalse())
+	})
+	It("non default", func() {
+		trueValue := true
+		Ω(isPropertyOverWritable(&trueValue)).Should(BeTrue())
 	})
 })

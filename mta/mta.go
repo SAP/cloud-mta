@@ -112,7 +112,8 @@ func Marshal(omta *MTA) ([]byte, error) {
 // UnmarshalYAML unmarshals a MetaData object, setting default values for fields not in the source
 func (meta *MetaData) UnmarshalYAML(node *yaml.Node) error {
 	type metadata MetaData
-	raw := metadata{OverWritable: true, Optional: false} // Default values
+
+	raw := metadata{} // Default values
 
 	if err := node.Decode(&raw); err != nil {
 		return err
