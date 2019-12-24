@@ -24,7 +24,7 @@ const (
 	missingPrefixMsg   = `could not resolve the value for the "~{%s}" variable; missing required prefix`
 )
 
-// Default environment variables file name
+// EnvFileName is the default environment variables file name
 const EnvFileName = ".env"
 
 var envGetter = os.Environ
