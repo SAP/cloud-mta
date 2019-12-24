@@ -71,12 +71,8 @@ func getExpected(expected []string) string {
 	return <-out
 }
 
-func callResolveAndValidateOutput(wd, moduleName, yamlPath string, expected []string, envFileNameOps ...string) {
-	envFileName := ".env"
-	if len(envFileNameOps) > 0 {
-		envFileName = envFileNameOps[0]
-	}
-	actualStr := callResolveAndGetOutput(wd, moduleName, yamlPath, envFileName)
+func callResolveAndValidateOutput(wd, moduleName, yamlPath string, expected []string, envFile string) {
+	actualStr := callResolveAndGetOutput(wd, moduleName, yamlPath, envFile)
 	expectedStr := getExpected(expected)
 	Ω(len(actualStr)).Should(Equal(len(expectedStr)))
 	for _, exp := range expected {
@@ -106,12 +102,12 @@ var _ = Describe("Resolve", func() {
 		wd := getTestPath("test-project")
 		yamlPath := getTestPath("test-project", "mta.yaml")
 		envGetter = mockEnvGetterWithVcapServices
-		callResolveAndValidateOutput(wd, "eb-java", yamlPath, expected)
+		callResolveAndValidateOutput(wd, "eb-java", yamlPath, expected, "")
 	})
 	It("Sanity - working dir not provided", func() {
 		yamlPath := getTestPath("test-project", "mta.yaml")
 		envGetter = mockEnvGetterExtWithVcapServices
-		callResolveAndValidateOutput("", "eb-java", yamlPath, expected)
+		callResolveAndValidateOutput("", "eb-java", yamlPath, expected, "")
 
 	})
 	It("Sanity - environment file name different from the default name (.env)", func() {
@@ -124,27 +120,27 @@ var _ = Describe("Resolve", func() {
 		yamlPath := getTestPath("test-project", "mta.yaml")
 		envGetter = mockEnvGetterExt
 		expected[len(expected)-1] = strings.Replace(expected[len(expected)-1], "ed-aaa-service", "${service-name}", -1)
-		callResolveAndValidateOutput("", "eb-java", yamlPath, expected)
+		callResolveAndValidateOutput("", "eb-java", yamlPath, expected, "")
 	})
 	It("empty module name", func() {
-		err := Resolve("", "", getTestPath("test-project", "mta.yaml"))
+		err := Resolve("", "", getTestPath("test-project", "mta.yaml"), "")
 		Ω(err).Should(HaveOccurred())
 		Ω(err.Error()).Should(Equal(emptyModuleNameMsg))
 	})
 	It("module not exists", func() {
-		err := Resolve("", "aaa", getTestPath("test-project", "mta.yaml"))
+		err := Resolve("", "aaa", getTestPath("test-project", "mta.yaml"), "")
 		Ω(err).Should(HaveOccurred())
 		Ω(err.Error()).Should(Equal(fmt.Sprintf(moduleNotFoundMsg, "aaa")))
 	})
 	It("mta yaml path not found", func() {
 		path := getTestPath("test-project", "mtaNotExist.yaml")
-		err := Resolve("", "eb-java", path)
+		err := Resolve("", "eb-java", path, "")
 		Ω(err).Should(HaveOccurred())
 		Ω(err.Error()).Should(ContainSubstring(fmt.Sprintf(pathNotFoundMsg, path)))
 	})
 	It("failure on unmarshal", func() {
 		path := getTestPath("test-project", "mtaBad.yaml")
-		err := Resolve("", "eb-java", path)
+		err := Resolve("", "eb-java", path, "")
 		Ω(err).Should(HaveOccurred())
 		Ω(err.Error()).Should(ContainSubstring(fmt.Sprintf(unmarshalFailsMsg, path)))
 	})

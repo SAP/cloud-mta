@@ -9,7 +9,7 @@ import (
 var resolvePath string
 var workspaceDir string
 var resolveModule string
-var resolveEnvFileName string
+var envFile string
 
 func init() {
 	resolveMtaCmd.Flags().StringVarP(&resolvePath, "path", "p", "",
@@ -18,7 +18,7 @@ func init() {
 		"the path to workspace-folder")
 	resolveMtaCmd.Flags().StringVarP(&resolveModule, "module", "m", "",
 		"module-name")
-	resolveMtaCmd.Flags().StringVarP(&resolveEnvFileName, "envFileName", "e", "",
+	resolveMtaCmd.Flags().StringVarP(&envFile, "envFileName", "e", "",
 		"the environment file name. The default file name is .env")
 
 }
@@ -33,7 +33,7 @@ with concrete values, based on environment variables provided and .env files in 
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logs.Logger.Info("Resolve MTA")
-		err := resolver.Resolve(workspaceDir, resolveModule, resolvePath, resolveEnvFileName)
+		err := resolver.Resolve(workspaceDir, resolveModule, resolvePath, envFile)
 		if err != nil {
 			logs.Logger.Error(err)
 		}

@@ -24,10 +24,12 @@ const (
 	missingPrefixMsg   = `could not resolve the value for the "~{%s}" variable; missing required prefix`
 )
 
+const EnvFileName = ".env"
+
 var envGetter = os.Environ
 
 // Resolve - resolve module's parameters
-func Resolve(workspaceDir, moduleName, modulePath string, envFileNameOps ...string) error {
+func Resolve(workspaceDir, moduleName, modulePath string, envFile string) error {
 	if len(moduleName) == 0 {
 		return errors.New(emptyModuleNameMsg)
 	}
@@ -45,9 +47,9 @@ func Resolve(workspaceDir, moduleName, modulePath string, envFileNameOps ...stri
 	}
 
 	// If environment file name is not provided - set the default file name to .env
-	envFileName := ".env"
-	if len(envFileNameOps) > 0 {
-		envFileName = envFileNameOps[0]
+	envFileName := EnvFileName
+	if len(envFile) > 0 {
+		envFileName = envFile
 	}
 
 	m := NewMTAResolver(mtaRaw, workspaceDir)
