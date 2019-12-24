@@ -112,7 +112,7 @@ var _ = Describe("Resolve", func() {
 	})
 	It("Sanity - environment file name different from the default name (.env)", func() {
 		wd := getTestPath("test-project2")
-		yamlPath := getTestPath("test-project2", "mta.yaml")
+		yamlPath := getTestPath("test-project", "mta.yaml")
 		envGetter = mockEnvGetterWithVcapServices
 		callResolveAndValidateOutput(wd, "eb-java", yamlPath, expected, ".env2")
 	})
