@@ -22,10 +22,9 @@ const (
 	moduleNotFoundMsg  = `could not find the "%s" module`
 	marshalFailsMag    = `could not marshal the "%s" environment variable`
 	missingPrefixMsg   = `could not resolve the value for the "~{%s}" variable; missing required prefix`
-)
 
-// EnvFileName is the default environment variables file name
-const EnvFileName = ".env"
+	defaultEnvFileName = ".env"
+)
 
 var envGetter = os.Environ
 
@@ -48,7 +47,7 @@ func Resolve(workspaceDir, moduleName, modulePath string, envFile string) error 
 	}
 
 	// If environment file name is not provided - set the default file name to .env
-	envFileName := EnvFileName
+	envFileName := defaultEnvFileName
 	if len(envFile) > 0 {
 		envFileName = envFile
 	}

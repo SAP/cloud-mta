@@ -111,10 +111,26 @@ var _ = Describe("Resolve", func() {
 
 	})
 	It("Sanity - environment file name different from the default name (.env)", func() {
-		wd := getTestPath("test-project2")
+		wd := getTestPath("test-project")
 		yamlPath := getTestPath("test-project", "mta.yaml")
-		envGetter = mockEnvGetterWithVcapServices
-		callResolveAndValidateOutput(wd, "eb-java", yamlPath, expected, ".env2")
+		envGetter = mockEnvGetterExtWithVcapServices
+		expectedResolve := []string{
+			`prop1=no_placeholders`,
+			`prop2=1000m`,
+			`prop3=["1000m","1m"]`,
+			`prop4={"p1":"1000m","p2":"1m"}`,
+			`prop5=1`,
+			`prop6={"1":"1000m"}`,
+			`prop7=~{eb-msahaa/heap`,
+			`prop8=[[{"a":["a1",{"a2-key":"a2-value"}]}]]`,
+			`prop9=newValue`,
+			`prop10=${env_var0}`,
+			`prop11=2G`,
+			`JBP_CONFIG_companyJVM=[ memory_calculator: { memory_sizes: { heap: 1000m, stack: 1m, metaspace: 150m } } ]`,
+			`JBP_CONFIG_companyJVM1=[ memory_calculator: { memory_sizes: { heap: 1000m, stack: 1m, metaspace: 150m } } ]`,
+			`JBP_CONFIG_RESOURCE_CONFIGURATION=[tomcat/webapps/ROOT/META-INF/context.xml: {"service_name_for_DefaultDB" : "ed-aaa-service"}]`,
+		}
+		callResolveAndValidateOutput(wd, "eb-java", yamlPath, expectedResolve, ".env2")
 	})
 	It("Sanity - working dir not provided, no VCAP services", func() {
 		yamlPath := getTestPath("test-project", "mta.yaml")
