@@ -39,6 +39,23 @@ modules:
    - name: uaa_mtahtml5
    - name: dest_mtahtml5
 
+ - name: ui5app3
+   type: html5
+   build-parameters:
+     no-source: true
+
+ - name: ui5app4
+   type: html5
+   build-parameters:
+     no-source: abc
+
+ - name: ui5app5
+   type: html5
+   build-parameters:
+     no-source: 
+        - a
+        - b
+
 resources:
  - name: uaa_mtahtml5
    parameters:
@@ -57,5 +74,9 @@ resources:
 		issues, _ := ifModulePathExists(mta, root, filepath.Join(wd, "testdata", "testproject"), true)
 		Ω(issues[0].Msg).Should(
 			Equal(`the "ui5app2" path of the "ui5app2" module does not exist`))
+		Ω(issues[1].Msg).Should(
+			Equal(`the "no-source" build parameter must be a boolean`))
+		Ω(issues[3].Msg).Should(
+			Equal(`the "no-source" build parameter must be a boolean`))
 	})
 })
