@@ -21,6 +21,7 @@ const (
 	parametersYamlField         = "parameters"
 	buildParametersYamlField    = "build-parameters"
 	builderYamlField            = "builder"
+	noSourceYamlField           = "no-source"
 	buildResultYamlField        = "build-result"
 	supportedPlatformsYamlField = "supported-platforms"
 	commandsYamlField           = "commands"

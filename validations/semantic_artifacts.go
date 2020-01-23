@@ -15,6 +15,14 @@ func ifModulePathExists(mta *mta.MTA, mtaNode *yaml.Node, source string, strict 
 
 	modulesNode := getPropValueByName(mtaNode, modulesYamlField)
 	for index, module := range mta.Modules {
+		// no path check for modules with build parameter "no-source" set to true
+		noSource, issue := ifNoSource(module, modulesNode, index)
+		if issue != nil {
+			issues = append(issues, *issue)
+		} else if noSource {
+			continue
+		}
+
 		modulePath := module.Path
 		// "path" property not defined -> use module name as a path
 		if modulePath == "" {
@@ -36,4 +44,21 @@ func ifModulePathExists(mta *mta.MTA, mtaNode *yaml.Node, source string, strict 
 	}
 
 	return issues, nil
+}
+
+func ifNoSource(module *mta.Module, modulesNode *yaml.Node, index int) (bool, *YamlValidationIssue) {
+	if module.BuildParams != nil && module.BuildParams[noSourceYamlField] != nil {
+		moduleNode := modulesNode.Content[index]
+		buildParametersNode := getPropValueByName(moduleNode, buildParametersYamlField)
+		noSourceNode := getPropValueByName(buildParametersNode, noSourceYamlField)
+		noSource, ok := module.BuildParams[noSourceYamlField].(bool)
+		if ok {
+			return noSource, nil
+		}
+		return false, &YamlValidationIssue{
+			Msg:  `the "no-source" build parameter must be a boolean`,
+			Line: noSourceNode.Line,
+		}
+	}
+	return false, nil
 }
