@@ -40,13 +40,15 @@ const (
 	gruntOptsYamlField = "grunt-opts"
 	mavenOptsYamlField = "maven-opts"
 
-	pathsValidation          = "paths"
-	namesValidation          = "names"
-	requiredValidation       = "required"
-	buildersValidation       = "builders"
-	deprecatedOptsValidation = "deprecatedOpts"
-	deployerConstrValidation = "deployerConstraints"
-	metadataValidation       = "metadata"
+	pathsValidation               = "paths"
+	emptyPathValidation           = "emptyPath"
+	namesValidation               = "names"
+	requiredValidation            = "required"
+	buildersValidation            = "builders"
+	deprecatedOptsValidation      = "deprecatedOpts"
+	deployerConstrValidation      = "deployerConstraints"
+	metadataValidation            = "metadata"
+	ifNoSourceParamBoolValidation = "checkNoSourceParam"
 
 	propertiesMtaField      = "Properties"
 	parametersMtaField      = "Parameters"
@@ -88,6 +90,9 @@ func getSemanticValidations(exclude string) []checkSemantic {
 	if !strings.Contains(exclude, pathsValidation) {
 		validations = append(validations, ifModulePathExists)
 	}
+	if !strings.Contains(exclude, emptyPathValidation) {
+		validations = append(validations, ifModulePathEmpty)
+	}
 	if !strings.Contains(exclude, namesValidation) {
 		validations = append(validations, isNameUnique)
 	}
@@ -105,6 +110,9 @@ func getSemanticValidations(exclude string) []checkSemantic {
 	}
 	if !strings.Contains(exclude, metadataValidation) {
 		validations = append(validations, checkParamsAndPropertiesMetadata)
+	}
+	if !strings.Contains(exclude, ifNoSourceParamBoolValidation) {
+		validations = append(validations, ifNoSourceParamBool)
 	}
 
 	return validations

@@ -72,11 +72,9 @@ func validateNameIsExtendedOnce(names map[string]nameInfo, name string,
 	prevObject, ok := names[name]
 	// name found -> add issue
 	if ok {
-		var article string
+		article := "a"
 		if objectName == prevObject.object {
 			article = "another"
-		} else {
-			article = "a"
 		}
 		result = appendIssue(result,
 			fmt.Sprintf(nameAlreadyExtendedMsg, name, objectName, article, prevObject.object, prevObject.Line), line)
