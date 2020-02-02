@@ -9,7 +9,7 @@ import (
 	"github.com/SAP/cloud-mta/mta"
 )
 
-// ifNoSourceParamBool - validates that "no-source" build parameter if boolean if defined
+// ifNoSourceParamBool - validates that "no-source" build parameter is boolean if defined
 func ifNoSourceParamBool(mta *mta.MTA, mtaNode *yaml.Node, source string, strict bool) ([]YamlValidationIssue, []YamlValidationIssue) {
 	var issues []YamlValidationIssue
 
@@ -57,8 +57,15 @@ func ifModulePathEmpty(mta *mta.MTA, mtaNode *yaml.Node, source string, strict b
 		// no path check for modules with build parameter "no-source" set to true
 		noSource, _ := ifNoSource(module, modulesNode, index)
 		if !noSource && module.Path == "" {
-			issues = appendIssue(issues, fmt.Sprintf(`the path of the "%s" module is not defined`,
-				module.Name), modulesNode.Line)
+			moduleNode := modulesNode.Content[index]
+			buildParametersNode := getPropValueByName(moduleNode, pathYamlField)
+			if buildParametersNode == nil {
+				issues = appendIssue(issues, fmt.Sprintf(`the path of the "%s" module is not defined`,
+					module.Name), moduleNode.Line)
+			} else {
+				issues = appendIssue(issues, fmt.Sprintf(`the path of the "%s" module is empty`,
+					module.Name), buildParametersNode.Line)
+			}
 		}
 	}
 
