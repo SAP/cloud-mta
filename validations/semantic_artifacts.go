@@ -58,13 +58,13 @@ func ifModulePathEmpty(mta *mta.MTA, mtaNode *yaml.Node, source string, strict b
 		noSource, _ := ifNoSource(module, modulesNode, index)
 		if !noSource && module.Path == "" {
 			moduleNode := modulesNode.Content[index]
-			buildParametersNode := getPropValueByName(moduleNode, pathYamlField)
-			if buildParametersNode == nil {
+			pathNode := getPropValueByName(moduleNode, pathYamlField)
+			if pathNode == nil {
 				issues = appendIssue(issues, fmt.Sprintf(`the path of the "%s" module is not defined`,
 					module.Name), moduleNode.Line)
 			} else {
 				issues = appendIssue(issues, fmt.Sprintf(`the path of the "%s" module is empty`,
-					module.Name), buildParametersNode.Line)
+					module.Name), pathNode.Line)
 			}
 		}
 	}
