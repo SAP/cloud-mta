@@ -9,6 +9,20 @@ import (
 	"github.com/SAP/cloud-mta/mta"
 )
 
+// ifNoSourceParamBool - validates that "no-source" build parameter is boolean if defined
+func ifNoSourceParamBool(mta *mta.MTA, mtaNode *yaml.Node, source string, strict bool) ([]YamlValidationIssue, []YamlValidationIssue) {
+	var issues []YamlValidationIssue
+
+	modulesNode := getPropValueByName(mtaNode, modulesYamlField)
+	for index, module := range mta.Modules {
+		_, issue := ifNoSource(module, modulesNode, index)
+		if issue != nil {
+			issues = append(issues, *issue)
+		}
+	}
+	return issues, nil
+}
+
 // ifModulePathExists - validates the existence of modules paths used in the MTA descriptor
 func ifModulePathExists(mta *mta.MTA, mtaNode *yaml.Node, source string, strict bool) ([]YamlValidationIssue, []YamlValidationIssue) {
 	var issues []YamlValidationIssue
@@ -16,30 +30,42 @@ func ifModulePathExists(mta *mta.MTA, mtaNode *yaml.Node, source string, strict 
 	modulesNode := getPropValueByName(mtaNode, modulesYamlField)
 	for index, module := range mta.Modules {
 		// no path check for modules with build parameter "no-source" set to true
-		noSource, issue := ifNoSource(module, modulesNode, index)
-		if issue != nil {
-			issues = append(issues, *issue)
-		} else if noSource {
-			continue
-		}
-
-		modulePath := module.Path
-		// "path" property not defined -> use module name as a path
-		if modulePath == "" {
-			modulePath = module.Name
-		}
-		// build full path
-		fullPath := filepath.Join(source, modulePath)
-		// check existence of file/folder
-		_, err := os.Stat(fullPath)
-		if err != nil {
-			line, propFound := getIndexedNodePropLine(modulesNode, index, pathYamlField)
-			if !propFound {
-				line, _ = getIndexedNodePropLine(modulesNode, index, nameYamlField)
+		noSource, _ := ifNoSource(module, modulesNode, index)
+		if !noSource && module.Path != "" {
+			// build full path
+			fullPath := filepath.Join(source, module.Path)
+			// check existence of file/folder
+			_, err := os.Stat(fullPath)
+			if err != nil {
+				line, _ := getIndexedNodePropLine(modulesNode, index, pathYamlField)
+				// path not exists -> add an issue
+				issues = appendIssue(issues, fmt.Sprintf(`the "%s" path of the "%s" module does not exist`,
+					module.Path, module.Name), line)
 			}
-			// path not exists -> add an issue
-			issues = appendIssue(issues, fmt.Sprintf(`the "%s" path of the "%s" module does not exist`,
-				modulePath, module.Name), line)
+		}
+	}
+
+	return issues, nil
+}
+
+// ifModulePathEmpty - validates that path is defined in module if no-source configuration is not used
+func ifModulePathEmpty(mta *mta.MTA, mtaNode *yaml.Node, source string, strict bool) ([]YamlValidationIssue, []YamlValidationIssue) {
+	var issues []YamlValidationIssue
+
+	modulesNode := getPropValueByName(mtaNode, modulesYamlField)
+	for index, module := range mta.Modules {
+		// no path check for modules with build parameter "no-source" set to true
+		noSource, _ := ifNoSource(module, modulesNode, index)
+		if !noSource && module.Path == "" {
+			moduleNode := modulesNode.Content[index]
+			buildParametersNode := getPropValueByName(moduleNode, pathYamlField)
+			if buildParametersNode == nil {
+				issues = appendIssue(issues, fmt.Sprintf(`the path of the "%s" module is not defined`,
+					module.Name), moduleNode.Line)
+			} else {
+				issues = appendIssue(issues, fmt.Sprintf(`the path of the "%s" module is empty`,
+					module.Name), buildParametersNode.Line)
+			}
 		}
 	}
 
