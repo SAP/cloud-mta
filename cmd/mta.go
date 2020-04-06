@@ -100,7 +100,7 @@ var copyCmd = &cobra.Command{
 			fmt.Sprintf("copy from source path: %s to target path: %s", copyCmdSourcePath, copyCmdTargetPath),
 			copyCmdTargetPath,
 			func() (interface{}, error) {
-				return nil, mta.CopyFile(copyCmdSourcePath, copyCmdTargetPath, os.MkdirAll)
+				return nil, mta.CopyFile(copyCmdSourcePath, copyCmdTargetPath, os.Create)
 			},
 		)
 	},

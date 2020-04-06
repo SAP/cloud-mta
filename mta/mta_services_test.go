@@ -95,7 +95,7 @@ var _ = Describe("MtaServices", func() {
 			sourceFilePath := getTestPath("result", "temp.mta.yaml")
 			targetFilePath := getTestPath("result", "temp2.mta.yaml")
 			Ω(CreateMta(sourceFilePath, string(jsonData), os.MkdirAll)).Should(Succeed())
-			Ω(CopyFile(sourceFilePath, targetFilePath, os.MkdirAll)).Should(Succeed())
+			Ω(CopyFile(sourceFilePath, targetFilePath, os.Create)).Should(Succeed())
 			Ω(targetFilePath).Should(BeAnExistingFile())
 			yamlData, err := ioutil.ReadFile(targetFilePath)
 			Ω(err).Should(Succeed())
@@ -113,7 +113,7 @@ var _ = Describe("MtaServices", func() {
 		It("Copy file creates the destination folder", func() {
 			sourceFilePath := getTestPath("result", "temp.mta.yaml")
 			targetFilePath := getTestPath("result2", "temp2.mta.yaml")
-			Ω(CopyFile(sourceFilePath, targetFilePath, os.MkdirAll)).Should(Succeed())
+			Ω(CopyFile(sourceFilePath, targetFilePath, os.Create)).Should(Succeed())
 			err := os.RemoveAll(getTestPath("result2"))
 			Ω(err).Should(Succeed())
 		})

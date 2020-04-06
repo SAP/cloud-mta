@@ -77,7 +77,7 @@ func CreateMta(path string, mtaDataJSON string, mkDirs func(string, os.FileMode)
 	return ioutil.WriteFile(path, mtaDataYaml, 0644)
 }
 
-// DeleteMta - deletes the MTA project.
+// DeleteMta - deletes the MTA
 func DeleteMta(path string) error {
 	return fs.DeleteDir(path)
 }
@@ -239,6 +239,11 @@ func CopyFile(src, dst string, create func(string) (*os.File, error)) (rerr erro
 		}
 	}()
 
+	folder := filepath.Dir(dst)
+	rerr = os.MkdirAlL(folder)
+	if rerr != nil {
+		return
+	}
 	out, err := create(dst)
 	if err != nil {
 		return err
