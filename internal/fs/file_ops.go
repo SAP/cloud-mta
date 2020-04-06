@@ -20,3 +20,8 @@ func CreateFile(path string) (file *os.File, err error) {
 func DeleteFile(path string) (err error) {
 	return os.Remove(path)
 }
+
+// DeleteDir - deletes the directory and all sub-directories and files.
+func DeleteDir(path string) (err error) {
+    return os.RemoveAll(path)
+}

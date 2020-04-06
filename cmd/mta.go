@@ -12,6 +12,7 @@ import (
 
 var createMtaCmdPath string
 var createMtaCmdData string
+var deleteMtaCmdPath string
 var copyCmdSourcePath string
 var copyCmdTargetPath string
 var deleteFileCmdPath string
@@ -29,6 +30,8 @@ func init() {
 		"the path to the yaml file")
 	createMtaCmd.Flags().StringVarP(&createMtaCmdData, "data", "d", "",
 		"data in JSON format")
+	deleteMtaCmd.Flags().StringVarP(&deleteMtaCmdPath, "path", "p", "",
+		"the path to the MTA project")
 	copyCmd.Flags().StringVarP(&copyCmdSourcePath, "source", "s", "",
 		"the path to the source file")
 	copyCmd.Flags().StringVarP(&copyCmdTargetPath, "target", "t", "",
@@ -65,6 +68,27 @@ var createMtaCmd = &cobra.Command{
 	SilenceErrors: true,
 }
 
+// deleteMtaCmd Delete MTA project
+var deleteMtaCmd = &cobra.Command{
+	Use:   "delete",
+	Short: "Delete MTA project",
+	Long:  "Delete MTA project",
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		logs.Logger.Info("delete MTA in path: " + deleteMtaCmdPath)
+		err := mta.DeleteMta(deleteMtaCmdPath)
+		writeErr := mta.WriteResult(nil, 0, err)
+		if err != nil {
+			// The original error is more important
+			return err
+		}
+		return writeErr
+	},
+	Hidden:        true,
+	SilenceUsage:  true,
+	SilenceErrors: true,
+}
+
 // copyCmd copy from source path to target path
 var copyCmd = &cobra.Command{
 	Use:   "copy",
@@ -76,7 +100,7 @@ var copyCmd = &cobra.Command{
 			fmt.Sprintf("copy from source path: %s to target path: %s", copyCmdSourcePath, copyCmdTargetPath),
 			copyCmdTargetPath,
 			func() (interface{}, error) {
-				return nil, mta.CopyFile(copyCmdSourcePath, copyCmdTargetPath, os.Create)
+				return nil, mta.CopyFile(copyCmdSourcePath, copyCmdTargetPath, os.MkdirAll)
 			},
 		)
 	},

@@ -3,15 +3,15 @@ package mta
 import (
 	"crypto/sha1"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"gopkg.in/yaml.v3"
+
 	ghodss "github.com/ghodss/yaml"
-	"github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
 	"github.com/SAP/cloud-mta/internal/fs"
@@ -75,6 +75,11 @@ func CreateMta(path string, mtaDataJSON string, mkDirs func(string, os.FileMode)
 		return err
 	}
 	return ioutil.WriteFile(path, mtaDataYaml, 0644)
+}
+
+// DeleteMta - deletes the MTA project.
+func DeleteMta(path string) error {
+	return fs.DeleteDir(path)
 }
 
 //AddModule - adds a new module.
