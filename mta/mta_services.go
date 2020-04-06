@@ -240,7 +240,7 @@ func CopyFile(src, dst string, create func(string) (*os.File, error)) (rerr erro
 	}()
 
 	folder := filepath.Dir(dst)
-	rerr = os.MkdirAlL(folder)
+	rerr = os.MkdirAll(folder)
 	if rerr != nil {
 		return
 	}
