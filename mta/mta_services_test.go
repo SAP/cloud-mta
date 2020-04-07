@@ -118,8 +118,8 @@ var _ = Describe("MtaServices", func() {
 			Ω(CreateMta(sourceFilePath, string(jsonData), os.MkdirAll)).Should(Succeed())
 			Ω(CopyFile(sourceFilePath, targetFilePath, os.Create)).Should(Succeed())
 			Ω(targetFilePath).Should(BeAnExistingFile())
-			err := os.RemoveAll(getTestPath("result2"))
-			Ω(err).Should(Succeed())
+			err2 := os.RemoveAll(getTestPath("result2"))
+			Ω(err2).Should(Succeed())
 		})
 
 		It("Copy file fail to create destination file", func() {
