@@ -44,6 +44,8 @@ var _ = Describe("MtaServices", func() {
 	AfterEach(func() {
 		err := os.RemoveAll(getTestPath("result"))
 		Ω(err).Should(Succeed())
+		err2 := os.RemoveAll(getTestPath("result2"))
+		Ω(err2).Should(Succeed())
 	})
 
 	var _ = Describe("CreateMta", func() {
@@ -74,6 +76,20 @@ var _ = Describe("MtaServices", func() {
 		})
 	})
 
+	var _ = Describe("deleteMta", func() {
+		It("Delete MTA", func() {
+			jsonData, err := json.Marshal(getMtaInput())
+			Ω(err).Should(Succeed())
+			mtaPath := getTestPath("result", "temp.mta.yaml")
+			Ω(CreateMta(mtaPath, string(jsonData), os.MkdirAll)).Should(Succeed())
+			Ω(mtaPath).Should(BeAnExistingFile())
+			mtaProject := getTestPath("result")
+			Ω(DeleteMta(mtaProject)).Should(Succeed())
+			Ω(mtaPath).ShouldNot(BeAnExistingFile())
+			Ω(mtaProject).ShouldNot(BeADirectory())
+		})
+	})
+
 	var _ = Describe("CopyFile", func() {
 		It("Copy file content", func() {
 			jsonData, err := json.Marshal(getMtaInput())
@@ -93,6 +109,27 @@ var _ = Describe("MtaServices", func() {
 		It("Copy file with non existing path", func() {
 			sourceFilePath := "c:/temp/test1"
 			targetFilePath := "c:/temp/test2"
+			Ω(CopyFile(sourceFilePath, targetFilePath, os.Create)).Should(HaveOccurred())
+		})
+
+		It("Copy file creates the destination folder", func() {
+			jsonData, err := json.Marshal(getMtaInput())
+			Ω(err).Should(Succeed())
+			sourceFilePath := getTestPath("result", "temp.mta.yaml")
+			targetFilePath := getTestPath("result2", "temp2.mta.yaml")
+			Ω(CreateMta(sourceFilePath, string(jsonData), os.MkdirAll)).Should(Succeed())
+			Ω(CopyFile(sourceFilePath, targetFilePath, os.Create)).Should(Succeed())
+			Ω(targetFilePath).Should(BeAnExistingFile())
+		})
+
+		It("Copy file fail to create destination folder", func() {
+			jsonData, err := json.Marshal(getMtaInput())
+			Ω(err).Should(Succeed())
+			sourceFilePath := getTestPath("result", "temp.mta.yaml")
+			targetFolderPath := getTestPath("result2")
+			Ω(CreateMta(sourceFilePath, string(jsonData), os.MkdirAll)).Should(Succeed())
+			Ω(CreateMta(targetFolderPath, string(jsonData), os.MkdirAll)).Should(Succeed())
+			targetFilePath := getTestPath("result2", "temp2.mta.yaml")
 			Ω(CopyFile(sourceFilePath, targetFilePath, os.Create)).Should(HaveOccurred())
 		})
 
