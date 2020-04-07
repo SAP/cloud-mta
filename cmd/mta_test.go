@@ -40,5 +40,7 @@ var _ = Describe("Resource", func() {
 		Ω(createMtaCmd.RunE(nil, []string{})).Should(Succeed())
 		// already exists
 		Ω(createMtaCmd.RunE(nil, []string{})).Should(HaveOccurred())
+		deleteMtaCmdPath = getTestPath("result")
+		Ω(deleteMtaCmd.RunE(nil, []string{})).Should(Succeed())
 	})
 })
