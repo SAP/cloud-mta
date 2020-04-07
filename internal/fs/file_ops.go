@@ -2,8 +2,9 @@ package fs
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"os"
+
+	"github.com/pkg/errors"
 )
 
 // CreateFile - creates a new file.
@@ -23,5 +24,5 @@ func DeleteFile(path string) (err error) {
 
 // DeleteDir - deletes the directory and all sub-directories and files.
 func DeleteDir(path string) (err error) {
-    return os.RemoveAll(path)
+	return os.RemoveAll(path)
 }
