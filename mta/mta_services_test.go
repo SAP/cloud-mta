@@ -111,9 +111,13 @@ var _ = Describe("MtaServices", func() {
 		})
 
 		It("Copy file creates the destination folder", func() {
+			jsonData, err := json.Marshal(getMtaInput())
+			Ω(err).Should(Succeed())
 			sourceFilePath := getTestPath("result", "temp.mta.yaml")
 			targetFilePath := getTestPath("result2", "temp2.mta.yaml")
+			Ω(CreateMta(sourceFilePath, string(jsonData), os.MkdirAll)).Should(Succeed())
 			Ω(CopyFile(sourceFilePath, targetFilePath, os.Create)).Should(Succeed())
+			Ω(targetFilePath).Should(BeAnExistingFile())
 			err := os.RemoveAll(getTestPath("result2"))
 			Ω(err).Should(Succeed())
 		})
