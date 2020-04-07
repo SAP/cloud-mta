@@ -44,6 +44,8 @@ var _ = Describe("MtaServices", func() {
 	AfterEach(func() {
 		err := os.RemoveAll(getTestPath("result"))
 		Ω(err).Should(Succeed())
+		err2 := os.RemoveAll(getTestPath("result2"))
+		Ω(err2).Should(Succeed())
 	})
 
 	var _ = Describe("CreateMta", func() {
@@ -118,8 +120,15 @@ var _ = Describe("MtaServices", func() {
 			Ω(CreateMta(sourceFilePath, string(jsonData), os.MkdirAll)).Should(Succeed())
 			Ω(CopyFile(sourceFilePath, targetFilePath, os.Create)).Should(Succeed())
 			Ω(targetFilePath).Should(BeAnExistingFile())
-			err2 := os.RemoveAll(getTestPath("result2"))
-			Ω(err2).Should(Succeed())
+		})
+
+		It("Copy file fail to create destination folder", func() {
+			jsonData, err := json.Marshal(getMtaInput())
+			Ω(err).Should(Succeed())
+			sourceFilePath := getTestPath("result", "temp.mta.yaml")
+			targetFilePath := ""
+			Ω(CreateMta(sourceFilePath, string(jsonData), os.MkdirAll)).Should(Succeed())
+			Ω(CopyFile(sourceFilePath, targetFilePath, os.Create)).Should(HaveOccurred())
 		})
 
 		It("Copy file fail to create destination file", func() {
