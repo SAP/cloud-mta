@@ -126,8 +126,9 @@ var _ = Describe("MtaServices", func() {
 			jsonData, err := json.Marshal(getMtaInput())
 			Ω(err).Should(Succeed())
 			sourceFilePath := getTestPath("result", "temp.mta.yaml")
-			targetFilePath := getTestPath("result", "temp.mta.yaml")
+			targetFilePath := getTestPath("result2", "temp2.mta.yaml")
 			Ω(CreateMta(sourceFilePath, string(jsonData), os.MkdirAll)).Should(Succeed())
+			Ω(CreateMta(targetFilePath, string(jsonData), os.MkdirAll)).Should(Succeed())
 			Ω(CopyFile(sourceFilePath, targetFilePath, os.Create)).Should(HaveOccurred())
 		})
 
