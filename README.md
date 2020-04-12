@@ -6,10 +6,6 @@
 ![GitHub license](https://img.shields.io/badge/license-Apache_2.0-blue.svg)
 ![pre-alpha](https://img.shields.io/badge/Release-pre--alpha-orange.svg)
 
-
-
-
-> <b>Disclaimer</b>: The MTA package is under heavy development and is currently in a `pre-alpha` stage.  Some functionality is still missing and the APIs are subject to change; use at your own risk.
                    
 ## Description
 
@@ -28,31 +24,10 @@ The tool commands (APIs) are used to do the following:
 
 A multitarget application is a package comprised of multiple application and resource modules that have been created using different technologies and deployed to different run-times; however, they have a common life cycle. A user can bundle the modules together using the `mta.yaml` file, describe them along with their inter-dependencies to other modules, services, and interfaces, and package them in an MTA project.
  
-## Roadmap 
-
-### Milestone 1  (Q1 - 2019)
- 
- - [x] Supports the MTA parser 
- - [x] Supports development descriptor schema validations (2.1) 
- - [ ] Supports semantic validations (MTA->project)
- - [x] Supports `path` validation
- - [ ] Add MTA API's usage documentation  
- 
-### Milestone 2 (Q1 - 2019)
- 
-- [x] Supports uniqueness of module and resource names
-- [ ] Supports multiple schema 
-- [ ] Supports advanced `mta.yaml` file (3.1, 3.2) schemas
-
- 
-### Milestone 3 (Q2 - 2019)
-
-- [ ] Supports updating scenarios, such as add module/resource, add module property, add dependency, and so on
-- [ ] Supports placeholder resolution
 
 ## Requirements
 
-* [Go (version > 1.11.x)](https://golang.org/dl/) 
+* [Go (version > 1.13.x)](https://golang.org/dl/) 
 
 ## Download and Installation
 
@@ -109,7 +84,7 @@ Please follow our [issue template](https://github.com/SAP/cloud-mta/blob/master/
 
 ## License
  
-Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved.
+Copyright (c) 2020 SAP SE or an SAP affiliate company. All rights reserved.
 
 This file is licensed under the Apache 2.0 License [except as noted otherwise in the LICENSE file](/LICENSE).
 
