@@ -2,6 +2,21 @@
 
 
 [[projects]]
+  digest = "1:6b69ff44dac77001b5ffebc4ff48d2105d02f897b64da7882d2a5518a1129d46"
+  name = "github.com/SAP/cloud-mta"
+  packages = [
+    "cmd",
+    "internal/fs",
+    "internal/logs",
+    "internal/resolver",
+    "internal/version",
+    "mta",
+  ]
+  pruneopts = "UT"
+  revision = "34249bcbd6ecb786850a3b096731c08a3b928577"
+  version = "v0.0.7"
+
+[[projects]]
   digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
   name = "github.com/fsnotify/fsnotify"
   packages = ["."]
@@ -373,6 +388,12 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/SAP/cloud-mta/cmd",
+    "github.com/SAP/cloud-mta/internal/fs",
+    "github.com/SAP/cloud-mta/internal/logs",
+    "github.com/SAP/cloud-mta/internal/resolver",
+    "github.com/SAP/cloud-mta/internal/version",
+    "github.com/SAP/cloud-mta/mta",
     "github.com/ghodss/yaml",
     "github.com/joho/godotenv",
     "github.com/json-iterator/go",
