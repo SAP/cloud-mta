@@ -1,7 +1,5 @@
 project_name: cloud-mta
 before:
-#  hooks:
-#    - go generate ./...
 builds:
   - goos:
       - linux
@@ -14,21 +12,23 @@ builds:
     main: .
     ldflags: -s -w -X main.Version={{.Version}}  -X main.BuildDate={{.Date}}
     binary: mta
-archive:
-  replacements:
-    darwin: Darwin
-    linux: Linux
-    windows: Windows
-  format: tar.gz
-  files:
-    - licence*
-    - LICENCE*
-    - license*
-    - LICENSE*
-    - readme*
-    - README*
-    - changelog*
-    - CHANGELOG*
+    env:
+      - CGO_ENABLED=0
+archives:
+  - replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+    format: tar.gz
+    files:
+      - licence*
+      - LICENCE*
+      - license*
+      - LICENSE*
+      - readme*
+      - README*
+      - changelog*
+      - CHANGELOG*
 dist: dist
 checksum:
   name_template: 'checksums.txt'
@@ -49,5 +49,4 @@ sign:
     - $artifact
   signature: ${artifact}.sig
   artifacts: none
-
 
