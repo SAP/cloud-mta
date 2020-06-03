@@ -3,18 +3,19 @@ package mta
 import (
 	"crypto/sha1"
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"gopkg.in/yaml.v3"
+	ghodss "github.com/ghodss/yaml"
+	"github.com/json-iterator/go"
+	"github.com/pkg/errors"
 
 	"github.com/SAP/cloud-mta/internal/fs"
 	"github.com/SAP/cloud-mta/internal/logs"
-	ghodss "github.com/ghodss/yaml"
-	"github.com/pkg/errors"
 )
 
 func createMtaYamlFile(path string, mkDirs func(string, os.FileMode) error) (rerr error) {
