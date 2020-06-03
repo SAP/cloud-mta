@@ -731,7 +731,7 @@ var _ = Describe("MtaServices", func() {
 			mtaPath := getTestPath("result", "mta.yaml")
 			id, err := GetMtaId(mtaPath)
 			Ω(err).Should(HaveOccurred())
-			Ω(id).Should(BeNil())
+			Ω(id).Should(Equal(""))
 		})
 	})
 

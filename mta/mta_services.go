@@ -188,7 +188,7 @@ func UpdateResource(path string, resourceDataJSON string, marshal func(*MTA) ([]
 func GetMtaId(path string) (string, error) {
 	mta, err := getMtaFromFile(path)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	return mta.ID, nil
 }
