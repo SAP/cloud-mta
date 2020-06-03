@@ -3,15 +3,15 @@ package mta
 import (
 	"crypto/sha1"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"gopkg.in/yaml.v3"
+
 	ghodss "github.com/ghodss/yaml"
-	"github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
 	"github.com/SAP/cloud-mta/internal/fs"
@@ -182,6 +182,15 @@ func UpdateResource(path string, resourceDataJSON string, marshal func(*MTA) ([]
 	}
 
 	return fmt.Errorf("the '%s' resource does not exist", resource.Name)
+}
+
+//GetMtaId - gets MTA ID.
+func GetMtaId(path string) (string, error) {
+	mta, err := getMtaFromFile(path)
+	if err != nil {
+		return nil, err
+	}
+	return mta.ID, nil
 }
 
 //IsNameUnique - checks if the name already exists as a `module`/`resource`/`provide` name.
