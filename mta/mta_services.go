@@ -184,6 +184,15 @@ func UpdateResource(path string, resourceDataJSON string, marshal func(*MTA) ([]
 	return fmt.Errorf("the '%s' resource does not exist", resource.Name)
 }
 
+//GetMtaID - gets MTA ID.
+func GetMtaID(path string) (string, error) {
+	mta, err := getMtaFromFile(path)
+	if err != nil {
+		return "", err
+	}
+	return mta.ID, nil
+}
+
 //IsNameUnique - checks if the name already exists as a `module`/`resource`/`provide` name.
 func IsNameUnique(path string, name string) (bool, error) {
 	mta, err := getMtaFromFile(path)

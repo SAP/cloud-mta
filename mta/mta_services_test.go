@@ -712,6 +712,29 @@ var _ = Describe("MtaServices", func() {
 		})
 	})
 
+	var _ = Describe("GetMtaID", func() {
+		It("Get MTA ID", func() {
+			mtaPath := getTestPath("result", "temp.mta.yaml")
+
+			jsonRootData, err := json.Marshal(getMtaInput())
+			Ω(err).Should(Succeed())
+			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
+			Ω(mtaPath).Should(BeAnExistingFile())
+
+			id, err := GetMtaID(mtaPath)
+			Ω(err).Should(Succeed())
+			oMtaInput := getMtaInput()
+			Ω(id).Should(Equal(oMtaInput.ID))
+		})
+
+		It("Get MTA ID from a non existing mta.yaml file", func() {
+			mtaPath := getTestPath("result", "mta.yaml")
+			id, err := GetMtaID(mtaPath)
+			Ω(err).Should(HaveOccurred())
+			Ω(id).Should(Equal(""))
+		})
+	})
+
 	var _ = Describe("isNameUnique", func() {
 		It("Check if name exists in mta.yaml", func() {
 			mtaPath := getTestPath("mta.yaml")

@@ -22,6 +22,7 @@ var updateBuildParametersCmdPath string
 var updateBuildParametersCmdData string
 var updateBuildParametersCmdForce bool
 var updateBuildParametersCmdHashcode int
+var getMtaIDCmdPath string
 
 func init() {
 
@@ -50,6 +51,8 @@ func init() {
 		"force action")
 	updateBuildParametersCmd.Flags().IntVarP(&updateBuildParametersCmdHashcode, "hashcode", "c", 0,
 		"data hashcode")
+	getMtaIDCmd.Flags().StringVarP(&getMtaIDCmdPath, "path", "p", "",
+		"the path to the file")
 }
 
 // createMtaCmd Create new MTA project
@@ -160,6 +163,22 @@ var updateBuildParametersCmd = &cobra.Command{
 		return mta.RunModifyAndWriteHash("update build parameters", updateBuildParametersCmdPath, updateBuildParametersCmdForce, func() error {
 			return mta.UpdateBuildParameters(updateBuildParametersCmdPath, updateBuildParametersCmdData)
 		}, updateBuildParametersCmdHashcode, false)
+	},
+	Hidden:        true,
+	SilenceUsage:  true,
+	SilenceErrors: true,
+}
+
+// getMtaIDCmd - get MTA ID.
+var getMtaIDCmd = &cobra.Command{
+	Use:   "id",
+	Short: "Get MTA ID",
+	Long:  "Get MTA ID",
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return mta.RunAndWriteResultAndHash("get MTA ID", getMtaIDCmdPath, func() (interface{}, error) {
+			return mta.GetMtaID(getMtaIDCmdPath)
+		})
 	},
 	Hidden:        true,
 	SilenceUsage:  true,
