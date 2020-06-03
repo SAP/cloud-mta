@@ -13,7 +13,7 @@ import (
 
 	ghodss "github.com/ghodss/yaml"
 	"github.com/pkg/errors"
-
+	"github.com/json-iterator/go"
 	"github.com/SAP/cloud-mta/internal/fs"
 	"github.com/SAP/cloud-mta/internal/logs"
 )
