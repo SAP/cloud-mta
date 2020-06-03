@@ -171,7 +171,7 @@ var updateBuildParametersCmd = &cobra.Command{
 
 // getMtaIDCmd - get MTA ID.
 var getMtaIDCmd = &cobra.Command{
-	Use:   "mtaId",
+	Use:   "id",
 	Short: "Get MTA ID",
 	Long:  "Get MTA ID",
 	Args:  cobra.NoArgs,
