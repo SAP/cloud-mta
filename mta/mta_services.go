@@ -11,11 +11,10 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	ghodss "github.com/ghodss/yaml"
-	"github.com/pkg/errors"
-	"github.com/json-iterator/go"
 	"github.com/SAP/cloud-mta/internal/fs"
 	"github.com/SAP/cloud-mta/internal/logs"
+	ghodss "github.com/ghodss/yaml"
+	"github.com/pkg/errors"
 )
 
 func createMtaYamlFile(path string, mkDirs func(string, os.FileMode) error) (rerr error) {
@@ -184,8 +183,8 @@ func UpdateResource(path string, resourceDataJSON string, marshal func(*MTA) ([]
 	return fmt.Errorf("the '%s' resource does not exist", resource.Name)
 }
 
-//GetMtaId - gets MTA ID.
-func GetMtaId(path string) (string, error) {
+//GetMtaID - gets MTA ID.
+func GetMtaID(path string) (string, error) {
 	mta, err := getMtaFromFile(path)
 	if err != nil {
 		return "", err

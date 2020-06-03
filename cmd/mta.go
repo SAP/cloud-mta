@@ -177,7 +177,7 @@ var getMtaIDCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return mta.RunAndWriteResultAndHash("get MTA ID", getMtaIDCmdPath, func() (interface{}, error) {
-			return mta.GetMtaId(getMtaIDCmdPath)
+			return mta.GetMtaID(getMtaIDCmdPath)
 		})
 	},
 	Hidden:        true,
