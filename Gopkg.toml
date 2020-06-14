@@ -35,7 +35,7 @@
 
 [[constraint]]
   name = "github.com/pkg/errors"
-  version = "0.8.1"
+  version = "0.9.1"
 
 [[constraint]]
   name = "github.com/sirupsen/logrus"
