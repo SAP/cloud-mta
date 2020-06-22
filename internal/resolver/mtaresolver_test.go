@@ -74,7 +74,7 @@ func getExpected(expected []string) string {
 func callResolveAndValidateOutput(wd, moduleName, yamlPath string, expected []string, envFile string) {
 	actualStr := callResolveAndGetOutput(wd, moduleName, yamlPath, envFile)
 	expectedStr := getExpected(expected)
-	Ω(len(actualStr)).Should(Equal(len(expectedStr)))
+	Ω(len(actualStr)).Should(Equal(len(expectedStr)), "Got: "+actualStr)
 	for _, exp := range expected {
 		Ω(actualStr).Should(ContainSubstring(exp))
 	}
@@ -104,11 +104,18 @@ var _ = Describe("Resolve", func() {
 		envGetter = mockEnvGetterWithVcapServices
 		callResolveAndValidateOutput(wd, "eb-java", yamlPath, expected, "")
 	})
+	It("Sanity with vcap_services from file", func() {
+		wd := getTestPath("test-project")
+		yamlPath := getTestPath("test-project", "mta.yaml")
+		envGetter = func() []string {
+			return []string{"health-check-type=http"}
+		}
+		callResolveAndValidateOutput(wd, "eb-java", yamlPath, expected, ".env_with_vcap")
+	})
 	It("Sanity - working dir not provided", func() {
 		yamlPath := getTestPath("test-project", "mta.yaml")
 		envGetter = mockEnvGetterExtWithVcapServices
 		callResolveAndValidateOutput("", "eb-java", yamlPath, expected, "")
-
 	})
 	It("Sanity - environment file name different from the default name (.env)", func() {
 		wd := getTestPath("test-project")
@@ -131,6 +138,13 @@ var _ = Describe("Resolve", func() {
 			`JBP_CONFIG_RESOURCE_CONFIGURATION=[tomcat/webapps/ROOT/META-INF/context.xml: {"service_name_for_DefaultDB" : "ed-aaa-service"}]`,
 		}
 		callResolveAndValidateOutput(wd, "eb-java", yamlPath, expectedResolve, ".env2")
+	})
+	It("Sanity - environment file absolute path provided", func() {
+		wd := getTestPath("test-project")
+		yamlPath := getTestPath("test-project", "mta.yaml")
+		envPath := getTestPath("test-project", "srv", ".env")
+		envGetter = mockEnvGetterExtWithVcapServices
+		callResolveAndValidateOutput(wd, "eb-java", yamlPath, expected, envPath)
 	})
 	It("Sanity - working dir not provided, no VCAP services", func() {
 		yamlPath := getTestPath("test-project", "mta.yaml")
