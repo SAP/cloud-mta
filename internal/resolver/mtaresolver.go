@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/joho/godotenv"
@@ -29,34 +29,33 @@ const (
 var envGetter = os.Environ
 
 // Resolve - resolve module's parameters
-func Resolve(workspaceDir, moduleName, modulePath string, envFile string) error {
+func Resolve(workspaceDir, moduleName, path string, envFile string) error {
 	if len(moduleName) == 0 {
 		return errors.New(emptyModuleNameMsg)
 	}
-	yamlData, err := ioutil.ReadFile(modulePath)
+	yamlData, err := ioutil.ReadFile(path)
 	if err != nil {
-		return errors.Wrapf(err, pathNotFoundMsg, modulePath)
+		return errors.Wrapf(err, pathNotFoundMsg, path)
 	}
 	mtaRaw, err := mta.Unmarshal(yamlData)
 	if err != nil {
-		return errors.Wrapf(err, unmarshalFailsMsg, modulePath)
+		return errors.Wrapf(err, unmarshalFailsMsg, path)
 	}
-
 	if len(workspaceDir) == 0 {
-		workspaceDir = path.Dir(modulePath)
+		workspaceDir = filepath.Dir(path)
 	}
 
 	// If environment file name is not provided - set the default file name to .env
-	envFileName := defaultEnvFileName
+	envFilePath := defaultEnvFileName
 	if len(envFile) > 0 {
-		envFileName = envFile
+		envFilePath = envFile
 	}
 
 	m := NewMTAResolver(mtaRaw, workspaceDir)
 
 	for _, module := range m.GetModules() {
 		if module.Name == moduleName {
-			m.ResolveProperies(module, envFileName)
+			m.ResolveProperties(module, envFilePath)
 
 			propVarMap, err := getPropertiesAsEnvVar(module)
 			if err != nil {
@@ -162,8 +161,16 @@ func NewMTAResolver(m *mta.MTA, workspaceDir string) *MTAResolver {
 	return resolver
 }
 
-// ResolveProperies is the main function to trigger the resolution
-func (m *MTAResolver) ResolveProperies(module *mta.Module, envFileName string) {
+func resolvePath(path string, parts ...string) string {
+	absolutePath := path
+	if !filepath.IsAbs(path) {
+		absolutePath = filepath.Join(append(parts, absolutePath)...)
+	}
+	return absolutePath
+}
+
+// ResolveProperties is the main function to trigger the resolution
+func (m *MTAResolver) ResolveProperties(module *mta.Module, envFilePath string) {
 
 	if m.Parameters == nil {
 		m.Parameters = map[string]interface{}{}
@@ -181,7 +188,7 @@ func (m *MTAResolver) ResolveProperies(module *mta.Module, envFileName string) {
 
 	//add .env file in module's path to the module context
 	if len(module.Path) > 0 {
-		envFile := path.Join(m.WorkingDir, module.Path, envFileName)
+		envFile := resolvePath(envFilePath, m.WorkingDir, module.Path)
 		envMap, err := godotenv.Read(envFile)
 		if err == nil {
 			for key, value := range envMap {
@@ -472,9 +479,9 @@ func (m *MTAResolver) getParameter(sourceModule *mta.Module, source *mtaSource, 
 	}
 
 	if source == nil {
-		println("Missing ", paramName)
+		logs.Logger.Warn("Missing ", paramName)
 	} else {
-		println("Missing ", source.Name+"/"+paramName)
+		logs.Logger.Warn("Missing ", source.Name+"/"+paramName)
 	}
 
 	return "${" + paramName + "}"

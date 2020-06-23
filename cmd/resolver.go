@@ -7,19 +7,19 @@ import (
 )
 
 var resolvePath string
-var workspaceDir string
+var resolveWorkspaceDir string
 var resolveModule string
 var resolveEnvFileName string
 
 func init() {
 	resolveMtaCmd.Flags().StringVarP(&resolvePath, "path", "p", "",
-		"the path to the yaml file")
-	resolveMtaCmd.Flags().StringVarP(&workspaceDir, "workspace", "w", "",
-		"the path to workspace-folder")
+		"the path to the mta.yaml file")
+	resolveMtaCmd.Flags().StringVarP(&resolveWorkspaceDir, "workspace", "w", "",
+		"the path to the project folder; the default path is the folder of the mta.yaml file")
 	resolveMtaCmd.Flags().StringVarP(&resolveModule, "module", "m", "",
-		"module-name")
+		"the module name")
 	resolveMtaCmd.Flags().StringVarP(&resolveEnvFileName, "envFile", "e", "",
-		"the environment file name. The default file name is .env")
+		"the environment file path, relative to the module folder; the default file path is \".env\"")
 
 }
 
@@ -27,13 +27,12 @@ func init() {
 var resolveMtaCmd = &cobra.Command{
 	Use:   "resolve",
 	Short: "Resolve variables and placeholders in an MTA file",
-	Long: `MTA file typically contains variables in the form ~{var-name} and placeholders in the form ${placeholder}, 
-resolve command print to stdout the MTA fil contents with as much as possible variables and placeholders replaced 
-with concrete values, based on environment variables provided and environment files in the modules' folders`,
+	Long: `The MTA file typically contains variables in the form ~{var-name} and placeholders in the form ${placeholder}.
+The resolve command prints the module's properties from the MTA file to stdout, with variables and placeholders replaced with concrete values, based on environment variables and an environment file.`,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logs.Logger.Info("Resolve MTA")
-		err := resolver.Resolve(workspaceDir, resolveModule, resolvePath, resolveEnvFileName)
+		err := resolver.Resolve(resolveWorkspaceDir, resolveModule, resolvePath, resolveEnvFileName)
 		if err != nil {
 			logs.Logger.Error(err)
 		}
