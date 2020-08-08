@@ -3,7 +3,6 @@
 [![Coverage Status](https://coveralls.io/repos/github/SAP/cloud-mta/badge.svg?branch=CD)](https://coveralls.io/github/SAP/cloud-mta?branch=CD)
 [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/SAP/cloud-mta/blob/master/.github/CONTRIBUTING.md)
 [![GoDoc](https://godoc.org/github.com/SAP/cloud-mta?status.svg)](https://godoc.org/github.com/SAP/cloud-mta/mta)
-![GitHub license](https://img.shields.io/badge/license-Apache_2.0-blue.svg)
 ![pre-alpha](https://img.shields.io/badge/Release-pre--alpha-orange.svg)
 
                    
@@ -81,10 +80,4 @@ No known major issues.  To report a new issue, please use our GitHub bug trackin
 ## Support
 
 Please follow our [issue template](https://github.com/SAP/cloud-mta/blob/master/.github/ISSUE_TEMPLATE/bug_report.md) on how to report an issue.
-
-## License
- 
-Copyright (c) 2020 SAP SE or an SAP affiliate company. All rights reserved.
-
-This file is licensed under the Apache 2.0 License [except as noted otherwise in the LICENSE file](/LICENSE).
 

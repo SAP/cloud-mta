@@ -29,10 +29,22 @@ jobs:
       - run: go test -v github.com/SAP/cloud-mta/validations -coverprofile=validations.coverprofile
       - run: gover
       - run: goveralls -v -service=circle-ci -coverprofile=gover.coverprofile -repotoken $COVERALLS_TOKEN
-      
-  deploy:
+
+  compliance:
     docker:
-      - image: circleci/golang:1.11.5
+      - image: circleci/python:3.6.4
+    working_directory: ~/workdir
+    steps:
+      - checkout
+      - run:
+          name: compliance check
+          command: |
+            pip3 install --user reuse
+            ~/.local/bin/reuse lint
+      
+  release:
+    docker:
+      - image: circleci/golang:1.13.3
     working_directory: /go/src/github.com/SAP/cloud-mta
     steps:
       - add_ssh_keys:
@@ -40,18 +52,16 @@ jobs:
             - "34:86:26:17:59:ed:71:fa:b8:37:fc:d6:a4:68:af:0e"
       - checkout
       - run:
-          name: install dep
+          name: install dependencies
           command: |
             apk update && apk add curl git build-base bash
             curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
             dep ensure
       - run:
-          name: remove dummy release tag
-          command: |
-            git push https://github.com/SAP/cloud-mta.git --delete release
-      - run:
           name: bump version
           command: |
+            #Make sure HEAD points to master
+            git checkout master
             CURR_MTA_VERSION=$(cat ./VERSION)
             echo "Current release: ${CURR_MTA_VERSION}"
             MTA_VERSION=$(echo $CURR_MTA_VERSION | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
@@ -61,7 +71,7 @@ jobs:
             sed  -i "/cli_version:/s/${CURR_MTA_VERSION}/${MTA_VERSION}/" ./configs/version.yaml
             sed  -i "s/${CURR_MTA_VERSION}/${MTA_VERSION}/" ./VERSION
             #Generate version file
-            go generate -run "go run ./internal/buildtools/embed.go -source=./configs/version.yaml -target=./internal/version/version_cfg.go -name=VersionConfig -package=version"
+            go generate -run "go run ./internal/tools/embed.go -source=./configs/version.yaml -target=./internal/version/version_cfg.go -name=VersionConfig -package=version"
             #Add all updated files to commit
             git add ./package.json ./configs/version.yaml ./VERSION ./internal/version/version_cfg.go
             git config user.email "${MTA_REPO_USER_EMAIL}"
@@ -72,16 +82,29 @@ jobs:
             #Tag
             git tag -a v${MTA_VERSION} -m "New release ${MTA_VERSION}"
             git push https://github.com/SAP/cloud-mta.git v${MTA_VERSION}
+            
       - run:
           name: release new version
           command: |
-            curl -sL https://git.io/goreleaser | bash
+            #Make sure HEAD points to master
+            git checkout master
+            export GITHUB_TOKEN=${GITHUB_TOKEN}
+            curl -sL https://git.io/goreleaser | bash  
+            
+      - run:
+          name: remove dummy release tag
+          command: |
+            git push https://github.com/SAP/cloud-mta.git --delete release
 
 workflows:
   version: 2
   on_pr_build:
     jobs:
       - build:
+          filters:
+            branches:
+              ignore: master
+      - compliance:
           filters:
             branches:
               ignore: master
@@ -92,16 +115,20 @@ workflows:
           filters:
             branches:
               only: master
+      - compliance:
+          filters:
+            branches:
+              ignore: master
               
   on_tag_build_test_deploy:
     jobs:
       - build:
-          filters:  # required since `deploy` has tag filters AND requires `build`
+          filters:  # required since `release` has tag filters AND requires `build`
             tags:
               only: /release/
             branches:
               ignore: /.*/
-      - deploy:
+      - release:
           requires:
             - build
           filters:  # job runs on tags for no branches
