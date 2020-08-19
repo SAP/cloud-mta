@@ -11,6 +11,8 @@ modules:
     properties:
       JBP_CONFIG_RESOURCE_CONFIGURATION: '[tomcat/webapps/ROOT/META-INF/context.xml: {"service_name_for_DefaultDB" : "~{aaa-container-name}"}]'
   - name: ed-bbb
+    properties:
+      bbb_service: ~{the-service-name}
   - name: ed-con
   - name: ed-dest
   - name: ed-sb-bbb
@@ -365,7 +367,7 @@ resources:
 - name: ed-bbb
   type: com.company.ms.bbb
   parameters:
-    service-name: ed-bbb
+    service-name: ed-bbb-param
     config:
       xcompanypname: 'ed-${space}'
       tenant-mode: dedicated
@@ -434,6 +436,8 @@ resources:
         - bbb.user
       oauth2-configuration:
         token-validity: 31536000
+  properties:
+    the-service-name: ${service-name}
 
 - name: ed-sb-bbb
   type: org.cloudfoundry.managed-service
