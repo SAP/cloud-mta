@@ -418,16 +418,16 @@ func (m *MTAResolver) getParameterFromSource(source *mtaSource, paramName string
 	if source != nil {
 		// See if the value was configured externally first (in VCAP_SERVICES, env var etc)
 		// The source can be a module or a resource
-		module, ok := m.context.modules[source.Name]
-		if ok {
+		module, found := m.context.modules[source.Name]
+		if found {
 			paramValStr, ok := module[paramName]
 			if ok {
 				return paramValStr
 			}
 		}
 
-		resource, ok := m.context.resources[source.Name]
-		if ok {
+		resource, found := m.context.resources[source.Name]
+		if found {
 			paramValStr, ok := resource[paramName]
 			if ok {
 				return paramValStr
