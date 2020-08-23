@@ -45,22 +45,22 @@ The resolve command prints the module's properties from the MTA file to stdout, 
 					return resolver.Resolve(resolveWorkspaceDir, resolveModule, resolvePath, resolveEnvFileName)
 				},
 			)
-		} else {
-			// Just write to the output (this option is here mainly for backwards compatibility)
-			logs.Logger.Info("Resolve MTA")
-			result, err := resolver.Resolve(resolveWorkspaceDir, resolveModule, resolvePath, resolveEnvFileName)
-			if err != nil {
-				logs.Logger.Error(err)
-			} else {
-				for key, val := range result.Properties {
-					fmt.Println(key + "=" + val)
-				}
-				for _, message := range result.Messages {
-					logs.Logger.Warn(message)
-				}
-			}
-			return err
 		}
+
+		// Just write to the output (this option is here for backwards compatibility)
+		logs.Logger.Info("Resolve MTA")
+		result, err := resolver.Resolve(resolveWorkspaceDir, resolveModule, resolvePath, resolveEnvFileName)
+		if err != nil {
+			logs.Logger.Error(err)
+		} else {
+			for key, val := range result.Properties {
+				fmt.Println(key + "=" + val)
+			}
+			for _, message := range result.Messages {
+				logs.Logger.Warn(message)
+			}
+		}
+		return err
 	},
 	Hidden:        false,
 	SilenceUsage:  true,
