@@ -20,7 +20,7 @@ type VcapService struct {
 
 const tagResourceNamePrefix = "mta-resource-name:"
 
-// ResolveContext holds context ifno during resolving of properties
+// ResolveContext holds context info during resolving of properties
 type ResolveContext struct {
 	global    map[string]string
 	modules   map[string]map[string]string
