@@ -96,6 +96,7 @@ var _ = Describe("Resolve", func() {
 		`JBP_CONFIG_companyJVM=[ memory_calculator: { memory_sizes: { heap: 1000m, stack: 1m, metaspace: 150m } } ]`,
 		`JBP_CONFIG_companyJVM1=[ memory_calculator: { memory_sizes: { heap: 1000m, stack: 1m, metaspace: 150m } } ]`,
 		`JBP_CONFIG_RESOURCE_CONFIGURATION=[tomcat/webapps/ROOT/META-INF/context.xml: {"service_name_for_DefaultDB" : "ed-aaa-service"}]`,
+		`bbb_service=ed-bbb-service`,
 	}
 
 	It("Sanity", func() {
@@ -136,6 +137,7 @@ var _ = Describe("Resolve", func() {
 			`JBP_CONFIG_companyJVM=[ memory_calculator: { memory_sizes: { heap: 1000m, stack: 1m, metaspace: 150m } } ]`,
 			`JBP_CONFIG_companyJVM1=[ memory_calculator: { memory_sizes: { heap: 1000m, stack: 1m, metaspace: 150m } } ]`,
 			`JBP_CONFIG_RESOURCE_CONFIGURATION=[tomcat/webapps/ROOT/META-INF/context.xml: {"service_name_for_DefaultDB" : "ed-aaa-service"}]`,
+			`bbb_service=ed-bbb-service`,
 		}
 		callResolveAndValidateOutput(wd, "eb-java", yamlPath, expectedResolve, ".env2")
 	})
@@ -149,7 +151,8 @@ var _ = Describe("Resolve", func() {
 	It("Sanity - working dir not provided, no VCAP services", func() {
 		yamlPath := getTestPath("test-project", "mta.yaml")
 		envGetter = mockEnvGetterExt
-		expected[len(expected)-1] = strings.Replace(expected[len(expected)-1], "ed-aaa-service", "${service-name}", -1)
+		expected[len(expected)-2] = strings.Replace(expected[len(expected)-2], "ed-aaa-service", "${service-name}", -1)
+		expected[len(expected)-1] = strings.Replace(expected[len(expected)-1], "ed-bbb-service", "ed-bbb-param", -1)
 		callResolveAndValidateOutput("", "eb-java", yamlPath, expected, "")
 	})
 	It("empty module name", func() {
@@ -235,7 +238,12 @@ var _ = Describe("convertToString", func() {
 
 var _ = Describe("getParameter", func() {
 	It("parameter found in source parameters", func() {
-		resolver := MTAResolver{}
+		resolver := MTAResolver{
+			context: &ResolveContext{
+				modules:   map[string]map[string]string{},
+				resources: map[string]map[string]string{},
+			},
+		}
 		source := mtaSource{
 			Parameters: map[string]interface{}{
 				"param1": "value1",

@@ -416,22 +416,30 @@ func (m *MTAResolver) resolvePlaceholdersString(sourceModule *mta.Module, source
 
 func (m *MTAResolver) getParameterFromSource(source *mtaSource, paramName string) string {
 	if source != nil {
+		// See if the value was configured externally first (in VCAP_SERVICES, env var etc)
+		// The source can be a module or a resource
+		module, found := m.context.modules[source.Name]
+		if found {
+			paramValStr, ok := module[paramName]
+			if ok {
+				return paramValStr
+			}
+		}
+
+		resource, found := m.context.resources[source.Name]
+		if found {
+			paramValStr, ok := resource[paramName]
+			if ok {
+				return paramValStr
+			}
+		}
+
+		// If it was not defined externally, try to get it from the source parameters
 		paramVal := source.Parameters[paramName]
 		if paramVal != nil {
 			return paramVal.(string)
 		}
 
-		//defaults to context's module params:
-		paramValStr, ok := m.context.modules[source.Name][paramName]
-		if ok {
-			return paramValStr
-		}
-
-		//defaults to context's resource params:
-		paramValStr, ok = m.context.resources[source.Name][paramName]
-		if ok {
-			return paramValStr
-		}
 	}
 	return ""
 }
