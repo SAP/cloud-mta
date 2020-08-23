@@ -49,7 +49,7 @@ jobs:
     steps:
       - add_ssh_keys:
           fingerprints:
-            - "34:86:26:17:59:ed:71:fa:b8:37:fc:d6:a4:68:af:0e"
+            - "03:a8:59:f6:a4:10:a5:b4:31:9a:10:57:af:99:a2:15"
       - checkout
       - run:
           name: install dependencies
