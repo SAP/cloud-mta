@@ -28,18 +28,24 @@ const (
 
 var envGetter = os.Environ
 
+// ResolveResult is the result of the Resolve function. This is serialized to json when requested.
+type ResolveResult struct {
+	Properties map[string]string `json:"properties"`
+	Messages   []string          `json:"messages"`
+}
+
 // Resolve - resolve module's parameters
-func Resolve(workspaceDir, moduleName, path string, envFile string) error {
+func Resolve(workspaceDir, moduleName, path string, envFile string) (result ResolveResult, err error) {
 	if len(moduleName) == 0 {
-		return errors.New(emptyModuleNameMsg)
+		return result, errors.New(emptyModuleNameMsg)
 	}
 	yamlData, err := ioutil.ReadFile(path)
 	if err != nil {
-		return errors.Wrapf(err, pathNotFoundMsg, path)
+		return result, errors.Wrapf(err, pathNotFoundMsg, path)
 	}
 	mtaRaw, err := mta.Unmarshal(yamlData)
 	if err != nil {
-		return errors.Wrapf(err, unmarshalFailsMsg, path)
+		return result, errors.Wrapf(err, unmarshalFailsMsg, path)
 	}
 	if len(workspaceDir) == 0 {
 		workspaceDir = filepath.Dir(path)
@@ -59,16 +65,15 @@ func Resolve(workspaceDir, moduleName, path string, envFile string) error {
 
 			propVarMap, err := getPropertiesAsEnvVar(module)
 			if err != nil {
-				return err
+				return result, err
 			}
-			for key, val := range propVarMap {
-				fmt.Println(key + "=" + val)
-			}
-			return nil
+			result.Properties = propVarMap
+			result.Messages = m.messages
+			return result, nil
 		}
 	}
 
-	return errors.Errorf(moduleNotFoundMsg, moduleName)
+	return result, errors.Errorf(moduleNotFoundMsg, moduleName)
 }
 
 func getPropertiesAsEnvVar(module *mta.Module) (map[string]string, error) {
@@ -126,6 +131,7 @@ type MTAResolver struct {
 	mta.MTA
 	WorkingDir string
 	context    *ResolveContext
+	messages   []string
 }
 
 const resourceType = 1
@@ -149,7 +155,7 @@ func NewMTAResolver(m *mta.MTA, workspaceDir string) *MTAResolver {
 		global:    map[string]string{},
 		modules:   map[string]map[string]string{},
 		resources: map[string]map[string]string{},
-	}}
+	}, []string{}}
 
 	for _, module := range m.Modules {
 		resolver.context.modules[module.Name] = map[string]string{}
@@ -333,7 +339,7 @@ func (m *MTAResolver) getVariableValue(sourceModule *mta.Module, requires *mta.R
 			providerName = variableName[:slashPos]
 			variableName = variableName[slashPos+1:]
 		} else {
-			logs.Logger.Warnf(missingPrefixMsg, variableName)
+			m.addMessage(fmt.Sprintf(missingPrefixMsg, variableName))
 			return "~{" + variableName + "}"
 		}
 
@@ -356,9 +362,9 @@ func (m *MTAResolver) getVariableValue(sourceModule *mta.Module, requires *mta.R
 	}
 
 	if source != nil && source.Type == resourceType && source.Resource.Type == "configuration" {
-		provID, ok := source.Resource.Parameters["provider-id"]
+		provID, ok := getStringFromMap(source.Resource.Parameters, "provider-id")
 		if ok {
-			println("missing configuration ", provID.(string), "/", variableName)
+			m.addMessage(fmt.Sprint("Missing configuration ", provID, "/", variableName))
 		}
 	}
 
@@ -435,9 +441,9 @@ func (m *MTAResolver) getParameterFromSource(source *mtaSource, paramName string
 		}
 
 		// If it was not defined externally, try to get it from the source parameters
-		paramVal := source.Parameters[paramName]
-		if paramVal != nil {
-			return paramVal.(string)
+		paramVal, found := getStringFromMap(source.Parameters, paramName)
+		if found {
+			return paramVal
 		}
 
 	}
@@ -455,17 +461,16 @@ func (m *MTAResolver) getParameter(sourceModule *mta.Module, source *mtaSource, 
 
 	//then try on requires level
 	if requires != nil {
-		paramVal := requires.Parameters[paramName]
-		if paramVal != nil {
-			return paramVal.(string)
+		paramVal, ok := getStringFromMap(requires.Parameters, paramName)
+		if ok {
+			return paramVal
 		}
 	}
 
-	var ok bool
 	if sourceModule != nil {
-		paramVal := sourceModule.Parameters[paramName]
-		if paramVal != nil {
-			return paramVal.(string)
+		paramVal, ok := getStringFromMap(sourceModule.Parameters, paramName)
+		if ok {
+			return paramVal
 		}
 		//defaults to context's module params:
 		paramValStr, ok = m.context.modules[sourceModule.Name][paramName]
@@ -475,9 +480,9 @@ func (m *MTAResolver) getParameter(sourceModule *mta.Module, source *mtaSource, 
 	}
 
 	//then on MTA root scope
-	paramVal := m.Parameters[paramName]
-	if paramVal != nil {
-		return paramVal.(string)
+	paramVal, ok := getStringFromMap(m.Parameters, paramName)
+	if ok {
+		return paramVal
 	}
 
 	//then global scope
@@ -487,9 +492,9 @@ func (m *MTAResolver) getParameter(sourceModule *mta.Module, source *mtaSource, 
 	}
 
 	if source == nil {
-		logs.Logger.Warn("Missing ", paramName)
+		m.addMessage(fmt.Sprint("Missing ", paramName))
 	} else {
-		logs.Logger.Warn("Missing ", source.Name+"/"+paramName)
+		m.addMessage(fmt.Sprint("Missing ", source.Name+"/"+paramName))
 	}
 
 	return "${" + paramName + "}"
@@ -516,6 +521,25 @@ func (m *MTAResolver) findProvider(name string) *mtaSource {
 	return nil
 }
 
+func (m *MTAResolver) addMessage(message string) {
+	// This check is necessary so the same message won't be written twice.
+	// This happens when a placeholder references a parameter that is not defined,
+	// because we try to resolve the parameter while resolving the placeholder and then
+	// we try to resolve the parameter again as a parameter.
+	if !containsString(m.messages, message) {
+		m.messages = append(m.messages, message)
+	}
+}
+
+func containsString(slice []string, value string) bool {
+	for _, curr := range slice {
+		if curr == value {
+			return true
+		}
+	}
+	return false
+}
+
 func convertToJSONSafe(val interface{}) interface{} {
 	switch v := val.(type) {
 	case map[interface{}]interface{}:
@@ -531,4 +555,27 @@ func convertToJSONSafe(val interface{}) interface{} {
 		return v
 	}
 	return val
+}
+
+func getStringFromMap(params map[string]interface{}, key string) (string, bool) {
+	// Only return the parameter value if it's a string, to prevent a panic.
+	// Note: this is used mainly for parameter values during resolve.
+	// The deployer DOES support non-string parameters, both as the whole value
+	// (it keeps the same type) and inside a string.
+	// It stringifies the value in side a string but it's not the usual json stringify.
+	// For example, if we have this string:
+	//   prop_from_resource: "this is the prop: ~{some_prop}"
+	// And some_prop is defined like this:
+	//   stuct_field: abc
+	// We will get a resolved value like this from the Deployer:
+	// "this is the prop: {stuct_field=abc}"
+	// We do not support this use case currently.
+	value, ok := params[key]
+	if ok && value != nil {
+		str, isString := value.(string)
+		if isString {
+			return str, true
+		}
+	}
+	return "", false
 }

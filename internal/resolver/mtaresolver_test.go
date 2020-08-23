@@ -1,14 +1,9 @@
 package resolver
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
-	"log"
-	"os"
 	"strings"
-	"sync"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -16,88 +11,39 @@ import (
 	"github.com/SAP/cloud-mta/mta"
 )
 
-func callResolveAndGetOutput(wd, moduleName, yamlPath string, envFileName string) string {
-	reader, writer, err := os.Pipe()
+func callResolveAndGetOutput(wd, moduleName, yamlPath string, envFileName string) ResolveResult {
+	result, err := Resolve(wd, moduleName, yamlPath, envFileName)
 	Ω(err).Should(Succeed())
-	stdout := os.Stdout
-	stderr := os.Stderr
-	defer func() {
-		os.Stdout = stdout
-		os.Stderr = stderr
-		log.SetOutput(os.Stderr)
-	}()
-	os.Stdout = writer
-	os.Stderr = writer
-	log.SetOutput(writer)
-	out := make(chan string)
-	wg := new(sync.WaitGroup)
-	wg.Add(1)
-	go func() {
-		var buf bytes.Buffer
-		wg.Done()
-		io.Copy(&buf, reader)
-		out <- buf.String()
-	}()
-	wg.Wait()
-	err = Resolve(wd, moduleName, yamlPath, envFileName)
-	Ω(err).Should(Succeed())
-	writer.Close()
-	return <-out
+	return result
 }
 
-func getExpected(expected []string) string {
-	reader, writer, err := os.Pipe()
-	Ω(err).Should(Succeed())
-	stdout := os.Stdout
-	defer func() {
-		os.Stdout = stdout
-	}()
-	os.Stdout = writer
-	log.SetOutput(writer)
-	out := make(chan string)
-	wg := new(sync.WaitGroup)
-	wg.Add(1)
-	go func() {
-		var buf bytes.Buffer
-		wg.Done()
-		io.Copy(&buf, reader)
-		out <- buf.String()
-	}()
-	wg.Wait()
-	for _, exp := range expected {
-		fmt.Println(exp)
-	}
-	writer.Close()
-	return <-out
-}
-
-func callResolveAndValidateOutput(wd, moduleName, yamlPath string, expected []string, envFile string) {
-	actualStr := callResolveAndGetOutput(wd, moduleName, yamlPath, envFile)
-	expectedStr := getExpected(expected)
-	Ω(len(actualStr)).Should(Equal(len(expectedStr)), "Got: "+actualStr)
-	for _, exp := range expected {
-		Ω(actualStr).Should(ContainSubstring(exp))
-	}
+func callResolveAndValidateOutput(wd, moduleName, yamlPath string, expected ResolveResult, envFile string) {
+	actualResult := callResolveAndGetOutput(wd, moduleName, yamlPath, envFile)
+	Ω(actualResult).Should(Equal(expected))
 }
 
 var _ = Describe("Resolve", func() {
-	expected := []string{
-		`prop1=no_placeholders`,
-		`prop2=1000m`,
-		`prop3=["1000m","1m"]`,
-		`prop4={"p1":"1000m","p2":"1m"}`,
-		`prop5=1`,
-		`prop6={"1":"1000m"}`,
-		`prop7=~{eb-msahaa/heap`,
-		`prop8=[[{"a":["a1",{"a2-key":"a2-value"}]}]]`,
-		`prop9=vvv`,
-		`prop10=${env_var0}`,
-		`prop11=2G`,
-		`JBP_CONFIG_companyJVM=[ memory_calculator: { memory_sizes: { heap: 1000m, stack: 1m, metaspace: 150m } } ]`,
-		`JBP_CONFIG_companyJVM1=[ memory_calculator: { memory_sizes: { heap: 1000m, stack: 1m, metaspace: 150m } } ]`,
-		`JBP_CONFIG_RESOURCE_CONFIGURATION=[tomcat/webapps/ROOT/META-INF/context.xml: {"service_name_for_DefaultDB" : "ed-aaa-service"}]`,
-		`bbb_service=ed-bbb-service`,
-	}
+	expected := ResolveResult{
+		Properties: map[string]string{
+			`prop1`:                             `no_placeholders`,
+			`prop2`:                             `1000m`,
+			`prop3`:                             `["1000m","1m"]`,
+			`prop4`:                             `{"p1":"1000m","p2":"1m"}`,
+			`prop5`:                             `1`,
+			`prop6`:                             `{"1":"1000m"}`,
+			`prop7`:                             `~{eb-msahaa/heap`,
+			`prop8`:                             `[[{"a":["a1",{"a2-key":"a2-value"}]}]]`,
+			`prop9`:                             `vvv`,
+			`prop10`:                            `${env_var0}`,
+			`prop11`:                            `2G`,
+			`JBP_CONFIG_companyJVM`:             `[ memory_calculator: { memory_sizes: { heap: 1000m, stack: 1m, metaspace: 150m } } ]`,
+			`JBP_CONFIG_companyJVM1`:            `[ memory_calculator: { memory_sizes: { heap: 1000m, stack: 1m, metaspace: 150m } } ]`,
+			`JBP_CONFIG_RESOURCE_CONFIGURATION`: `[tomcat/webapps/ROOT/META-INF/context.xml: {"service_name_for_DefaultDB" : "ed-aaa-service"}]`,
+			`bbb_service`:                       `ed-bbb-service`,
+		},
+		Messages: []string{
+			`Missing env_var0`,
+		}}
 
 	It("Sanity", func() {
 		wd := getTestPath("test-project")
@@ -122,22 +68,25 @@ var _ = Describe("Resolve", func() {
 		wd := getTestPath("test-project")
 		yamlPath := getTestPath("test-project", "mta.yaml")
 		envGetter = mockEnvGetterExtWithVcapServices
-		expectedResolve := []string{
-			`prop1=no_placeholders`,
-			`prop2=1000m`,
-			`prop3=["1000m","1m"]`,
-			`prop4={"p1":"1000m","p2":"1m"}`,
-			`prop5=1`,
-			`prop6={"1":"1000m"}`,
-			`prop7=~{eb-msahaa/heap`,
-			`prop8=[[{"a":["a1",{"a2-key":"a2-value"}]}]]`,
-			`prop9=newValue`,
-			`prop10=${env_var0}`,
-			`prop11=2G`,
-			`JBP_CONFIG_companyJVM=[ memory_calculator: { memory_sizes: { heap: 1000m, stack: 1m, metaspace: 150m } } ]`,
-			`JBP_CONFIG_companyJVM1=[ memory_calculator: { memory_sizes: { heap: 1000m, stack: 1m, metaspace: 150m } } ]`,
-			`JBP_CONFIG_RESOURCE_CONFIGURATION=[tomcat/webapps/ROOT/META-INF/context.xml: {"service_name_for_DefaultDB" : "ed-aaa-service"}]`,
-			`bbb_service=ed-bbb-service`,
+		expectedResolve := ResolveResult{
+			Properties: map[string]string{
+				`prop1`:                             `no_placeholders`,
+				`prop2`:                             `1000m`,
+				`prop3`:                             `["1000m","1m"]`,
+				`prop4`:                             `{"p1":"1000m","p2":"1m"}`,
+				`prop5`:                             `1`,
+				`prop6`:                             `{"1":"1000m"}`,
+				`prop7`:                             `~{eb-msahaa/heap`,
+				`prop8`:                             `[[{"a":["a1",{"a2-key":"a2-value"}]}]]`,
+				`prop9`:                             `newValue`,
+				`prop10`:                            `${env_var0}`,
+				`prop11`:                            `2G`,
+				`JBP_CONFIG_companyJVM`:             `[ memory_calculator: { memory_sizes: { heap: 1000m, stack: 1m, metaspace: 150m } } ]`,
+				`JBP_CONFIG_companyJVM1`:            `[ memory_calculator: { memory_sizes: { heap: 1000m, stack: 1m, metaspace: 150m } } ]`,
+				`JBP_CONFIG_RESOURCE_CONFIGURATION`: `[tomcat/webapps/ROOT/META-INF/context.xml: {"service_name_for_DefaultDB" : "ed-aaa-service"}]`,
+				`bbb_service`:                       `ed-bbb-service`,
+			},
+			Messages: []string{`Missing env_var0`},
 		}
 		callResolveAndValidateOutput(wd, "eb-java", yamlPath, expectedResolve, ".env2")
 	})
@@ -151,29 +100,30 @@ var _ = Describe("Resolve", func() {
 	It("Sanity - working dir not provided, no VCAP services", func() {
 		yamlPath := getTestPath("test-project", "mta.yaml")
 		envGetter = mockEnvGetterExt
-		expected[len(expected)-2] = strings.Replace(expected[len(expected)-2], "ed-aaa-service", "${service-name}", -1)
-		expected[len(expected)-1] = strings.Replace(expected[len(expected)-1], "ed-bbb-service", "ed-bbb-param", -1)
+		expected.Properties["JBP_CONFIG_RESOURCE_CONFIGURATION"] = strings.Replace(expected.Properties["JBP_CONFIG_RESOURCE_CONFIGURATION"], "ed-aaa-service", "${service-name}", -1)
+		expected.Properties["bbb_service"] = strings.Replace(expected.Properties["bbb_service"], "ed-bbb-service", "ed-bbb-param", -1)
+		expected.Messages = append(expected.Messages, `Missing ed-aaa/service-name`)
 		callResolveAndValidateOutput("", "eb-java", yamlPath, expected, "")
 	})
 	It("empty module name", func() {
-		err := Resolve("", "", getTestPath("test-project", "mta.yaml"), "")
+		_, err := Resolve("", "", getTestPath("test-project", "mta.yaml"), "")
 		Ω(err).Should(HaveOccurred())
 		Ω(err.Error()).Should(Equal(emptyModuleNameMsg))
 	})
 	It("module not exists", func() {
-		err := Resolve("", "aaa", getTestPath("test-project", "mta.yaml"), "")
+		_, err := Resolve("", "aaa", getTestPath("test-project", "mta.yaml"), "")
 		Ω(err).Should(HaveOccurred())
 		Ω(err.Error()).Should(Equal(fmt.Sprintf(moduleNotFoundMsg, "aaa")))
 	})
 	It("mta yaml path not found", func() {
 		path := getTestPath("test-project", "mtaNotExist.yaml")
-		err := Resolve("", "eb-java", path, "")
+		_, err := Resolve("", "eb-java", path, "")
 		Ω(err).Should(HaveOccurred())
 		Ω(err.Error()).Should(ContainSubstring(fmt.Sprintf(pathNotFoundMsg, path)))
 	})
 	It("failure on unmarshal", func() {
 		path := getTestPath("test-project", "mtaBad.yaml")
-		err := Resolve("", "eb-java", path, "")
+		_, err := Resolve("", "eb-java", path, "")
 		Ω(err).Should(HaveOccurred())
 		Ω(err.Error()).Should(ContainSubstring(fmt.Sprintf(unmarshalFailsMsg, path)))
 	})
@@ -252,6 +202,23 @@ var _ = Describe("getParameter", func() {
 		res := resolver.getParameter(nil, &source, nil, "param1")
 		Ω(res).Should(Equal("value1"))
 	})
+	It("parameter found in source parameters but isn't a string", func() {
+		resolver := MTAResolver{
+			context: &ResolveContext{
+				modules:   map[string]map[string]string{},
+				resources: map[string]map[string]string{},
+			},
+		}
+		source := mtaSource{
+			Parameters: map[string]interface{}{
+				"param1": struct {
+					a string
+				}{a: "a"},
+			},
+		}
+		res := resolver.getParameter(nil, &source, nil, "param1")
+		Ω(res).Should(Equal("${param1}"))
+	})
 	It("parameter found in the module (defined by the source) of the context", func() {
 		resolver := MTAResolver{
 			context: &ResolveContext{
@@ -316,6 +283,7 @@ var _ = Describe("getParameter", func() {
 					},
 				},
 			},
+			messages: []string{},
 		}
 		source := mtaSource{
 			Name: "module1",
@@ -323,6 +291,7 @@ var _ = Describe("getParameter", func() {
 
 		res := resolver.getParameter(nil, &source, nil, "param2")
 		Ω(res).Should(Equal("${param2}"))
+		Ω(resolver.messages).Should(Equal([]string{"Missing module1/param2"}))
 	})
 })
 
@@ -368,12 +337,13 @@ var _ = Describe("resolvePlaceholders", func() {
 
 var _ = Describe("getVariableValue", func() {
 	It("missing required prefix", func() {
-		resolver := MTAResolver{}
+		resolver := MTAResolver{messages: []string{}}
 		res := resolver.getVariableValue(nil, nil, "var_without_prefix")
 		Ω(res).Should(Equal("~{var_without_prefix}"))
+		Ω(resolver.messages).Should(Equal([]string{fmt.Sprintf(missingPrefixMsg, "var_without_prefix")}))
 	})
 	It("missing configuration", func() {
-		resolver := MTAResolver{}
+		resolver := MTAResolver{messages: []string{}}
 		resolver.Resources = []*mta.Resource{
 			{
 				Name:       "provider",
@@ -386,6 +356,7 @@ var _ = Describe("getVariableValue", func() {
 		}
 		res := resolver.getVariableValue(nil, nil, "provider/var")
 		Ω(res).Should(Equal("~{var}"))
+		Ω(resolver.messages).Should(Equal([]string{"Missing configuration id/var"}))
 	})
 })
 

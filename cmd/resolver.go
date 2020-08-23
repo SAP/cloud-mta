@@ -1,8 +1,10 @@
 package commands
 
 import (
+	"fmt"
 	"github.com/SAP/cloud-mta/internal/logs"
 	"github.com/SAP/cloud-mta/internal/resolver"
+	"github.com/SAP/cloud-mta/mta"
 	"github.com/spf13/cobra"
 )
 
@@ -10,6 +12,7 @@ var resolvePath string
 var resolveWorkspaceDir string
 var resolveModule string
 var resolveEnvFileName string
+var resolveOutputFormat string
 
 func init() {
 	resolveMtaCmd.Flags().StringVarP(&resolvePath, "path", "p", "",
@@ -20,6 +23,9 @@ func init() {
 		"the module name")
 	resolveMtaCmd.Flags().StringVarP(&resolveEnvFileName, "envFile", "e", "",
 		"the environment file path, relative to the module folder; the default file path is \".env\"")
+	resolveMtaCmd.Flags().StringVarP(&resolveOutputFormat, "output", "o", "",
+		"the output format; use \"json\" for json-formatted output")
+	_ = resolveMtaCmd.Flags().MarkHidden("output")
 
 }
 
@@ -31,12 +37,30 @@ var resolveMtaCmd = &cobra.Command{
 The resolve command prints the module's properties from the MTA file to stdout, with variables and placeholders replaced with concrete values, based on environment variables and an environment file.`,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		logs.Logger.Info("Resolve MTA")
-		err := resolver.Resolve(resolveWorkspaceDir, resolveModule, resolvePath, resolveEnvFileName)
-		if err != nil {
-			logs.Logger.Error(err)
+		if resolveOutputFormat == "json" {
+			return mta.RunAndWriteResultAndHash(
+				"Resolve MTA",
+				resolvePath,
+				func() (interface{}, error) {
+					return resolver.Resolve(resolveWorkspaceDir, resolveModule, resolvePath, resolveEnvFileName)
+				},
+			)
+		} else {
+			// Just write to the output (this option is here mainly for backwards compatibility)
+			logs.Logger.Info("Resolve MTA")
+			result, err := resolver.Resolve(resolveWorkspaceDir, resolveModule, resolvePath, resolveEnvFileName)
+			if err != nil {
+				logs.Logger.Error(err)
+			} else {
+				for key, val := range result.Properties {
+					fmt.Println(key + "=" + val)
+				}
+				for _, message := range result.Messages {
+					logs.Logger.Warn(message)
+				}
+			}
+			return err
 		}
-		return err
 	},
 	Hidden:        false,
 	SilenceUsage:  true,
