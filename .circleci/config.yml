@@ -91,6 +91,25 @@ jobs:
             export GITHUB_TOKEN=${CLOUD_MTA_BOT_TOKEN}
             curl -sL https://git.io/goreleaser | bash  
             
+  publish:
+    docker:
+      - image: circleci/node:13.1.0
+    working_directory: ~/go/src/github.com/SAP/cloud-mta
+    steps:
+      - add_ssh_keys:
+          fingerprints:
+            - "c3:2b:e9:bb:d5:05:32:ab:df:ce:2b:c3:e5:f7:95:42"
+      - checkout
+      - run:
+          name: publish to npm
+          command: |
+            #Make sure HEAD points to master
+            git checkout master
+            git fetch
+            git rebase
+            echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > .npmrc
+            npm install
+            npm publish
       - run:
           name: remove dummy release tag
           command: |
@@ -132,6 +151,14 @@ workflows:
           requires:
             - build
           filters:  # job runs on tags for no branches
+            tags:
+              only: /release/
+            branches:
+              ignore: /.*/
+      - publish:
+          requires:
+            - release
+          filters:  # job runs on tag 'release' for no branches
             tags:
               only: /release/
             branches:
