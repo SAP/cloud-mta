@@ -1,7 +1,9 @@
 package fs
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 
 	"github.com/pkg/errors"
@@ -25,4 +27,19 @@ func DeleteFile(path string) (err error) {
 // DeleteDir - deletes the directory and all sub-directories and files.
 func DeleteDir(path string) (err error) {
 	return os.RemoveAll(path)
+}
+
+// GetJSONContent reads the file, parses it as JSON and returns the result.
+func GetJSONContent(path string) (map[string]interface{}, error) {
+	// Get the file content
+	fileConfigBuffer, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	fileConfig := make(map[string]interface{})
+	err = json.Unmarshal(fileConfigBuffer, &fileConfig)
+	if err != nil {
+		return nil, err
+	}
+	return fileConfig, nil
 }

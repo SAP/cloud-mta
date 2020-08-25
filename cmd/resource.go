@@ -14,6 +14,9 @@ var getResourcesCmdPath string
 var updateResourceMtaCmdPath string
 var updateResourceCmdData string
 var updateResourceCmdHashcode int
+var getResourceConfigCmdPath string
+var getResourceConfigCmdName string
+var getResourceConfigCmdDir string
 
 func init() {
 	// set flags of commands
@@ -33,6 +36,13 @@ func init() {
 		"data in JSON format")
 	updateResourceCmd.Flags().IntVarP(&updateResourceCmdHashcode, "hashcode", "c", 0,
 		"data hashcode")
+
+	getResourceConfigCmd.Flags().StringVarP(&getResourceConfigCmdPath, "path", "p", "",
+		"the path to the yaml file")
+	getResourceConfigCmd.Flags().StringVarP(&getResourceConfigCmdDir, "workspace", "w", "",
+		"the path to the project folder; the default path is the folder of the mta.yaml file")
+	getResourceConfigCmd.Flags().StringVarP(&getResourceConfigCmdName, "resource", "r", "",
+		"the resource name")
 }
 
 // addResourceCmd - adds a new resource.
@@ -77,6 +87,21 @@ var updateResourceCmd = &cobra.Command{
 		return mta.RunModifyAndWriteHash("update existing resource", updateResourceMtaCmdPath, false, func() error {
 			return mta.UpdateResource(updateResourceMtaCmdPath, updateResourceCmdData, mta.Marshal)
 		}, updateResourceCmdHashcode, false)
+	},
+	Hidden:        true,
+	SilenceUsage:  true,
+	SilenceErrors: true,
+}
+
+var getResourceConfigCmd = &cobra.Command{
+	Use:   "resource-config",
+	Short: "Get resource configuration",
+	Long:  "Get resource configuration, which is used when creating the service",
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return mta.RunAndWriteResultAndHash("get resource config", getResourceConfigCmdPath, func() (interface{}, error) {
+			return mta.GetResourceConfig(getResourceConfigCmdPath, getResourceConfigCmdName, getResourceConfigCmdDir)
+		})
 	},
 	Hidden:        true,
 	SilenceUsage:  true,

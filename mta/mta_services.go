@@ -134,6 +134,72 @@ func GetResources(path string) ([]*Resource, error) {
 	return mta.Resources, nil
 }
 
+// GetResourceConfig returns the configuration for a resource (its service creation parameters).
+// If both the config and path parameters are defined, the result is merged.
+func GetResourceConfig(path string, resourceName string, workspaceDir string) (map[string]interface{}, error) {
+	mta, err := getMtaFromFile(path)
+	if err != nil {
+		return nil, err
+	}
+	if len(workspaceDir) == 0 {
+		workspaceDir = filepath.Dir(path)
+	}
+
+	resource := mta.GetResourceByName(resourceName)
+	if resource == nil {
+		return nil, fmt.Errorf("the '%s' resource does not exist", resourceName)
+	}
+
+	// Get the resource config from its parameters
+	configParam := resource.Parameters["config"]
+	var config map[string]interface{}
+	if configParam != nil {
+		config, _, _ = getMapValue(configParam)
+	}
+
+	// Get the resource service creation parameters file path
+	filePath := resource.Parameters["path"]
+	var fileConfig map[string]interface{}
+
+	if filePath != nil {
+		fileConfig, err = fs.GetJSONContent(filepath.Join(workspaceDir, filePath.(string)))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return mergeMaps(config, fileConfig), nil
+}
+
+// Shallow merge the maps. If the first map is not nil the merge result is inlined in it.
+// The first map keys override the second map keys.
+func mergeMaps(first map[string]interface{}, second map[string]interface{}) map[string]interface{} {
+	var result map[string]interface{}
+	if first == nil && second == nil {
+		// Both maps are nil - return empty map
+		result = make(map[string]interface{})
+	} else if first == nil {
+		// Only second exists
+		result = second
+	} else if second == nil {
+		// Only first exists
+		result = first
+	} else {
+		// Both maps are not nil at this point.
+		// Shallow merge the maps (same as the deployer).
+		result = first
+		for key, value := range second {
+			// The first map keys override the second map keys.
+			_, ok := result[key]
+			if !ok {
+				result[key] = value
+			}
+		}
+	}
+
+	return result
+}
+
 // UpdateModule updates an existing module according to the module name. If more than one module with this
 // name exists, one of the modules is updated to the existing structure.
 func UpdateModule(path string, moduleDataJSON string, marshal func(*MTA) ([]byte, error)) error {
