@@ -1,0 +1,7 @@
+{
+	"xsappname": "nameFromPath",
+	"paramFromPath": "paramValueFromPath",
+	"deepParam": {
+		"otherValue": "deepValueFromPath"
+	}
+}

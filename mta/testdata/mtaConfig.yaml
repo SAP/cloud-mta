@@ -1,0 +1,41 @@
+ID: HANATest
+_schema-version: '2.0'
+version: 1.0.0
+
+resources:
+- name: resourceWithNoConfigAndPath
+  type: com.sap.xs.uaa-space
+
+- name: resourceWithPath2
+  type: com.sap.xs.uaa-space
+  parameters:
+    path: ./xs-security2.json
+
+- name: resourceWithPath
+  type: com.sap.xs.uaa-space
+  parameters:
+    path: ./xs-security.json
+
+- name: resourceWithPathAndBadConfig
+  type: com.sap.xs.uaa-space
+  parameters:
+    path: ./xs-security.json
+    config: "this is not a map"
+
+- name: resourceWithConfig
+  type: com.sap.xs.uaa-space
+  parameters:
+    config:
+      xsappname: testName
+
+- name: resourceWithConfigAndPath
+  type: com.sap.xs.uaa-space
+  parameters:
+    path: ./xs-security.json
+    config:
+      xsappname: nameFromConfig
+      paramFromConfig: paramValueFromConfig
+      deepParam:
+        someValue: deepValueFromConfig
+
+

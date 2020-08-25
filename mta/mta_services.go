@@ -2,6 +2,7 @@ package mta
 
 import (
 	"crypto/sha1"
+	"encoding/json"
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"io"
@@ -132,6 +133,67 @@ func GetResources(path string) ([]*Resource, error) {
 		return nil, err
 	}
 	return mta.Resources, nil
+}
+
+// GetResourceConfig returns the configuration for a resource (its service creation parameters).
+// If both the config and path parameters are defined, the result is merged.
+func GetResourceConfig(path string, resourceName string, workspaceDir string) (map[string]interface{}, error) {
+	mta, err := getMtaFromFile(path)
+	if err != nil {
+		return nil, err
+	}
+	if len(workspaceDir) == 0 {
+		workspaceDir = filepath.Dir(path)
+	}
+
+	resource := mta.GetResourceByName(resourceName)
+	if resource == nil {
+		return nil, fmt.Errorf("the '%s' resource does not exist", resourceName)
+	}
+
+	// Get the resource config from its parameters
+	configParam := resource.Parameters["config"]
+	var config map[string]interface{}
+	if configParam != nil {
+		config, _, _ = getMapValue(configParam)
+	}
+
+	// Get the resource service creation parameters file path
+	filePath := resource.Parameters["path"]
+	var fileConfig map[string]interface{}
+
+	if filePath != nil {
+		// Get the file content
+		fileConfigBuffer, err := ioutil.ReadFile(filepath.Join(workspaceDir, filePath.(string)))
+		if err != nil {
+			return nil, err
+		}
+		fileConfig = make(map[string]interface{})
+		err = json.Unmarshal(fileConfigBuffer, &fileConfig)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if config == nil && fileConfig == nil {
+		// Both maps are nil - return empty map
+		config = make(map[string]interface{})
+	} else if config == nil {
+		// Only file config exists
+		config = fileConfig
+	} else if fileConfig != nil {
+		// config is not nil at this point.
+		// Shallow merge the config parameters (same as the deployer)
+		for key, value := range fileConfig {
+			// The config parameter overrides the file config
+			_, ok := config[key]
+			if !ok {
+				config[key] = value
+			}
+		}
+	}
+
+	return config, nil
 }
 
 // UpdateModule updates an existing module according to the module name. If more than one module with this

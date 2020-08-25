@@ -712,6 +712,109 @@ var _ = Describe("MtaServices", func() {
 		})
 	})
 
+	var _ = Describe("GetResourceConfig", func() {
+		It("returns error when mta.yaml does not exist", func() {
+			mtaPath := getTestPath("result", "mta.yaml")
+			resourceConfig, err := GetResourceConfig(mtaPath, "myResource", "")
+			Ω(err).Should(HaveOccurred())
+			Ω(resourceConfig).Should(BeNil())
+		})
+
+		It("returns error when resource does not exist", func() {
+			mtaPath := getTestPath("mtaConfig.yaml")
+			resourceConfig, err := GetResourceConfig(mtaPath, "nonExistingResource", "")
+			Ω(err).Should(HaveOccurred())
+			Ω(resourceConfig).Should(BeNil())
+		})
+
+		It("returns error when path references a file that doesn't exist", func() {
+			mtaPath := getTestPath("mtaConfig.yaml")
+			resourceConfig, err := GetResourceConfig(mtaPath, "resourceWithPath2", "")
+			Ω(err).Should(HaveOccurred())
+			Ω(resourceConfig).Should(BeNil())
+		})
+
+		It("returns error when path references a file that is not json", func() {
+			mtaPath := getTestPath("mtaConfig.yaml")
+			resourceConfig, err := GetResourceConfig(mtaPath, "resourceWithPath", getTestPath("otherWorkdir"))
+			Ω(err).Should(HaveOccurred())
+			Ω(resourceConfig).Should(BeNil())
+		})
+
+		// Both xs-security.json and otherWorkdir/xs-security2.json contain this content
+		fileContent := map[string]interface{}{
+			"xsappname":     "nameFromPath",
+			"paramFromPath": "paramValueFromPath",
+			"deepParam": map[string]interface{}{
+				"otherValue": "deepValueFromPath",
+			},
+		}
+
+		It("returns empty map when config and path aren't defined", func() {
+			mtaPath := getTestPath("mtaConfig.yaml")
+			resourceConfig, err := GetResourceConfig(mtaPath, "resourceWithNoConfigAndPath", "")
+			Ω(err).Should(Succeed())
+			Ω(resourceConfig).ShouldNot(BeNil())
+			result := map[string]interface{}{}
+			Ω(resourceConfig).Should(Equal(result))
+		})
+
+		It("returns file content when config is not defined and path exists", func() {
+			mtaPath := getTestPath("mtaConfig.yaml")
+			resourceConfig, err := GetResourceConfig(mtaPath, "resourceWithPath", "")
+			Ω(err).Should(Succeed())
+			Ω(resourceConfig).ShouldNot(BeNil())
+			result := fileContent
+			Ω(resourceConfig).Should(Equal(result))
+		})
+
+		It("returns file content when config is not defined and path exists relative to workdir", func() {
+			mtaPath := getTestPath("mtaConfig.yaml")
+			resourceConfig, err := GetResourceConfig(mtaPath, "resourceWithPath2", getTestPath("otherWorkdir"))
+			Ω(err).Should(Succeed())
+			Ω(resourceConfig).ShouldNot(BeNil())
+			result := fileContent
+			Ω(resourceConfig).Should(Equal(result))
+		})
+
+		It("returns file content when config is not a map and path exists", func() {
+			mtaPath := getTestPath("mtaConfig.yaml")
+			resourceConfig, err := GetResourceConfig(mtaPath, "resourceWithPathAndBadConfig", "")
+			Ω(err).Should(Succeed())
+			Ω(resourceConfig).ShouldNot(BeNil())
+			result := fileContent
+			Ω(resourceConfig).Should(Equal(result))
+		})
+
+		It("returns config when it is defined and path is not defined", func() {
+			mtaPath := getTestPath("mtaConfig.yaml")
+			resourceConfig, err := GetResourceConfig(mtaPath, "resourceWithConfig", "")
+			Ω(err).Should(Succeed())
+			Ω(resourceConfig).ShouldNot(BeNil())
+			result := map[string]interface{}{
+				"xsappname": "testName",
+			}
+			Ω(resourceConfig).Should(Equal(result))
+		})
+
+		It("merges config and file when both config and path are defined", func() {
+			// Keys from config override keys from file path, and the override is shallow
+			mtaPath := getTestPath("mtaConfig.yaml")
+			resourceConfig, err := GetResourceConfig(mtaPath, "resourceWithConfigAndPath", "")
+			Ω(err).Should(Succeed())
+			Ω(resourceConfig).ShouldNot(BeNil())
+			result := map[string]interface{}{
+				"xsappname":       "nameFromConfig",
+				"paramFromPath":   "paramValueFromPath",
+				"paramFromConfig": "paramValueFromConfig",
+				"deepParam": map[string]interface{}{
+					"someValue": "deepValueFromConfig",
+				},
+			}
+			Ω(resourceConfig).Should(Equal(result))
+		})
+	})
+
 	var _ = Describe("GetMtaID", func() {
 		It("Get MTA ID", func() {
 			mtaPath := getTestPath("result", "temp.mta.yaml")
