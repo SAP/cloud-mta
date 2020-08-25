@@ -29,8 +29,8 @@ func DeleteDir(path string) (err error) {
 	return os.RemoveAll(path)
 }
 
-// GetJsonContent reads the file, parses it as JSON and returns the result.
-func GetJsonContent(path string) (map[string]interface{}, error) {
+// GetJSONContent reads the file, parses it as JSON and returns the result.
+func GetJSONContent(path string) (map[string]interface{}, error) {
 	// Get the file content
 	fileConfigBuffer, err := ioutil.ReadFile(path)
 	if err != nil {

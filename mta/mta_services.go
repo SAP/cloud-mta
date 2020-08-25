@@ -162,7 +162,7 @@ func GetResourceConfig(path string, resourceName string, workspaceDir string) (m
 	var fileConfig map[string]interface{}
 
 	if filePath != nil {
-		fileConfig, err = fs.GetJsonContent(filepath.Join(workspaceDir, filePath.(string)))
+		fileConfig, err = fs.GetJSONContent(filepath.Join(workspaceDir, filePath.(string)))
 		if err != nil {
 			return nil, err
 		}
