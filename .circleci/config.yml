@@ -71,7 +71,7 @@ jobs:
             sed  -i "/cli_version:/s/${CURR_MTA_VERSION}/${MTA_VERSION}/" ./configs/version.yaml
             sed  -i "s/${CURR_MTA_VERSION}/${MTA_VERSION}/" ./VERSION
             #Generate version file
-            go generate -run "go run ./internal/tools/embed.go -source=./configs/version.yaml -target=./internal/version/version_cfg.go -name=VersionConfig -package=version"
+            go generate -run "go run ./tools/embed.go -source=./configs/version.yaml -target=./internal/version/version_cfg.go -name=VersionConfig -package=version"
             #Add all updated files to commit
             git add ./package.json ./configs/version.yaml ./VERSION ./internal/version/version_cfg.go
             git config user.email "${CLOUD_MTA_BOT_EMAIL}"
