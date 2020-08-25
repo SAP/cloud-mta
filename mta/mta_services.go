@@ -2,7 +2,6 @@ package mta
 
 import (
 	"crypto/sha1"
-	"encoding/json"
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"io"
@@ -163,37 +162,42 @@ func GetResourceConfig(path string, resourceName string, workspaceDir string) (m
 	var fileConfig map[string]interface{}
 
 	if filePath != nil {
-		// Get the file content
-		fileConfigBuffer, err := ioutil.ReadFile(filepath.Join(workspaceDir, filePath.(string)))
-		if err != nil {
-			return nil, err
-		}
-		fileConfig = make(map[string]interface{})
-		err = json.Unmarshal(fileConfigBuffer, &fileConfig)
+		fileConfig, err = fs.GetJsonContent(filepath.Join(workspaceDir, filePath.(string)))
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	if config == nil && fileConfig == nil {
+	return mergeMaps(config, fileConfig), nil
+}
+
+// Shallow merge the maps. If the first map is not nil the merge result is inlined in it.
+// The first map keys override the second map keys.
+func mergeMaps(first map[string]interface{}, second map[string]interface{}) map[string]interface{} {
+	var result map[string]interface{}
+	if first == nil && second == nil {
 		// Both maps are nil - return empty map
-		config = make(map[string]interface{})
-	} else if config == nil {
-		// Only file config exists
-		config = fileConfig
-	} else if fileConfig != nil {
-		// config is not nil at this point.
-		// Shallow merge the config parameters (same as the deployer)
-		for key, value := range fileConfig {
-			// The config parameter overrides the file config
-			_, ok := config[key]
+		result = make(map[string]interface{})
+	} else if first == nil {
+		// Only second exists
+		result = second
+	} else if second == nil {
+		// Only first exists
+		result = first
+	} else {
+		// Both maps are not nil at this point.
+		// Shallow merge the maps (same as the deployer).
+		result = first
+		for key, value := range second {
+			// The first map keys override the second map keys.
+			_, ok := result[key]
 			if !ok {
-				config[key] = value
+				result[key] = value
 			}
 		}
 	}
 
-	return config, nil
+	return result
 }
 
 // UpdateModule updates an existing module according to the module name. If more than one module with this
