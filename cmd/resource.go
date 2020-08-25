@@ -103,5 +103,7 @@ var getResourceConfigCmd = &cobra.Command{
 			return mta.GetResourceConfig(getResourceConfigCmdPath, getResourceConfigCmdName, getResourceConfigCmdDir)
 		})
 	},
-	SilenceUsage: true,
+	Hidden:        true,
+	SilenceUsage:  true,
+	SilenceErrors: true,
 }
