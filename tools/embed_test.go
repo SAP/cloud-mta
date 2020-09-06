@@ -14,7 +14,8 @@ import (
 var _ = Describe("Embed", func() {
 	BeforeEach(func() {
 		templatePath = ""
-		os.Mkdir("./testdata/result", os.ModePerm)
+		err := os.Mkdir("./testdata/result", os.ModePerm)
+		Ω(err).Should(Succeed())
 	})
 
 	AfterEach(func() {

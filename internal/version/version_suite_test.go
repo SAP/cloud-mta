@@ -19,7 +19,8 @@ var _ = Describe("Version", func() {
 cli_version: 5.2
 makefile_version: 10.5.3
 `)
-		yaml.Unmarshal([]byte("cli_version:5.2"), &VersionConfig)
+		err := yaml.Unmarshal([]byte("cli_version:5.2"), &VersionConfig)
+		Ω(err).Should(Succeed())
 		Ω(GetVersion()).Should(Equal(Version{CliVersion: "5.2", MakeFile: "10.5.3"}))
 	})
 })

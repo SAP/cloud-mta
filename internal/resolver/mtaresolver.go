@@ -242,24 +242,22 @@ func (m *MTAResolver) addValueToContext(key, value string) {
 }
 
 func (m *MTAResolver) resolve(sourceModule *mta.Module, requires *mta.Requires, valueObj interface{}) interface{} {
-	switch valueObj.(type) {
+	switch valueObj := valueObj.(type) {
 	case map[interface{}]interface{}:
 		v := convertToJSONSafe(valueObj)
 		return m.resolve(sourceModule, requires, v)
 	case map[string]interface{}:
-		value := valueObj.(map[string]interface{})
-		for k, v := range value {
-			value[k] = m.resolve(sourceModule, requires, v)
+		for k, v := range valueObj {
+			valueObj[k] = m.resolve(sourceModule, requires, v)
 		}
-		return value
+		return valueObj
 	case []interface{}:
-		value := valueObj.([]interface{})
-		for i, v := range value {
-			value[i] = m.resolve(sourceModule, requires, v)
+		for i, v := range valueObj {
+			valueObj[i] = m.resolve(sourceModule, requires, v)
 		}
-		return value
+		return valueObj
 	case string:
-		return m.resolveString(sourceModule, requires, valueObj.(string))
+		return m.resolveString(sourceModule, requires, valueObj)
 	default:
 		//if the value is not a string but a leaf, just return it
 		return valueObj
@@ -372,24 +370,22 @@ func (m *MTAResolver) getVariableValue(sourceModule *mta.Module, requires *mta.R
 }
 
 func (m *MTAResolver) resolvePlaceholders(sourceModule *mta.Module, source *mtaSource, requires *mta.Requires, valueObj interface{}) interface{} {
-	switch valueObj.(type) {
+	switch valueObj := valueObj.(type) {
 	case map[interface{}]interface{}:
 		v := convertToJSONSafe(valueObj)
 		return m.resolvePlaceholders(sourceModule, source, requires, v)
 	case map[string]interface{}:
-		value := valueObj.(map[string]interface{})
-		for k, v := range value {
-			value[k] = m.resolvePlaceholders(sourceModule, source, requires, v)
+		for k, v := range valueObj {
+			valueObj[k] = m.resolvePlaceholders(sourceModule, source, requires, v)
 		}
-		return value
+		return valueObj
 	case []interface{}:
-		value := valueObj.([]interface{})
-		for k, v := range value {
-			value[k] = m.resolvePlaceholders(sourceModule, source, requires, v)
+		for k, v := range valueObj {
+			valueObj[k] = m.resolvePlaceholders(sourceModule, source, requires, v)
 		}
-		return value
+		return valueObj
 	case string:
-		return m.resolvePlaceholdersString(sourceModule, source, requires, valueObj.(string))
+		return m.resolvePlaceholdersString(sourceModule, source, requires, valueObj)
 	default:
 		//if the value is not a string but a leaf, just return it
 		return valueObj
