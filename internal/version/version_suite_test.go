@@ -5,7 +5,6 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"gopkg.in/yaml.v2"
 )
 
 func TestVersion(t *testing.T) {
@@ -19,8 +18,6 @@ var _ = Describe("Version", func() {
 cli_version: 5.2
 makefile_version: 10.5.3
 `)
-		err := yaml.Unmarshal([]byte("cli_version:5.2"), &VersionConfig)
-		Ω(err).Should(Succeed())
 		Ω(GetVersion()).Should(Equal(Version{CliVersion: "5.2", MakeFile: "10.5.3"}))
 	})
 })
