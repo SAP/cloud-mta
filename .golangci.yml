@@ -14,7 +14,6 @@ linters:
     - govet
     - staticcheck
     - ineffassign
-    - deadcode
     - stylecheck
     - interfacer
     - unconvert
