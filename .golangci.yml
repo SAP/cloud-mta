@@ -25,3 +25,7 @@ linters:
     - gofmt
     - gosec
     - golint
+
+linters-settings:
+  govet:
+    check-shadowing: true
