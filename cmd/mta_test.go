@@ -17,10 +17,9 @@ var _ = Describe("Resource", func() {
 	})
 
 	It("Sanity", func() {
-		os.MkdirAll(getTestPath("result"), os.ModePerm)
+		err := os.MkdirAll(getTestPath("result"), os.ModePerm)
+		Ω(err).Should(Succeed())
 		createMtaCmdPath = getTestPath("result", "mta.yaml")
-
-		var err error
 
 		hash, exists, err := mta.GetMtaHash(createMtaCmdPath)
 		Ω(hash).Should(Equal(0))

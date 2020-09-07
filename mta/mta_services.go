@@ -1,7 +1,7 @@
 package mta
 
 import (
-	"crypto/sha1"
+	"crypto/sha256"
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"io"
@@ -346,7 +346,7 @@ func GetMtaHash(path string) (int, bool, error) {
 		// the file does not exist.
 		return 0, false, nil
 	}
-	h := sha1.New()
+	h := sha256.New()
 	code, err := h.Write(mtaContent)
 	return code, true, err
 }

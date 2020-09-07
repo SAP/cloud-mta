@@ -431,7 +431,7 @@ func matchesEnumValues(enumValues []string) YamlCheck {
 }
 
 func prettifyPath(path string) string {
-	wrongIdxSyntax, _ := regexp.Compile("\\.\\[")
+	wrongIdxSyntax, _ := regexp.Compile(`\.\[`)
 
 	return wrongIdxSyntax.ReplaceAllString(path, "[")
 }
@@ -444,7 +444,7 @@ func buildPathString(path []string) string {
 	if len(path) == 1 {
 		return buildPathString(append([]string{"root"}, path...))
 	}
-	pathStr := strings.Join(append(path), ".")
+	pathStr := strings.Join(path, ".")
 
 	prettyPathStr := prettifyPath(pathStr)
 

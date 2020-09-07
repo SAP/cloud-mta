@@ -1,0 +1,30 @@
+run:
+  deadline: 5m
+
+linters:
+  disable-all: true
+  enable:
+    - deadcode
+    - errcheck
+    - unused
+    - gosimple
+    - structcheck
+    - varcheck
+    - typecheck
+    - govet
+    - staticcheck
+    - ineffassign
+    - stylecheck
+    - interfacer
+    - unconvert
+    - goconst
+    - misspell
+    - maligned
+    - gocyclo
+    - gofmt
+    - gosec
+    - golint
+
+linters-settings:
+  govet:
+    check-shadowing: true

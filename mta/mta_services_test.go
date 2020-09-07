@@ -247,13 +247,13 @@ var _ = Describe("MtaServices", func() {
 		})
 
 		It("Add module to non existing mta.yaml file", func() {
-			json := "{name:fff}"
+			const json = "{name:fff}"
 			mtaPath := getTestPath("result", "mta.yaml")
 			Ω(AddModule(mtaPath, json, Marshal)).Should(HaveOccurred())
 		})
 
 		It("Add module to wrong mta.yaml format", func() {
-			wrongJSON := "{TEST:fff}"
+			const wrongJSON = "{TEST:fff}"
 			mtaPath := getTestPath("result", "mta.yaml")
 			Ω(CreateMta(mtaPath, wrongJSON, os.MkdirAll)).Should(Succeed())
 
@@ -263,7 +263,7 @@ var _ = Describe("MtaServices", func() {
 		})
 
 		It("Add module with wrong json format", func() {
-			wrongJSON := "{name:fff"
+			const wrongJSON = "{name:fff"
 
 			mtaPath := getTestPath("result", "temp.mta.yaml")
 			jsonRootData, err := json.Marshal(getMtaInput())
@@ -288,14 +288,14 @@ var _ = Describe("MtaServices", func() {
 
 	var _ = Describe("updateModule", func() {
 		It("fails when mta.yaml doesn't exist", func() {
-			json := "{name:fff}"
+			const json = "{name:fff}"
 			mtaPath := getTestPath("result", "mta.yaml")
 			err := UpdateModule(mtaPath, json, Marshal)
 			Ω(err).Should(HaveOccurred())
 		})
 
 		It("fails when mta has wrong format", func() {
-			wrongJSON := "{TEST:fff}"
+			const wrongJSON = "{TEST:fff}"
 
 			mtaPath := getTestPath("result", "mta.yaml")
 			Ω(CreateMta(mtaPath, wrongJSON, os.MkdirAll)).Should(Succeed())
@@ -307,7 +307,7 @@ var _ = Describe("MtaServices", func() {
 		})
 
 		It("fails when input is bad json format", func() {
-			wrongJSON := "{name:fff"
+			const wrongJSON = "{name:fff"
 
 			mtaPath := getTestPath("result", "temp.mta.yaml")
 			jsonRootData, err := json.Marshal(getMtaInput())
@@ -495,7 +495,7 @@ var _ = Describe("MtaServices", func() {
 		})
 
 		It("Add resource to non existing mta.yaml file", func() {
-			json := "{name:fff}"
+			const json = "{name:fff}"
 			mtaPath := getTestPath("result", "mta.yaml")
 			Ω(AddResource(mtaPath, json, Marshal)).Should(HaveOccurred())
 		})
@@ -511,7 +511,7 @@ var _ = Describe("MtaServices", func() {
 		})
 
 		It("Add resource with wrong json format", func() {
-			wrongJSON := "{name:fff"
+			const wrongJSON = "{name:fff"
 
 			mtaPath := getTestPath("result", "temp.mta.yaml")
 			jsonRootData, err := json.Marshal(getMtaInput())
@@ -1012,16 +1012,17 @@ var _ = Describe("Module", func() {
 	})
 
 	It("Sanity", func() {
-		os.MkdirAll(getTestPath("result"), os.ModePerm)
+		err := os.MkdirAll(getTestPath("result"), os.ModePerm)
+		Ω(err).Should(Succeed())
 		mtaPath := getTestPath("result", "mta.yaml")
 		Ω(CopyFile(getTestPath("mta.yaml"), mtaPath, os.Create)).Should(Succeed())
 
-		var err error
 		mtaHashCode, exists, err := GetMtaHash(mtaPath)
 		Ω(err).Should(Succeed())
 		Ω(exists).Should(BeTrue())
 
 		jsonData, err := json.Marshal(oModule)
+		Ω(err).Should(Succeed())
 		moduleJSON := string(jsonData)
 		mtaHashCodeResult, err := ModifyMta(mtaPath, func() error {
 			return AddModule(mtaPath, moduleJSON, Marshal)
@@ -1039,6 +1040,7 @@ var _ = Describe("Module", func() {
 		Ω(err.Error()).Should(ContainSubstring("file does not exist"))
 		oModule.Name = "test1"
 		jsonData, err = json.Marshal(oModule)
+		Ω(err).Should(Succeed())
 		moduleJSON = string(jsonData)
 		// hashcode of the mta.yaml is wrong now
 		_, err = ModifyMta(mtaPath, func() error {
@@ -1048,7 +1050,8 @@ var _ = Describe("Module", func() {
 	})
 
 	It("Modify mta.yaml with force even when the hashcode is wrong", func() {
-		os.MkdirAll(getTestPath("result"), os.ModePerm)
+		err := os.MkdirAll(getTestPath("result"), os.ModePerm)
+		Ω(err).Should(Succeed())
 		mtaPath := getTestPath("result", "mta.yaml")
 		Ω(CopyFile(getTestPath("mta.yaml"), mtaPath, os.Create)).Should(Succeed())
 
@@ -1075,7 +1078,8 @@ var _ = Describe("Module", func() {
 	})
 
 	It("2 parallel processes, second fails to make locking", func() {
-		os.MkdirAll(getTestPath("result"), os.ModePerm)
+		err := os.MkdirAll(getTestPath("result"), os.ModePerm)
+		Ω(err).Should(Succeed())
 		mtaPath := getTestPath("result", "mta.yaml")
 		Ω(CopyFile(getTestPath("mta.yaml"), mtaPath, os.Create)).Should(Succeed())
 		mtaHashCode, _, err := GetMtaHash(mtaPath)

@@ -17,11 +17,11 @@ var _ = Describe("Module", func() {
 	})
 
 	It("Sanity", func() {
-		os.MkdirAll(getTestPath("result"), os.ModePerm)
+		err := os.MkdirAll(getTestPath("result"), os.ModePerm)
+		Ω(err).Should(Succeed())
 		addModuleMtaCmdPath = getTestPath("result", "mta.yaml")
 		Ω(mta.CopyFile(getTestPath("mta.yaml"), addModuleMtaCmdPath, os.Create)).Should(Succeed())
 
-		var err error
 		hash, exists, err := mta.GetMtaHash(addModuleMtaCmdPath)
 		addModuleCmdHashcode = hash
 		Ω(err).Should(Succeed())

@@ -215,7 +215,7 @@ lastName: duck
 firstName: Donald
   lastName: duck # invalid indentation
 		`)
-		node, _ := getContentNode([]byte(data))
+		node, _ := getContentNode(data)
 		issues := runSchemaValidations(node, property("lastName", required()))
 		Ω(len(issues)).Should(Equal(1))
 	})
@@ -245,7 +245,7 @@ optionalClasses:
 			property("optionalClasses",
 				forEachProperty(typeIsBoolean())))
 
-		node, _ := getContentNode([]byte(data))
+		node, _ := getContentNode(data)
 		validateIssues := runSchemaValidations(node, validations)
 
 		Ω(validateIssues).Should(ConsistOf(
@@ -277,7 +277,7 @@ aliases:
 prop1: *alias1
    `)
 	It("sanity", func() {
-		node, _ := getContentNode([]byte(data))
+		node, _ := getContentNode(data)
 		node = getPropByName(node, "lastName")
 		Ω(node.Value).Should(Equal("lastName"))
 		Ω(node.Line).Should(Equal(3))
@@ -286,18 +286,18 @@ prop1: *alias1
 		Ω(getPropByName(nil, "x")).Should(BeNil())
 	})
 	It("property not exists", func() {
-		node, _ := getContentNode([]byte(data))
+		node, _ := getContentNode(data)
 		Ω(getPropByName(node, "x")).Should(BeNil())
 	})
 	It("aliases usage", func() {
-		node, _ := getContentNode([]byte(data))
+		node, _ := getContentNode(data)
 		prop1 := getPropValueByName(node, "prop1")
 		Ω(prop1).ShouldNot(BeNil())
 		Ω(getPropByName(prop1, "veryLastName")).ShouldNot(BeNil())
 		Ω(getPropByName(prop1, "y")).Should(BeNil())
 	})
 	It("aliases usage; aliases content is nil", func() {
-		node, _ := getContentNode([]byte(data))
+		node, _ := getContentNode(data)
 		prop := getPropValueByName(node, "prop1")
 		Ω(prop).ShouldNot(BeNil())
 		prop.Alias = nil

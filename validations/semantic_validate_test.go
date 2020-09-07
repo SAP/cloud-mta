@@ -41,7 +41,8 @@ resources:
    type: org.cloudfoundry.managed-service
 `)
 		mtaStr := mta.MTA{}
-		yaml.Unmarshal(mtaContent, &mtaStr)
+		err := yaml.Unmarshal(mtaContent, &mtaStr)
+		Ω(err).Should(Succeed())
 		root, _ := getContentNode(mtaContent)
 		issues, _ := runSemanticValidations(&mtaStr, root, getTestPath("testproject"), "", true)
 		Ω(len(issues)).Should(Equal(2))
@@ -60,7 +61,8 @@ modules:
    path: ui5app 
    type: html5`)
 		mtaStr := mta.MTA{}
-		yaml.Unmarshal(mtaContent, &mtaStr)
+		err := yaml.Unmarshal(mtaContent, &mtaStr)
+		Ω(err).Should(Succeed())
 		root, _ := getContentNode(mtaContent)
 		line, exists := getIndexedNodePropLine(root, 0, "unknown")
 		Ω(line).Should(Equal(2))
