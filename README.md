@@ -7,9 +7,17 @@
 [![REUSE status](https://api.reuse.software/badge/github.com/SAP/cloud-mta)](https://api.reuse.software/info/github.com/SAP/cloud-mta)
 
                    
-## Description
+# Description
 
 MTA tool for exploring and validating the multitarget application descriptor (`mta.yaml`).
+
+The tool can be used as a Go library or as a command-line tool, also available as an npm package.
+
+## Multitarget Applications
+
+A multitarget application is a package comprised of multiple application and resource modules that have been created using different technologies and deployed to different run-times; however, they have a common life cycle. A user can bundle the modules together using the `mta.yaml` file, describe them along with their inter-dependencies to other modules, services, and interfaces, and package them in an MTA project.
+
+## Go Library
 
 The tool commands (APIs) are used to do the following:
 
@@ -19,17 +27,11 @@ The tool commands (APIs) are used to do the following:
    - Validate the descriptor against the project folder structure, such as the `path` attribute reference in an existing project folder.
    - Get data for constructing a deployment MTA descriptor, such as deployment module types.
    
-
- ### Multitarget Applications
-
-A multitarget application is a package comprised of multiple application and resource modules that have been created using different technologies and deployed to different run-times; however, they have a common life cycle. A user can bundle the modules together using the `mta.yaml` file, describe them along with their inter-dependencies to other modules, services, and interfaces, and package them in an MTA project.
- 
-
-## Requirements
+### Requirements
 
 * [Go (version > 1.13.x)](https://golang.org/dl/) 
 
-## Download and Installation
+### Download and Installation
 
 1.  Set your [workspace](https://golang.org/doc/code.html#Workspaces).
 
@@ -39,7 +41,7 @@ A multitarget application is a package comprised of multiple application and res
     $ go get github.com/SAP/cloud-mta/mta
     ```
 
-## Usage
+### Usage
 
  - Import it into your source code:
 
@@ -68,6 +70,32 @@ A multitarget application is a package comprised of multiple application and res
     	return err
     }
     ```
+
+## Command-Line Tool
+
+Some of the tool's features are available as an command-line tool, which can be downloaded from the GitHub releases page or installed as an npm package.
+
+The commands of the CLI tool are used as APIs by other programs, such as the `mta-lib` npm package which exposes Javascript APIs for reading and manipulating the `mta.yaml` file.  
+
+### npm package
+
+#### `mta`
+The `mta` npm package installs the executable and allows you to run it from a shell or command line.
+You can install it globally via the command:
+```shell script
+npm install -g mta
+```
+
+#### `mta-local`
+The `mta-local` npm package exposes the same CLI tool without installing it globally. It is packaged by other libraries, and it provides a way to lazily download the executable according to the current operating system and run it.
+You can use it in the following way:
+```javascript
+// You can use "cross-spawn" library instead of "process" for compatibility to Windows systems
+const { spawn } = require("process");
+const mtaPath = require("mta").paths["mta"];
+const childProcess = spawn(mtaPath, args);
+// Handle the process events ...
+```
 
 ## Contributions
 
