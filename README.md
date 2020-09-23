@@ -92,7 +92,7 @@ You can use it in the following way:
 ```javascript
 // You can use "cross-spawn" library instead of "process" for compatibility to Windows systems
 const { spawn } = require("process");
-const mtaPath = require("mta").paths["mta"];
+const mtaPath = require("mta-local").paths["mta"];
 const childProcess = spawn(mtaPath, args);
 // Handle the process events ...
 ```
