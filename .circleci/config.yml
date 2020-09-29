@@ -110,6 +110,9 @@ jobs:
             echo "//registry.npmjs.org/:_authToken=$CLOUD_MTA_BOT_NPM_TOKEN" > .npmrc
             npm install
             npm publish
+            #Publish the mta-local package
+            node convertPackageJson.js
+            npm publish
       - run:
           name: remove dummy release tag
           command: |
