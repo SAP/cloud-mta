@@ -111,7 +111,7 @@ jobs:
             npm install
             npm publish
             #Publish the mta-local package
-            node convertPackageJson.js
+            node convertPackageJsonToMtaLocal.js
             npm publish
       - run:
           name: remove dummy release tag
