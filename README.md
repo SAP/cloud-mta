@@ -97,6 +97,30 @@ const childProcess = spawn(mtaPath, args);
 // Handle the process events ...
 ```
 
+#### Packaging with webpack
+To use these npm libraries from an application packaged with webpack, you have to copy the `bin/mta` file to the webpack output directory (keeping the same file structure) and enable `__dirname` to be used.
+For example, if the results are in the `dist` folder, add this configuration inside your webpack configuration file:
+```javascript
+const path = require("path");
+const CopyWebpackPlugin = require("copy-webpack-plugin");
+const config = {
+    // ...
+    node: {
+        __dirname: false,
+    },
+    plugins: [
+        new CopyWebpackPlugin({
+            patterns: [
+                {
+                  from: path.join(require.resolve("mta-local"), "..", "bin"),
+                  to: path.resolve(__dirname, "dist", "bin"),
+                }
+            ]
+        })
+    ]
+};
+```
+
 ## Contributions
 
 Contributions are greatly appreciated.

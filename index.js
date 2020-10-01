@@ -1,7 +1,7 @@
 var binwrap = require('binwrap');
 var path = require('path');
 
-var packageInfo = require(path.join(__dirname, 'package.json'));
+var packageInfo = require("./package.json");
 var version = packageInfo.version;
 var root = `https://github.com/SAP/cloud-mta/releases/download/v${version}/cloud-mta_${version}_`;
 

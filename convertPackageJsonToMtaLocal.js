@@ -10,8 +10,11 @@ const pkgJsonOrgStr = readFileSync(pkgJsonPath, "utf8");
 const pkgJson = JSON.parse(pkgJsonOrgStr);
 
 // This package doesn't download the binary on install, and doesn't add scripts in the ".bin" folder.
+// Since the install script is removed and the code is packaged, it also doesn't require binwrap in the dependencies.
 pkgJson.name = "mta-local";
 delete pkgJson.bin;
 delete pkgJson.scripts.install;
+pkgJson.devDependencies.binwrap = pkgJson.dependencies.binwrap;
+delete pkgJson.dependencies.binwrap;
 
 writeFileSync(pkgJsonPath, JSON.stringify(pkgJson, undefined, 2));
