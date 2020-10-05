@@ -4,6 +4,7 @@
 [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/SAP/cloud-mta/blob/master/.github/CONTRIBUTING.md)
 [![GoDoc](https://godoc.org/github.com/SAP/cloud-mta?status.svg)](https://godoc.org/github.com/SAP/cloud-mta/mta)
 ![pre-alpha](https://img.shields.io/badge/Release-pre--alpha-orange.svg)
+[![dependentbot](https://api.dependabot.com/badges/status?host=github&repo=SAP/cloud-mta)](https://dependabot.com/)
 [![REUSE status](https://api.reuse.software/badge/github.com/SAP/cloud-mta)](https://api.reuse.software/info/github.com/SAP/cloud-mta)
 
                    
