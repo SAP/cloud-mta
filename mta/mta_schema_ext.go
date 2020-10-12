@@ -1,6 +1,6 @@
 package mta
 
-// EXT mta extension schema
+// EXT mta schema extension
 type EXT struct {
 	// indicates MTA schema version, using semver.
 	SchemaVersion *string `yaml:"_schema-version"`
