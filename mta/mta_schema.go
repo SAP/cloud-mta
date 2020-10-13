@@ -1,6 +1,6 @@
 package mta
 
-// MTA master schema, the schema will contain the latest mta schema version
+// MTA mta schema, the schema will contain the latest mta schema version
 // and all the previous version will be as subset of the latest
 // Todo - Add the missing properties to support the latest 3.2 version
 type MTA struct {
