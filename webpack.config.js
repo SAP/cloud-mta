@@ -2,6 +2,7 @@
 
 const webpack = require("webpack");
 const path = require("path");
+const fs = require("fs");
 const distPath = path.resolve(__dirname, "dist");
 
 /**@type {import('webpack').Configuration}*/
@@ -89,6 +90,12 @@ const config = {
       entryOnly: true,
       test: "bin/mta",
     }),
+    function (compiler) {
+      compiler.hooks.done.tap("ExecuteChmodOnBinMta", () => {
+        // bin/mta should be executable
+        fs.chmodSync(path.resolve(distPath, "bin", "mta"), "755");
+      });
+    }
   ],
 };
 module.exports = config;
