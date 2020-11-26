@@ -366,12 +366,12 @@
   revision = "c131134a1947e9afd9cecfe11f4c6dff0732ae58"
 
 [[projects]]
-  digest = "1:d7f1bd887dc650737a421b872ca883059580e9f8314d601f88025df4f4802dce"
+  digest = "1:5054a1f394226de9e6ddc47b0ba77e35092a4112f4a1cd9cb94aba1f5bdc3ec6"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   pruneopts = "UT"
-  revision = "0b1645d91e851e735d3e23330303ce81f70adbe3"
-  version = "v2.3.0"
+  revision = "7649d4548cb53a614db133b2a8ac1f31859dda8c"
+  version = "v2.4.0"
 
 [[projects]]
   branch = "v3"
