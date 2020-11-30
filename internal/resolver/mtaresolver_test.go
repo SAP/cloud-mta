@@ -7,19 +7,22 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	. "github.com/onsi/gomega/types"
 
+	"github.com/SAP/cloud-mta/internal/fs"
 	"github.com/SAP/cloud-mta/mta"
 )
 
-func callResolveAndGetOutput(wd, moduleName, yamlPath string, envFileName string) ResolveResult {
-	result, err := Resolve(wd, moduleName, yamlPath, envFileName)
+func callResolveAndGetOutput(wd, moduleName, yamlPath string, extensions []string, envFileName string) (ResolveResult, []string) {
+	result, messages, err := Resolve(wd, moduleName, yamlPath, extensions, envFileName)
 	Ω(err).Should(Succeed())
-	return result
+	return result, messages
 }
 
-func callResolveAndValidateOutput(wd, moduleName, yamlPath string, expected ResolveResult, envFile string) {
-	actualResult := callResolveAndGetOutput(wd, moduleName, yamlPath, envFile)
+func callResolveAndValidateOutput(wd, moduleName, yamlPath string, extensions []string, envFile string, expected ResolveResult, expectedMessagesMatcher GomegaMatcher) {
+	actualResult, actualMessages := callResolveAndGetOutput(wd, moduleName, yamlPath, extensions, envFile)
 	Ω(actualResult).Should(Equal(expected))
+	Ω(actualMessages).Should(expectedMessagesMatcher)
 }
 
 var _ = Describe("Resolve", func() {
@@ -45,26 +48,26 @@ var _ = Describe("Resolve", func() {
 			`Missing env_var0`,
 		}}
 
-	It("Sanity", func() {
+	It("resolves from environment variables and default env file when env file is not sent", func() {
 		wd := getTestPath("test-project")
 		yamlPath := getTestPath("test-project", "mta.yaml")
 		envGetter = mockEnvGetterWithVcapServices
-		callResolveAndValidateOutput(wd, "eb-java", yamlPath, expected, "")
+		callResolveAndValidateOutput(wd, "eb-java", yamlPath, nil, "", expected, BeEmpty())
 	})
-	It("Sanity with vcap_services from file", func() {
+	It("resolves vcap_services from env file", func() {
 		wd := getTestPath("test-project")
 		yamlPath := getTestPath("test-project", "mta.yaml")
 		envGetter = func() []string {
 			return []string{"health-check-type=http"}
 		}
-		callResolveAndValidateOutput(wd, "eb-java", yamlPath, expected, ".env_with_vcap")
+		callResolveAndValidateOutput(wd, "eb-java", yamlPath, nil, ".env_with_vcap", expected, BeEmpty())
 	})
-	It("Sanity - working dir not provided", func() {
+	It("uses mta.yaml folder as the working dir when working dir is not sent", func() {
 		yamlPath := getTestPath("test-project", "mta.yaml")
 		envGetter = mockEnvGetterExtWithVcapServices
-		callResolveAndValidateOutput("", "eb-java", yamlPath, expected, "")
+		callResolveAndValidateOutput("", "eb-java", yamlPath, nil, "", expected, BeEmpty())
 	})
-	It("Sanity - environment file name different from the default name (.env)", func() {
+	It("resolves from env file when it's different from the default name (.env)", func() {
 		wd := getTestPath("test-project")
 		yamlPath := getTestPath("test-project", "mta.yaml")
 		envGetter = mockEnvGetterExtWithVcapServices
@@ -88,44 +91,112 @@ var _ = Describe("Resolve", func() {
 			},
 			Messages: []string{`Missing env_var0`},
 		}
-		callResolveAndValidateOutput(wd, "eb-java", yamlPath, expectedResolve, ".env2")
+		callResolveAndValidateOutput(wd, "eb-java", yamlPath, nil, ".env2", expectedResolve, BeEmpty())
 	})
-	It("Sanity - environment file absolute path provided", func() {
+	It("resolves from .env file with absolute path", func() {
 		wd := getTestPath("test-project")
 		yamlPath := getTestPath("test-project", "mta.yaml")
 		envPath := getTestPath("test-project", "srv", ".env")
 		envGetter = mockEnvGetterExtWithVcapServices
-		callResolveAndValidateOutput(wd, "eb-java", yamlPath, expected, envPath)
+		callResolveAndValidateOutput(wd, "eb-java", yamlPath, nil, envPath, expected, BeEmpty())
 	})
-	It("Sanity - working dir not provided, no VCAP services", func() {
+	It("resolves service name from mta.yaml when vcap_services variable is not defined", func() {
 		yamlPath := getTestPath("test-project", "mta.yaml")
 		envGetter = mockEnvGetterExt
+		// No default service name - returned value is the same as defined in the property (variable reference)
 		expected.Properties["JBP_CONFIG_RESOURCE_CONFIGURATION"] = strings.Replace(expected.Properties["JBP_CONFIG_RESOURCE_CONFIGURATION"], "ed-aaa-service", "${service-name}", -1)
+		// Default service name defined in the mta.yaml
 		expected.Properties["bbb_service"] = strings.Replace(expected.Properties["bbb_service"], "ed-bbb-service", "ed-bbb-param", -1)
+		// Message about missing service name variable
 		expected.Messages = append(expected.Messages, `Missing ed-aaa/service-name`)
-		callResolveAndValidateOutput("", "eb-java", yamlPath, expected, "")
+		callResolveAndValidateOutput("", "eb-java", yamlPath, nil, "", expected, BeEmpty())
 	})
-	It("empty module name", func() {
-		_, err := Resolve("", "", getTestPath("test-project", "mta.yaml"), "")
+	It("returns error when module name is empty", func() {
+		_, _, err := Resolve("", "", getTestPath("test-project", "mta.yaml"), nil, "")
 		Ω(err).Should(HaveOccurred())
 		Ω(err.Error()).Should(Equal(emptyModuleNameMsg))
 	})
-	It("module not exists", func() {
-		_, err := Resolve("", "aaa", getTestPath("test-project", "mta.yaml"), "")
+	It("returns error when module does not exist", func() {
+		_, _, err := Resolve("", "aaa", getTestPath("test-project", "mta.yaml"), nil, "")
+
 		Ω(err).Should(HaveOccurred())
 		Ω(err.Error()).Should(Equal(fmt.Sprintf(moduleNotFoundMsg, "aaa")))
 	})
-	It("mta yaml path not found", func() {
+	It("returns error when mta yaml path is not found", func() {
 		path := getTestPath("test-project", "mtaNotExist.yaml")
-		_, err := Resolve("", "eb-java", path, "")
+		_, _, err := Resolve("", "eb-java", path, nil, "")
 		Ω(err).Should(HaveOccurred())
-		Ω(err.Error()).Should(ContainSubstring(fmt.Sprintf(pathNotFoundMsg, path)))
+		Ω(err.Error()).Should(ContainSubstring(fmt.Sprintf(fs.PathNotFoundMsg, path)))
 	})
-	It("failure on unmarshal", func() {
+	It("returns error when mta.yaml is invalid", func() {
 		path := getTestPath("test-project", "mtaBad.yaml")
-		_, err := Resolve("", "eb-java", path, "")
+		_, _, err := Resolve("", "eb-java", path, nil, "")
 		Ω(err).Should(HaveOccurred())
 		Ω(err.Error()).Should(ContainSubstring(fmt.Sprintf(unmarshalFailsMsg, path)))
+	})
+	Describe("resolve with extensions", func() {
+		var getExpectedResolve = func() ResolveResult {
+			// This is the result expected to be returned for mtaExtTest.yaml with .envExtTest with env from mockEnvGetterExt and without extensions
+			return ResolveResult{
+				Properties: map[string]string{
+					`requiredStringProp`: `value in string: testResource1Service`,
+					`requiredEnvProp`: `param1_value`,
+					`requiredPropValue`: `resource2-defaultServiceName`,
+					`hardCodedProp`: `no_placeholders`,
+					`stringProp`: `value1`,
+					`arrayProp`: `["value1","value2"]`,
+					`mapProp`: `{"field1":"value1","field2":"value2"}`,
+					`hardCodedNumericProp`: `1`,
+					`mapPropWithNumericKey`: `{"1":"value1"}`,
+					"badReferenceProp": "~{testResource3/prop1",
+					`hardCodedNestedArrayProp`:`[[{"a":["a1",{"a2-key":"a2-value"}]}]]`,
+					`extEnvProp`: `vvv`,
+					`unknownProp`: `${env_var0}`,
+					`paramProp`: `/health`,
+					`nestedProp`: `[ memory_calculator: { memory_sizes: { heap: value1, stack: 1m, metaspace: 150m } } ]`,
+				},
+				Messages: []string{`Missing env_var0`},
+			}
+		}
+		It("resolves variables defined in mta.yaml when the sent extensions don't exist", func() {
+			wd := getTestPath("test-project")
+			mtaPath := getTestPath("test-project", "mtaExtTest.yaml")
+			mtaExtPath := getTestPath("test-project", "nonExisting.mtaext")
+			envGetter = mockEnvGetterExt
+			expectedResolve := getExpectedResolve()
+			callResolveAndValidateOutput(wd, "testModule", mtaPath, []string{mtaExtPath}, ".envExtTest", expectedResolve, ContainElement(ContainSubstring(fs.PathNotFoundMsg, mtaExtPath)))
+		})
+		It("resolves variables defined in mta.yaml when the sent extensions are invalid", func() {
+			wd := getTestPath("test-project")
+			mtaPath := getTestPath("test-project", "mtaExtTest.yaml")
+			mtaExtPath := getTestPath("test-project", "invalid.mtaext")
+			envGetter = mockEnvGetterExt
+			expectedResolve := getExpectedResolve()
+			callResolveAndValidateOutput(wd, "testModule", mtaPath, []string{mtaExtPath}, ".envExtTest", expectedResolve, ContainElement(ContainSubstring("testModule_doesNotExist")))
+		})
+		It("resolves variables defined in the merged mta when extensions are sent", func() {
+			wd := getTestPath("test-project")
+			mtaPath := getTestPath("test-project", "mtaExtTest.yaml")
+			mtaExtPath := getTestPath("test-project", "valid1.mtaext")
+			envGetter = mockEnvGetterExt
+			expectedResolve := getExpectedResolve()
+			expectedResolve.Properties[`hardCodedProp`] = `no_placeholders_fromExt1`
+			expectedResolve.Properties[`stringProp`] = `value2`
+			expectedResolve.Properties[`mapProp`] = `{"field1":"hardCodedValue_fromExt1","field2":"value2"}`
+			expectedResolve.Properties[`requiredPropValue`] = `resource2-defaultServiceName_fromExt1`
+			callResolveAndValidateOutput(wd, "testModule", mtaPath, []string{mtaExtPath}, ".envExtTest", expectedResolve, BeEmpty())
+		})
+		It("resolves variables defined in the merged mta when extensions are partially invalid", func() {
+			wd := getTestPath("test-project")
+			mtaPath := getTestPath("test-project", "mtaExtTest.yaml")
+			mtaExtPath2 := getTestPath("test-project", "valid2.mtaext")
+			mtaExtPath3 := getTestPath("test-project", "invalid3.mtaext")
+			envGetter = mockEnvGetterExt
+			expectedResolve := getExpectedResolve()
+			expectedResolve.Properties[`hardCodedProp`] = `no_placeholders_fromExt3`
+			// The service-name in testResource2 is not overwritten because of the invalid module name
+			callResolveAndValidateOutput(wd, "testModule", mtaPath, []string{mtaExtPath2, mtaExtPath3}, ".envExtTest", expectedResolve, ContainElement(ContainSubstring("testModule_doesNotExist")))
+		})
 	})
 })
 

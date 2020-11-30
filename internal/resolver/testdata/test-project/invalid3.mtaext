@@ -1,0 +1,16 @@
+_schema-version: 2.1.0
+extends: test2
+ID: test3
+
+modules:
+- name: testModule
+  properties:
+    hardCodedProp: no_placeholders_fromExt3
+- name: testModule_doesNotExist
+  properties:
+    hardCodedProp: no_placeholders_fromExt3
+
+resources:
+- name: testResource2
+  parameters:
+    service-name: resource2-defaultServiceName_fromExt1

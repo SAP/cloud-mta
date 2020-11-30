@@ -10,6 +10,7 @@ import (
 	. "github.com/onsi/gomega"
 	"gopkg.in/yaml.v3"
 
+	"github.com/SAP/cloud-mta/internal/fs"
 	"github.com/SAP/cloud-mta/mta"
 )
 
@@ -66,7 +67,7 @@ var _ = Describe("MTA tests", func() {
 				Parameters:  map[string]interface{}{"disk-quota": "256M", "memory": "256M"},
 			}
 			var modules = []*mta.Module{&moduleSrv, &moduleUI}
-			mtaFile, _ := readFile("./testdata/mta.yaml")
+			mtaFile, _ := fs.ReadFile("./testdata/mta.yaml")
 			// Unmarshal file
 			oMta := &mta.MTA{}
 			Ω(yaml.Unmarshal(mtaFile, oMta)).Should(Succeed())

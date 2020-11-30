@@ -2,10 +2,10 @@ package validate
 
 import (
 	"gopkg.in/yaml.v3"
-	"strings"
 
 	"github.com/pkg/errors"
 
+	"github.com/SAP/cloud-mta/internal/fs"
 	"github.com/SAP/cloud-mta/mta"
 )
 
@@ -21,14 +21,10 @@ func Mtaext(projectPath, extPath string,
 		var errIssues, warnIssues YamlValidationIssues
 
 		// ParseFile contains MTA yaml content.
-		yamlContent, e := readFile(extPath)
-
+		yamlContent, e := fs.ReadFile(extPath)
 		if e != nil {
 			return "", errors.Wrapf(e, couldNotValidateErrorMsg, extPath)
 		}
-		s := string(yamlContent)
-		s = strings.Replace(s, "\r\n", "\r", -1)
-		yamlContent = []byte(s)
 
 		// Validates MTA content.
 		contentErrIssues, contentWarnIssues := validateExt(yamlContent, projectPath, extPath,

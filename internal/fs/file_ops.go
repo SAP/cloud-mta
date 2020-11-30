@@ -5,9 +5,13 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 )
+
+const PathNotFoundMsg = `could not read from the "%s" path`
 
 // CreateFile - creates a new file.
 func CreateFile(path string) (file *os.File, err error) {
@@ -17,6 +21,18 @@ func CreateFile(path string) (file *os.File, err error) {
 	}
 	// The caller needs to use the \"defer.close\" command.
 	return file, err
+}
+
+// ReadFile reads the file and removes the \r characters
+func ReadFile(path string) ([]byte, error) {
+	fileContent, err := ioutil.ReadFile(filepath.Join(path))
+	if err != nil {
+		return nil, errors.Wrapf(err, PathNotFoundMsg, path)
+	}
+	s := string(fileContent)
+	s = strings.Replace(s, "\r\n", "\r", -1)
+	fileContent = []byte(s)
+	return fileContent, nil
 }
 
 // DeleteFile - deletes the file.

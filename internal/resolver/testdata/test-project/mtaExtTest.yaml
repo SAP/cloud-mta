@@ -1,0 +1,61 @@
+_schema-version: 2.1.0
+ID: com.company.vs.samples.odata.eb
+version: 0.3.0
+
+modules:
+- name: testModule
+  type: java
+  path: srv
+  requires:
+  - name: testResource1
+    properties:
+      requiredStringProp: 'value in string: ~{resource1-container-name}'
+      requiredEnvProp: ~{resource1-prop}
+  - name: testResource2
+    properties:
+      requiredPropValue: ~{the-service-name}
+  parameters:
+    stringParam: /health
+  properties:
+    hardCodedProp: no_placeholders
+    stringProp: '~{testResource3/prop1}'
+    arrayProp: ['~{testResource3/prop1}','~{testResource3/prop2}']
+    mapProp:
+      field1: '~{testResource3/prop1}'
+      field2: '~{testResource3/prop2}'
+    hardCodedNumericProp: 1
+    mapPropWithNumericKey:
+      1: '~{testResource3/prop1}'
+    badReferenceProp: '~{testResource3/prop1'
+    hardCodedNestedArrayProp:
+    - ["a":["a1", {"a2-key":"a2-value"}]]
+    extEnvProp: '${env_var1}'
+    unknownProp: '${env_var0}'
+    paramProp: '${stringParam}'
+    nestedProp: '[ memory_calculator: { memory_sizes: { heap: ~{testResource3/prop1}, stack: 1m, metaspace: 150m } } ]'
+  provides:
+  - name: java
+    properties:
+      url: '${default-url}'
+
+resources:
+- name: testResource1
+  type: com.company.ms.aaa-container
+  parameters:
+    param1: "param1_value"
+  properties:
+    resource1-container-name: '${service-name}'
+    resource1-prop: '${param1}'
+
+- name: testResource2
+  type: com.company.ms.bbb
+  parameters:
+    service-name: resource2-defaultServiceName
+  properties:
+    the-service-name: ${service-name}
+
+- name: testResource3
+  type: com.company.aaa
+  properties:
+    prop1: value1
+    prop2: value2

@@ -1,0 +1,9 @@
+ID: test
+_schema-version: '1.1'
+version: 1.2
+description: test mta creation
+
+modules:
+  - name: testModule
+    type: testType
+    path: test

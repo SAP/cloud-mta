@@ -7,6 +7,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
+
+	"github.com/SAP/cloud-mta/internal/fs"
 )
 
 func boolPtr(b bool) *bool {
@@ -19,12 +21,12 @@ func truePtr() *bool {
 	return boolPtr(true)
 }
 
-var _ = Describe("Extension MTA", func() {
+var _ = Describe("MTA Extensions", func() {
 	var _ = Describe("UnmarshalExt", func() {
 		It("Sanity", func() {
 			wd, err := os.Getwd()
 			Ω(err).Should(Succeed())
-			content, err := readFile(filepath.Join(wd, "testdata", "my.mtaext"))
+			content, err := fs.ReadFile(filepath.Join(wd, "testdata", "my.mtaext"))
 			Ω(err).Should(Succeed())
 			m, err := UnmarshalExt(content)
 			Ω(err).Should(Succeed())
@@ -388,7 +390,7 @@ var _ = Describe("Extension MTA", func() {
 					"p1": "changed",
 					"p2": "added",
 				},
-			})
+			}, "")
 
 			Ω(err).Should(Succeed())
 			Ω(mtaObj).Should(Equal(MTA{
@@ -404,7 +406,7 @@ var _ = Describe("Extension MTA", func() {
 				Parameters: map[string]interface{}{
 					"p2": "added",
 				},
-			})
+			}, "")
 
 			Ω(err).Should(Succeed())
 			Ω(mtaObj).Should(Equal(MTA{
@@ -428,7 +430,7 @@ var _ = Describe("Extension MTA", func() {
 						"p1p2c1": "changed",
 					},
 				},
-			})
+			}, "")
 
 			Ω(err).Should(HaveOccurred())
 			Ω(err.Error()).Should(ContainSubstring(overwriteScalarWithStructuredErrorMsg, "p1p1"))
@@ -448,7 +450,7 @@ var _ = Describe("Extension MTA", func() {
 				Parameters: map[string]interface{}{
 					"p1p1": "changed",
 				},
-			})
+			}, "")
 
 			Ω(err).Should(HaveOccurred())
 			Ω(err.Error()).Should(ContainSubstring(overwriteNonOverwritableErrorMsg, "p1p1"))
@@ -1718,7 +1720,7 @@ var _ = Describe("Extension MTA", func() {
 					},
 				}
 
-				err := Merge(&mtaObj, &extMta)
+				err := Merge(&mtaObj, &extMta, "")
 
 				Ω(err).Should(Succeed())
 				Ω(mtaObj).Should(Equal(MTA{
@@ -1796,7 +1798,7 @@ var _ = Describe("Extension MTA", func() {
 					},
 				}
 
-				err := Merge(&mtaObj, &extMta)
+				err := Merge(&mtaObj, &extMta, "")
 
 				Ω(err).Should(Succeed())
 				Ω(mtaObj).Should(Equal(MTA{
@@ -2301,7 +2303,7 @@ var _ = Describe("Extension MTA", func() {
 				},
 			}
 
-			err := Merge(&mta, &extMta)
+			err := Merge(&mta, &extMta, "")
 
 			Ω(err).Should(Succeed())
 			Ω(mta).Should(Equal(MTA{
@@ -2346,33 +2348,251 @@ var _ = Describe("Extension MTA", func() {
 		})
 
 		It("returns error when merge fails on overwriting scalar with structured value", func() {
-			content, err := readFile(getTestPath("mta.yaml"))
+			content, err := fs.ReadFile(getTestPath("mta.yaml"))
 			Ω(err).Should(Succeed())
 			mta, err := Unmarshal(content)
 			Ω(err).Should(Succeed())
 
 			// The map in lines 12-13 is returned as map[interface{}]interface{} instead of map[string]interface{}
-			extContent, err := readFile(getTestPath("overwrite_error.mtaext"))
+			extContent, err := fs.ReadFile(getTestPath("overwrite_error.mtaext"))
 			Ω(err).Should(Succeed())
 			ext, err := UnmarshalExt(extContent)
 			Ω(err).Should(Succeed())
 
-			err = Merge(mta, ext)
+			err = Merge(mta, ext, "")
 			Ω(err).Should(HaveOccurred())
 			Ω(err.Error()).Should(ContainSubstring(overwriteScalarWithStructuredErrorMsg, "name"))
 		})
 
+		It("returns error message with extension path when sent", func() {
+			mtaObj := MTA{
+				Parameters: map[string]interface{}{
+					"p1p1": "value",
+				},
+			}
+			err := Merge(&mtaObj, &EXT{
+				Parameters: map[string]interface{}{
+					"p1p1": map[string]interface{}{
+						"p1p2c1": "added",
+					},
+					"p1p2": map[string]interface{}{
+						"p1p2c1": "changed",
+					},
+				},
+			}, "my.mtaext")
+
+			Ω(err).Should(HaveOccurred())
+			Ω(err.Error()).Should(ContainSubstring(mergeExtPathErrorMsg, "my.mtaext"))
+		})
+
+		It("returns error message with extension ID when path is empty", func() {
+			mtaObj := MTA{
+				Parameters: map[string]interface{}{
+					"p1p1": "value",
+				},
+			}
+			err := Merge(&mtaObj, &EXT{
+				ID: "my_extension_id",
+				Parameters: map[string]interface{}{
+					"p1p1": map[string]interface{}{
+						"p1p2c1": "added",
+					},
+					"p1p2": map[string]interface{}{
+						"p1p2c1": "changed",
+					},
+				},
+			}, "")
+
+			Ω(err).Should(HaveOccurred())
+			Ω(err.Error()).Should(ContainSubstring(mergeExtIDErrorMsg, "my_extension_id"))
+		})
+	})
+
+	var _ = Describe("mergeWithExtensionFiles", func() {
+		expectedSchemaVersion := `1.1`
+		var getMta = func() *MTA {
+			mtaContent, err := fs.ReadFile(getTestPath("mta_module.yaml"))
+			Ω(err).Should(Succeed())
+			mtaObj, err := Unmarshal(mtaContent)
+			Ω(err).Should(Succeed())
+			return mtaObj
+		}
+		It("returns mta.yaml content when there are no extension files", func() {
+			mtaObj := getMta()
+			err := mergeWithExtensionFiles(mtaObj, nil)
+			Ω(err).Should(Succeed())
+			Ω(mtaObj).Should(Equal(&MTA{
+				ID:            `test`,
+				SchemaVersion: &expectedSchemaVersion,
+				Version:       `1.2`,
+				Description:   `test mta creation`,
+				Modules: []*Module{
+					{
+						Name: `testModule`,
+						Type: `testType`,
+						Path: `test`,
+					},
+				},
+			}))
+		})
+		It("returns the merged result when there is one extension file with correct extends", func() {
+			mtaObj := getMta()
+			err := mergeWithExtensionFiles(mtaObj, []string{getTestPath("module_valid1.mtaext")})
+			Ω(err).Should(Succeed())
+			Ω(mtaObj).Should(Equal(&MTA{
+				ID:            `test`,
+				SchemaVersion: &expectedSchemaVersion,
+				Version:       `1.2`,
+				Description:   `test mta creation`,
+				Modules: []*Module{
+					{
+						Name: `testModule`,
+						Type: `testType`,
+						Path: `test`,
+						Properties: map[string]interface{} {
+							`commonProp`: `value1`,
+							`newProp`: `new value`,
+						},
+					},
+				},
+			}))
+		})
+		It("returns the merged result when there is one extension file with incorrect extends", func() {
+			mtaObj := getMta()
+			err := mergeWithExtensionFiles(mtaObj, []string{getTestPath("module_valid2.mtaext")})
+			Ω(err).Should(Succeed())
+			Ω(mtaObj).Should(Equal(&MTA{
+				ID:            `test`,
+				SchemaVersion: &expectedSchemaVersion,
+				Version:       `1.2`,
+				Description:   `test mta creation`,
+				Modules: []*Module{
+					{
+						Name: `testModule`,
+						Type: `testType`,
+						Path: `test`,
+						Properties: map[string]interface{} {
+							`commonProp`: `value2`,
+							`newProp2`: `new value2`,
+						},
+					},
+				},
+			}))
+		})
+		It("returns merged result when there are multiple extension files in the correct extends order", func() {
+			mtaObj := getMta()
+			err := mergeWithExtensionFiles(mtaObj, []string{getTestPath("module_valid1.mtaext"), getTestPath("module_valid2.mtaext")})
+			Ω(err).Should(Succeed())
+			Ω(mtaObj).Should(Equal(&MTA{
+				ID:            `test`,
+				SchemaVersion: &expectedSchemaVersion,
+				Version:       `1.2`,
+				Description:   `test mta creation`,
+				Modules: []*Module{
+					{
+						Name: `testModule`,
+						Type: `testType`,
+						Path: `test`,
+						Properties: map[string]interface{} {
+							`commonProp`: `value2`,
+							`newProp`: `new value`,
+							`newProp2`: `new value2`,
+						},
+					},
+				},
+			}))
+		})
+		It("returns merged result when there are multiple extension files in an incorrect extends order", func() {
+			mtaObj := getMta()
+			err := mergeWithExtensionFiles(mtaObj, []string{getTestPath("module_valid2.mtaext"), getTestPath("module_valid1.mtaext")})
+			Ω(err).Should(Succeed())
+			Ω(mtaObj).Should(Equal(&MTA{
+				ID:            `test`,
+				SchemaVersion: &expectedSchemaVersion,
+				Version:       `1.2`,
+				Description:   `test mta creation`,
+				Modules: []*Module{
+					{
+						Name: `testModule`,
+						Type: `testType`,
+						Path: `test`,
+						Properties: map[string]interface{} {
+							// The extensions are merged in the sent order so module_valid1.mtaext is last
+							`commonProp`: `value1`,
+							`newProp`: `new value`,
+							`newProp2`: `new value2`,
+						},
+					},
+				},
+			}))
+		})
+		It("returns partially merged result when there are multiple extension files and one is invalid", func() {
+			mtaObj := getMta()
+			err := mergeWithExtensionFiles(mtaObj, []string{
+				getTestPath("module_valid1.mtaext"),
+				getTestPath("module_invalid2.mtaext"),
+				getTestPath("module_valid3.mtaext"),
+			})
+			Ω(err).ShouldNot(Succeed())
+			Ω(err.Error()).Should(ContainSubstring(mergeExtPathErrorMsg, getTestPath("module_invalid2.mtaext")))
+			Ω(err.Error()).Should(ContainSubstring("testModuleNonExisting"))
+			Ω(mtaObj).Should(Equal(&MTA{
+				ID:            `test`,
+				SchemaVersion: &expectedSchemaVersion,
+				Version:       `1.2`,
+				Description:   `test mta creation`,
+				Modules: []*Module{
+					{
+						Name: `testModule`,
+						Type: `testType`,
+						Path: `test`,
+						Properties: map[string]interface{} {
+							`commonProp`: `value2`,
+							`newProp`: `new value`,
+							`newProp2`: `new value2`,
+						},
+					},
+				},
+			}))
+		})
+		It("returns partially merged result when there are multiple extension files and one does not exist", func() {
+			mtaObj := getMta()
+			err := mergeWithExtensionFiles(mtaObj, []string{
+				getTestPath("module_valid1.mtaext"),
+				getTestPath("nonExisting.mtaext"),
+				getTestPath("module_valid3.mtaext"),
+			})
+			Ω(err).ShouldNot(Succeed())
+			Ω(err.Error()).Should(ContainSubstring(fs.PathNotFoundMsg, getTestPath("nonExisting.mtaext")))
+			Ω(mtaObj).Should(Equal(&MTA{
+				ID:            `test`,
+				SchemaVersion: &expectedSchemaVersion,
+				Version:       `1.2`,
+				Description:   `test mta creation`,
+				Modules: []*Module{
+					{
+						Name: `testModule`,
+						Type: `testType`,
+						Path: `test`,
+						Properties: map[string]interface{} {
+							`commonProp`: `value1`,
+							`newProp`: `new value`,
+						},
+					},
+				},
+			}))
+		})
 	})
 })
 
 func checkMerge(mtaObj MTA, extMta EXT, expected MTA) {
-	err := Merge(&mtaObj, &extMta)
+	err := Merge(&mtaObj, &extMta, "")
 	Ω(err).Should(Succeed())
 	Ω(mtaObj).Should(Equal(expected))
 }
 
 func checkMergeFails(mtaObj MTA, extMta EXT, msg string, args ...interface{}) {
-	err := Merge(&mtaObj, &extMta)
+	err := Merge(&mtaObj, &extMta, "")
 
 	Ω(err).Should(HaveOccurred())
 	Ω(err.Error()).Should(ContainSubstring(msg, args...))

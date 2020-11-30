@@ -62,8 +62,8 @@ var createMtaCmd = &cobra.Command{
 	Long:  "Create new MTA project",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return mta.RunModifyAndWriteHash("create MTA project", createMtaCmdPath, false, func() error {
-			return mta.CreateMta(createMtaCmdPath, createMtaCmdData, os.MkdirAll)
+		return mta.RunModifyAndWriteHash("create MTA project", createMtaCmdPath, false, func() ([]string, error) {
+			return nil, mta.CreateMta(createMtaCmdPath, createMtaCmdData, os.MkdirAll)
 		}, 0, true)
 	},
 	Hidden:        true,
@@ -80,7 +80,7 @@ var deleteMtaCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logs.Logger.Info("delete MTA in path: " + deleteMtaCmdPath)
 		err := mta.DeleteMta(deleteMtaCmdPath)
-		writeErr := mta.WriteResult(nil, 0, err)
+		writeErr := mta.WriteResult(nil, nil, 0, err)
 		if err != nil {
 			// The original error is more important
 			return err
@@ -102,8 +102,9 @@ var copyCmd = &cobra.Command{
 		return mta.RunAndWriteResultAndHash(
 			fmt.Sprintf("copy from source path: %s to target path: %s", copyCmdSourcePath, copyCmdTargetPath),
 			copyCmdTargetPath,
-			func() (interface{}, error) {
-				return nil, mta.CopyFile(copyCmdSourcePath, copyCmdTargetPath, os.Create)
+			nil, // Extensions are not relevant in copy
+			func() (interface{}, []string, error) {
+				return nil, nil, mta.CopyFile(copyCmdSourcePath, copyCmdTargetPath, os.Create)
 			},
 		)
 	},
@@ -121,7 +122,7 @@ var deleteFileCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logs.Logger.Info("delete file in path: " + deleteFileCmdPath)
 		err := mta.DeleteFile(deleteFileCmdPath)
-		writeErr := mta.WriteResult(nil, 0, err)
+		writeErr := mta.WriteResult(nil, nil, 0, err)
 		if err != nil {
 			// The original error is more important
 			return err
@@ -143,7 +144,8 @@ var existCmd = &cobra.Command{
 		return mta.RunAndWriteResultAndHash(
 			fmt.Sprintf("check if name %s exists in %s file", existCmdName, existCmdPath),
 			existCmdPath,
-			func() (interface{}, error) {
+			nil, // Extensions don't change, remove or add names
+			func() (interface{}, []string, error) {
 				return mta.IsNameUnique(existCmdPath, existCmdName)
 			},
 		)
@@ -160,7 +162,7 @@ var updateBuildParametersCmd = &cobra.Command{
 	Long:  "Update build parameters",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return mta.RunModifyAndWriteHash("update build parameters", updateBuildParametersCmdPath, updateBuildParametersCmdForce, func() error {
+		return mta.RunModifyAndWriteHash("update build parameters", updateBuildParametersCmdPath, updateBuildParametersCmdForce, func() ([]string, error) {
 			return mta.UpdateBuildParameters(updateBuildParametersCmdPath, updateBuildParametersCmdData)
 		}, updateBuildParametersCmdHashcode, false)
 	},
@@ -176,7 +178,8 @@ var getMtaIDCmd = &cobra.Command{
 	Long:  "Get MTA ID",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return mta.RunAndWriteResultAndHash("get MTA ID", getMtaIDCmdPath, func() (interface{}, error) {
+		// Extensions don't change the mta ID
+		return mta.RunAndWriteResultAndHash("get MTA ID", getMtaIDCmdPath, nil, func() (interface{}, []string, error) {
 			return mta.GetMtaID(getMtaIDCmdPath)
 		})
 	},

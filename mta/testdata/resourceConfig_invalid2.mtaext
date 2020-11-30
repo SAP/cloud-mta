@@ -1,0 +1,13 @@
+_schema-version: '2.0'
+ID: HANATestExt1
+extends: HANATest
+
+resources:
+  - name: resourceWithConfig
+    parameters:
+      config:
+        xsappname: testNameFromExt
+  - name: resourceWithConfig_notExisting2
+    parameters:
+      config:
+        xsappname: testName

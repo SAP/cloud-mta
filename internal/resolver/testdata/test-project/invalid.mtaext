@@ -1,0 +1,10 @@
+_schema-version: 2.1.0
+extends: com.company.vs.samples.odata.eb
+ID: test
+
+modules:
+- name: testModule_doesNotExist
+  requires:
+  - name: testResource1
+    properties:
+      requiredStringProp: 'value2 in string: ~{resource1-container-name}'

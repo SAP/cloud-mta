@@ -1,0 +1,8 @@
+_schema-version: 2.1.0
+extends: com.company.vs.samples.odata.eb
+ID: test2
+
+modules:
+- name: testModule
+  properties:
+    hardCodedProp: no_placeholders_fromExt2

@@ -3,7 +3,6 @@ package validate
 import (
 	"fmt"
 	"gopkg.in/yaml.v3"
-	"io/ioutil"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/SAP/cloud-mta/internal/fs"
 	"github.com/SAP/cloud-mta/mta"
 )
 
@@ -36,14 +36,11 @@ func MtaYaml(projectPath, mtaFilename string,
 
 		mtaPath := filepath.Join(projectPath, mtaFilename)
 		// ParseFile contains MTA yaml content.
-		yamlContent, e := readFile(mtaPath)
-
+		yamlContent, e := fs.ReadFile(mtaPath)
 		if e != nil {
 			return "", errors.Wrapf(e, `could not read the "%v" file; the validation failed`, mtaPath)
 		}
-		s := string(yamlContent)
-		s = strings.Replace(s, "\r\n", "\r", -1)
-		yamlContent = []byte(s)
+
 		// Validates MTA content.
 		errIssues, warnIssues := validate(yamlContent, projectPath,
 			validateSchema, validateSemantic, strict, exclude)
@@ -57,17 +54,6 @@ func MtaYaml(projectPath, mtaFilename string,
 	}
 
 	return "", nil
-}
-
-func readFile(file string) ([]byte, error) {
-	content, err := ioutil.ReadFile(file)
-	if err != nil {
-		return nil, errors.Wrapf(err, `failed to read the "%v" file`, file)
-	}
-	s := string(content)
-	s = strings.Replace(s, "\r\n", "\r", -1)
-	content = []byte(s)
-	return content, nil
 }
 
 // validate - validates the MTA descriptor

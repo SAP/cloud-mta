@@ -11,6 +11,7 @@ var addModuleCmdData string
 var addModuleCmdForce bool
 var addModuleCmdHashcode int
 var getModulesCmdPath string
+var getModulesCmdExtensions []string
 var updateModuleMtaCmdPath string
 var updateModuleCmdData string
 var updateModuleCmdHashcode int
@@ -25,8 +26,12 @@ func init() {
 		"force action")
 	addModuleCmd.Flags().IntVarP(&addModuleCmdHashcode, "hashcode", "c", 0,
 		"data hashcode")
+
 	getModulesCmd.Flags().StringVarP(&getModulesCmdPath, "path", "p", "",
 		"the path to the yaml file")
+	getModulesCmd.Flags().StringSliceVarP(&getModulesCmdExtensions, "extensions", "x", nil,
+		"the paths to the MTA extension descriptors")
+
 	updateModuleCmd.Flags().StringVarP(&updateModuleMtaCmdPath, "path", "p", "",
 		"the path to the yaml file")
 	updateModuleCmd.Flags().StringVarP(&updateModuleCmdData, "data", "d", "",
@@ -42,7 +47,7 @@ var addModuleCmd = &cobra.Command{
 	Long:  "Add new module",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return mta.RunModifyAndWriteHash("add new module", addModuleMtaCmdPath, addModuleCmdForce, func() error {
+		return mta.RunModifyAndWriteHash("add new module", addModuleMtaCmdPath, addModuleCmdForce, func() ([]string, error) {
 			return mta.AddModule(addModuleMtaCmdPath, addModuleCmdData, mta.Marshal)
 		}, addModuleCmdHashcode, false)
 	},
@@ -58,8 +63,8 @@ var getModulesCmd = &cobra.Command{
 	Long:  "Get all modules",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return mta.RunAndWriteResultAndHash("get modules", getModulesCmdPath, func() (interface{}, error) {
-			return mta.GetModules(getModulesCmdPath)
+		return mta.RunAndWriteResultAndHash("get modules", getModulesCmdPath, getModulesCmdExtensions, func() (interface{}, []string, error) {
+			return mta.GetModules(getModulesCmdPath, getModulesCmdExtensions)
 		})
 	},
 	Hidden:        true,
@@ -74,7 +79,7 @@ var updateModuleCmd = &cobra.Command{
 	Long:  "Update existing module",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return mta.RunModifyAndWriteHash("update existing module", updateModuleMtaCmdPath, false, func() error {
+		return mta.RunModifyAndWriteHash("update existing module", updateModuleMtaCmdPath, false, func() ([]string, error) {
 			return mta.UpdateModule(updateModuleMtaCmdPath, updateModuleCmdData, mta.Marshal)
 		}, updateModuleCmdHashcode, false)
 	},
