@@ -2555,6 +2555,33 @@ var _ = Describe("MTA Extensions", func() {
 				},
 			}))
 		})
+		It("returns partially merged result when there are multiple extension files and one cannot be marshalled", func() {
+			mtaObj := getMta()
+			err := mergeWithExtensionFiles(mtaObj, []string{
+				getTestPath("module_valid1.mtaext"),
+				getTestPath("unmarshalled.mtaext"),
+				getTestPath("module_valid3.mtaext"),
+			})
+			Ω(err).ShouldNot(Succeed())
+			Ω(err.Error()).Should(ContainSubstring(mergeExtUnmarshalErrorMsg, getTestPath("unmarshalled.mtaext")))
+			Ω(mtaObj).Should(Equal(&MTA{
+				ID:            `test`,
+				SchemaVersion: &expectedSchemaVersion,
+				Version:       `1.2`,
+				Description:   `test mta creation`,
+				Modules: []*Module{
+					{
+						Name: `testModule`,
+						Type: `testType`,
+						Path: `test`,
+						Properties: map[string]interface{}{
+							`commonProp`: `value1`,
+							`newProp`:    `new value`,
+						},
+					},
+				},
+			}))
+		})
 		It("returns partially merged result when there are multiple extension files and one does not exist", func() {
 			mtaObj := getMta()
 			err := mergeWithExtensionFiles(mtaObj, []string{
