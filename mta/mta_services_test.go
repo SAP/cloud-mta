@@ -484,8 +484,8 @@ var _ = Describe("MtaServices", func() {
 				Path: "test",
 				Properties: map[string]interface{}{
 					`commonProp`: `value2`,
-					"newProp":  "new value",
-					"newProp2": "new value2",
+					"newProp":    "new value",
+					"newProp2":   "new value2",
 				},
 			}
 			expectedModules := []*Module{&mergedModule}
@@ -508,8 +508,8 @@ var _ = Describe("MtaServices", func() {
 				Path: "test",
 				Properties: map[string]interface{}{
 					`commonProp`: `value2`,
-					"newProp":  "new value",
-					"newProp2": "new value2",
+					"newProp":    "new value",
+					"newProp2":   "new value2",
 				},
 			}
 			expectedModules := []*Module{&mergedModule}

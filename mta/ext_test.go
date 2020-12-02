@@ -2449,9 +2449,9 @@ var _ = Describe("MTA Extensions", func() {
 						Name: `testModule`,
 						Type: `testType`,
 						Path: `test`,
-						Properties: map[string]interface{} {
+						Properties: map[string]interface{}{
 							`commonProp`: `value1`,
-							`newProp`: `new value`,
+							`newProp`:    `new value`,
 						},
 					},
 				},
@@ -2471,9 +2471,9 @@ var _ = Describe("MTA Extensions", func() {
 						Name: `testModule`,
 						Type: `testType`,
 						Path: `test`,
-						Properties: map[string]interface{} {
+						Properties: map[string]interface{}{
 							`commonProp`: `value2`,
-							`newProp2`: `new value2`,
+							`newProp2`:   `new value2`,
 						},
 					},
 				},
@@ -2493,10 +2493,10 @@ var _ = Describe("MTA Extensions", func() {
 						Name: `testModule`,
 						Type: `testType`,
 						Path: `test`,
-						Properties: map[string]interface{} {
+						Properties: map[string]interface{}{
 							`commonProp`: `value2`,
-							`newProp`: `new value`,
-							`newProp2`: `new value2`,
+							`newProp`:    `new value`,
+							`newProp2`:   `new value2`,
 						},
 					},
 				},
@@ -2516,11 +2516,11 @@ var _ = Describe("MTA Extensions", func() {
 						Name: `testModule`,
 						Type: `testType`,
 						Path: `test`,
-						Properties: map[string]interface{} {
+						Properties: map[string]interface{}{
 							// The extensions are merged in the sent order so module_valid1.mtaext is last
 							`commonProp`: `value1`,
-							`newProp`: `new value`,
-							`newProp2`: `new value2`,
+							`newProp`:    `new value`,
+							`newProp2`:   `new value2`,
 						},
 					},
 				},
@@ -2546,10 +2546,10 @@ var _ = Describe("MTA Extensions", func() {
 						Name: `testModule`,
 						Type: `testType`,
 						Path: `test`,
-						Properties: map[string]interface{} {
+						Properties: map[string]interface{}{
 							`commonProp`: `value2`,
-							`newProp`: `new value`,
-							`newProp2`: `new value2`,
+							`newProp`:    `new value`,
+							`newProp2`:   `new value2`,
 						},
 					},
 				},
@@ -2574,9 +2574,9 @@ var _ = Describe("MTA Extensions", func() {
 						Name: `testModule`,
 						Type: `testType`,
 						Path: `test`,
-						Properties: map[string]interface{} {
+						Properties: map[string]interface{}{
 							`commonProp`: `value1`,
-							`newProp`: `new value`,
+							`newProp`:    `new value`,
 						},
 					},
 				},
