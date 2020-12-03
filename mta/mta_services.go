@@ -3,6 +3,7 @@ package mta
 import (
 	"crypto/sha256"
 	"fmt"
+	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 	"io"
 	"io/ioutil"
@@ -15,6 +16,8 @@ import (
 	"github.com/SAP/cloud-mta/internal/fs"
 	"github.com/SAP/cloud-mta/internal/logs"
 )
+
+const UnmarshalFailsMsg = `the "%s" file is not a valid MTA development descriptor`
 
 func createMtaYamlFile(path string, mkDirs func(string, os.FileMode) error) (rerr error) {
 	folder := filepath.Dir(path)
@@ -42,7 +45,7 @@ func GetMtaFromFile(path string, extensions []string) (mta *MTA, messages []stri
 	}
 	mta, err = Unmarshal(mtaContent)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.Wrapf(err, UnmarshalFailsMsg, path)
 	}
 
 	// If there is an error during the merge return the result so far and return the error as a message.

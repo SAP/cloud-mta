@@ -16,7 +16,6 @@ import (
 
 const (
 	emptyModuleNameMsg = "provide a name for the module"
-	unmarshalFailsMsg  = `could not unmarshal the "%s"`
 	moduleNotFoundMsg  = `could not find the "%s" module`
 	marshalFailsMag    = `could not marshal the "%s" environment variable`
 	missingPrefixMsg   = `could not resolve the value for the "~{%s}" variable; missing required prefix`
@@ -39,7 +38,7 @@ func Resolve(workspaceDir, moduleName, path string, extensions []string, envFile
 	}
 	mtaRaw, messages, err := mta.GetMtaFromFile(path, extensions)
 	if err != nil {
-		return result, messages, errors.Wrapf(err, unmarshalFailsMsg, path)
+		return result, messages, err
 	}
 	if len(workspaceDir) == 0 {
 		workspaceDir = filepath.Dir(path)

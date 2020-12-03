@@ -132,7 +132,7 @@ var _ = Describe("Resolve", func() {
 		path := getTestPath("test-project", "mtaBad.yaml")
 		_, _, err := Resolve("", "eb-java", path, nil, "")
 		Ω(err).Should(HaveOccurred())
-		Ω(err.Error()).Should(ContainSubstring(fmt.Sprintf(unmarshalFailsMsg, path)))
+		Ω(err.Error()).Should(ContainSubstring(fmt.Sprintf(mta.UnmarshalFailsMsg, path)))
 	})
 	Describe("resolve with extensions", func() {
 		var getExpectedResolve = func() ResolveResult {
