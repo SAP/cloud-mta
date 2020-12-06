@@ -3,7 +3,6 @@ package resolver
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -17,8 +16,6 @@ import (
 
 const (
 	emptyModuleNameMsg = "provide a name for the module"
-	pathNotFoundMsg    = `could not find the "%s" path`
-	unmarshalFailsMsg  = `could not unmarshal the "%s"`
 	moduleNotFoundMsg  = `could not find the "%s" module`
 	marshalFailsMag    = `could not marshal the "%s" environment variable`
 	missingPrefixMsg   = `could not resolve the value for the "~{%s}" variable; missing required prefix`
@@ -35,17 +32,13 @@ type ResolveResult struct {
 }
 
 // Resolve - resolve module's parameters
-func Resolve(workspaceDir, moduleName, path string, envFile string) (result ResolveResult, err error) {
+func Resolve(workspaceDir, moduleName, path string, extensions []string, envFile string) (result ResolveResult, messages []string, err error) {
 	if len(moduleName) == 0 {
-		return result, errors.New(emptyModuleNameMsg)
+		return result, nil, errors.New(emptyModuleNameMsg)
 	}
-	yamlData, err := ioutil.ReadFile(path)
+	mtaRaw, messages, err := mta.GetMtaFromFile(path, extensions)
 	if err != nil {
-		return result, errors.Wrapf(err, pathNotFoundMsg, path)
-	}
-	mtaRaw, err := mta.Unmarshal(yamlData)
-	if err != nil {
-		return result, errors.Wrapf(err, unmarshalFailsMsg, path)
+		return result, messages, err
 	}
 	if len(workspaceDir) == 0 {
 		workspaceDir = filepath.Dir(path)
@@ -65,15 +58,15 @@ func Resolve(workspaceDir, moduleName, path string, envFile string) (result Reso
 
 			propVarMap, err := getPropertiesAsEnvVar(module)
 			if err != nil {
-				return result, err
+				return result, messages, err
 			}
 			result.Properties = propVarMap
 			result.Messages = m.messages
-			return result, nil
+			return result, messages, nil
 		}
 	}
 
-	return result, errors.Errorf(moduleNotFoundMsg, moduleName)
+	return result, messages, errors.Errorf(moduleNotFoundMsg, moduleName)
 }
 
 func getPropertiesAsEnvVar(module *mta.Module) (map[string]string, error) {

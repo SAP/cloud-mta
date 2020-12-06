@@ -7,8 +7,8 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/pkg/errors"
-	"strings"
+
+	"github.com/SAP/cloud-mta/internal/fs"
 )
 
 var _ = Describe("Mta", func() {
@@ -318,7 +318,7 @@ var _ = Describe("Mta", func() {
 		It("Sanity", func() {
 			wd, err := os.Getwd()
 			Ω(err).Should(Succeed())
-			content, err := readFile(filepath.Join(wd, "testdata", "mta.yaml"))
+			content, err := fs.ReadFile(filepath.Join(wd, "testdata", "mta.yaml"))
 			Ω(err).Should(Succeed())
 			m, err := Unmarshal(content)
 			Ω(err).Should(Succeed())
@@ -327,7 +327,7 @@ var _ = Describe("Mta", func() {
 		})
 
 		It("Wrong deployed-after value", func() {
-			content, err := readFile(getTestPath("mtaWrongDeployedAfter.yaml"))
+			content, err := fs.ReadFile(getTestPath("mtaWrongDeployedAfter.yaml"))
 			Ω(err).Should(Succeed())
 			_, err = Unmarshal(content)
 			Ω(err).Should(HaveOccurred())
@@ -335,7 +335,7 @@ var _ = Describe("Mta", func() {
 		})
 
 		It("Wrong properties-metadata value", func() {
-			content, err := readFile(getTestPath("mtaWrongMetaData.yaml"))
+			content, err := fs.ReadFile(getTestPath("mtaWrongMetaData.yaml"))
 			Ω(err).Should(Succeed())
 			_, err = Unmarshal(content)
 			Ω(err).Should(HaveOccurred())
@@ -343,14 +343,3 @@ var _ = Describe("Mta", func() {
 		})
 	})
 })
-
-func readFile(file string) ([]byte, error) {
-	content, err := ioutil.ReadFile(file)
-	if err != nil {
-		return nil, errors.Wrapf(err, `failed to read the "%v" file`, file)
-	}
-	s := string(content)
-	s = strings.Replace(s, "\r\n", "\r", -1)
-	content = []byte(s)
-	return content, nil
-}

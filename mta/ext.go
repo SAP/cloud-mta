@@ -4,12 +4,17 @@ import (
 	"bytes"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
+	"path/filepath"
+
+	"github.com/SAP/cloud-mta/internal/fs"
 )
 
 const (
-	mergeExtErrorMsg = `could not merge the MTA extension with the "%s" ID`
+	mergeExtIDErrorMsg        = `could not merge the MTA extension with the "%s" ID`
+	mergeExtUnmarshalErrorMsg = `the "%s" file is not a valid MTA extension descriptor`
+	mergeExtPathErrorMsg      = `could not merge the "%s" MTA extension`
 
-	mergeRootParametersErrorMsg = `could not merge parameters from MTA extension with ID "%s"`
+	mergeRootParametersErrorMsg = `could not merge parameters`
 
 	mergeModulePropertiesErrorMsg             = `could not merge the properties of the "%s" module`
 	mergeModuleParametersErrorMsg             = `could not merge the parameters of the "%s" module`
@@ -49,24 +54,51 @@ func UnmarshalExt(content []byte) (*EXT, error) {
 	return &mtaExt, err
 }
 
+// mergeWithExtensionFiles merges the extensions in the sent order.
+// There are currently no validations performed on the ID, extends or schema version fields of the extensions.
+func mergeWithExtensionFiles(mta *MTA, extensions []string) error {
+	for _, extPath := range extensions {
+		mtaExtContent, err := fs.ReadFile(filepath.Join(extPath))
+		if err != nil {
+			return err
+		}
+		mtaExt, err := UnmarshalExt(mtaExtContent)
+		if err != nil {
+			return errors.Wrapf(err, mergeExtUnmarshalErrorMsg, extPath)
+		}
+		err = Merge(mta, mtaExt, extPath)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Merge merges mta object with mta extension object extension properties complement and overwrite mta properties
-func Merge(mta *MTA, mtaExt *EXT) error {
+func Merge(mta *MTA, mtaExt *EXT, extFilePath string) error {
 	err := chain().
-		extendMap(&mta.Parameters, mta.ParametersMetaData, mtaExt.Parameters, mergeRootParametersErrorMsg, mtaExt.ID).
+		extendMap(&mta.Parameters, mta.ParametersMetaData, mtaExt.Parameters, mergeRootParametersErrorMsg).
 		err
 	if err != nil {
-		return err
+		return wrapMergeError(err, extFilePath, mtaExt.ID)
 	}
 
 	if err = mergeModules(*mta, mtaExt.Modules); err != nil {
-		return errors.Wrapf(err, mergeExtErrorMsg, mtaExt.ID)
+		return wrapMergeError(err, extFilePath, mtaExt.ID)
 	}
 
 	if err = mergeResources(*mta, mtaExt.Resources); err != nil {
-		return errors.Wrapf(err, mergeExtErrorMsg, mtaExt.ID)
+		return wrapMergeError(err, extFilePath, mtaExt.ID)
 	}
 
 	return nil
+}
+
+func wrapMergeError(err error, extFilePath string, extID string) error {
+	if extFilePath != "" {
+		return errors.Wrapf(err, mergeExtPathErrorMsg, extFilePath)
+	}
+	return errors.Wrapf(err, mergeExtIDErrorMsg, extID)
 }
 
 // mergeModules is responsible for handling the rules of merging modules

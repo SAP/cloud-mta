@@ -14,6 +14,8 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/SAP/cloud-mta/internal/fs"
 )
 
 func getMtaInput() MTA {
@@ -76,7 +78,7 @@ var _ = Describe("MtaServices", func() {
 		})
 	})
 
-	var _ = Describe("deleteMta", func() {
+	var _ = Describe("DeleteMta", func() {
 		It("Delete MTA", func() {
 			jsonData, err := json.Marshal(getMtaInput())
 			Ω(err).Should(Succeed())
@@ -144,7 +146,7 @@ var _ = Describe("MtaServices", func() {
 		})
 	})
 
-	var _ = Describe("deleteFile", func() {
+	var _ = Describe("DeleteFile", func() {
 		It("Delete file", func() {
 			jsonData, err := json.Marshal(getMtaInput())
 			Ω(err).Should(Succeed())
@@ -166,22 +168,22 @@ var _ = Describe("MtaServices", func() {
 			printed = ""
 		})
 
-		It("Writes only the hashcode when the result and error are nil", func() {
-			err := printResult(nil, 123, nil, printer, json.Marshal)
+		It("Writes only the hashcode when the result, messages and error are nil", func() {
+			err := printResult(nil, nil, 123, nil, printer, json.Marshal)
 			Ω(err).Should(Succeed())
 			Ω(printed).Should(Equal(`{"hashcode":123}`))
 		})
 
 		It("Writes error message when the error is not nil", func() {
-			err := printResult("123", 123, errors.New("error message"), printer, json.Marshal)
+			err := printResult("123", nil, 123, errors.New("error message"), printer, json.Marshal)
 			Ω(err).Should(Succeed())
 			Ω(printed).Should(Equal(`{"message":"error message"}`))
 		})
 
-		It("Writes hashcode and result when the result is sent and there is no error", func() {
-			err := printResult("1234", 3, nil, printer, json.Marshal)
+		It("Writes hashcode, messages and result when the result is sent and there is no error", func() {
+			err := printResult("1234", []string{"some message"}, 3, nil, printer, json.Marshal)
 			Ω(err).Should(Succeed())
-			Ω(printed).Should(Equal(`{"result":"1234","hashcode":3}`))
+			Ω(printed).Should(Equal(`{"result":"1234","messages":["some message"],"hashcode":3}`))
 		})
 
 		It("Writes complex result", func() {
@@ -195,7 +197,7 @@ var _ = Describe("MtaServices", func() {
 					Type: "type2",
 				},
 			}
-			err := printResult(modules, 0, nil, printer, json.Marshal)
+			err := printResult(modules, nil, 0, nil, printer, json.Marshal)
 			Ω(err).Should(Succeed())
 			Ω(printed).Should(Equal(`{"result":[{"name":"m1","type":"type1"},{"name":"m2","type":"type2"}],"hashcode":0}`))
 		})
@@ -204,19 +206,19 @@ var _ = Describe("MtaServices", func() {
 			printerErr := func(s ...interface{}) (int, error) {
 				return 0, errors.New("error in print")
 			}
-			err := printResult(nil, 1, nil, printerErr, json.Marshal)
+			err := printResult(nil, nil, 1, nil, printerErr, json.Marshal)
 			Ω(err).Should(MatchError("error in print"))
 		})
 
 		It("Returns and writes error if the result cannot be serialized to JSON", func() {
 			var unserializableResult UnmarshalableString = "a"
-			err := printResult(unserializableResult, 0, nil, printer, json.Marshal)
+			err := printResult(unserializableResult, nil, 0, nil, printer, json.Marshal)
 			Ω(err).Should(MatchError(ContainSubstring("cannot marshal value a")))
 			Ω(printed).Should(ContainSubstring("cannot marshal value a"))
 		})
 
 		It("Returns and writes error if the error message cannot be serialized to JSON", func() {
-			err := printResult(nil, 0, errors.New("some error"), printer, jsonMarshalErr)
+			err := printResult(nil, nil, 0, errors.New("some error"), printer, jsonMarshalErr)
 			Ω(err).Should(MatchError("could not marshal to json"))
 			// Both error messages should be printed to the output
 			Ω(printed).Should(ContainSubstring("could not marshal to json"))
@@ -224,7 +226,7 @@ var _ = Describe("MtaServices", func() {
 		})
 	})
 
-	var _ = Describe("addModule", func() {
+	var _ = Describe("AddModule", func() {
 		It("Add module", func() {
 			mtaPath := getTestPath("result", "temp.mta.yaml")
 
@@ -234,7 +236,9 @@ var _ = Describe("MtaServices", func() {
 
 			jsonModuleData, err := json.Marshal(oModule)
 			Ω(err).Should(Succeed())
-			Ω(AddModule(mtaPath, string(jsonModuleData), Marshal)).Should(Succeed())
+			messages, err := AddModule(mtaPath, string(jsonModuleData), Marshal)
+			Ω(err).Should(Succeed())
+			Ω(messages).Should(BeEmpty())
 
 			oMtaInput := getMtaInput()
 			oMtaInput.Modules = append(oMtaInput.Modules, &oModule)
@@ -249,7 +253,8 @@ var _ = Describe("MtaServices", func() {
 		It("Add module to non existing mta.yaml file", func() {
 			const json = "{name:fff}"
 			mtaPath := getTestPath("result", "mta.yaml")
-			Ω(AddModule(mtaPath, json, Marshal)).Should(HaveOccurred())
+			_, err := AddModule(mtaPath, json, Marshal)
+			Ω(err).Should(HaveOccurred())
 		})
 
 		It("Add module to wrong mta.yaml format", func() {
@@ -259,7 +264,8 @@ var _ = Describe("MtaServices", func() {
 
 			jsonModuleData, err := json.Marshal(oModule)
 			Ω(err).Should(Succeed())
-			Ω(AddModule(mtaPath, string(jsonModuleData), Marshal)).Should(HaveOccurred())
+			_, err = AddModule(mtaPath, string(jsonModuleData), Marshal)
+			Ω(err).Should(HaveOccurred())
 		})
 
 		It("Add module with wrong json format", func() {
@@ -270,7 +276,8 @@ var _ = Describe("MtaServices", func() {
 			Ω(err).Should(Succeed())
 			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
 
-			Ω(AddModule(mtaPath, wrongJSON, Marshal)).Should(HaveOccurred())
+			_, err = AddModule(mtaPath, wrongJSON, Marshal)
+			Ω(err).Should(HaveOccurred())
 		})
 
 		It("Add module fails to marshal", func() {
@@ -282,15 +289,16 @@ var _ = Describe("MtaServices", func() {
 
 			jsonModuleData, err := json.Marshal(oModule)
 			Ω(err).Should(Succeed())
-			Ω(AddModule(mtaPath, string(jsonModuleData), marshalErr)).Should(HaveOccurred())
+			_, err = AddModule(mtaPath, string(jsonModuleData), marshalErr)
+			Ω(err).Should(HaveOccurred())
 		})
 	})
 
-	var _ = Describe("updateModule", func() {
+	var _ = Describe("UpdateModule", func() {
 		It("fails when mta.yaml doesn't exist", func() {
 			const json = "{name:fff}"
 			mtaPath := getTestPath("result", "mta.yaml")
-			err := UpdateModule(mtaPath, json, Marshal)
+			_, err := UpdateModule(mtaPath, json, Marshal)
 			Ω(err).Should(HaveOccurred())
 		})
 
@@ -302,7 +310,7 @@ var _ = Describe("MtaServices", func() {
 
 			jsonModuleData, err := json.Marshal(oModule)
 			Ω(err).Should(Succeed())
-			err = UpdateModule(mtaPath, string(jsonModuleData), Marshal)
+			_, err = UpdateModule(mtaPath, string(jsonModuleData), Marshal)
 			Ω(err).Should(MatchError(MatchRegexp("yaml: unmarshal errors")))
 		})
 
@@ -314,7 +322,7 @@ var _ = Describe("MtaServices", func() {
 			Ω(err).Should(Succeed())
 			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
 
-			err = UpdateModule(mtaPath, wrongJSON, Marshal)
+			_, err = UpdateModule(mtaPath, wrongJSON, Marshal)
 			Ω(err).Should(MatchError(MatchRegexp("line 1: did not find expected")))
 		})
 
@@ -341,7 +349,7 @@ var _ = Describe("MtaServices", func() {
 
 			jsonModuleData, err := json.Marshal(oUpdatedModule)
 			Ω(err).Should(Succeed())
-			err = UpdateModule(mtaPath, string(jsonModuleData), Marshal)
+			_, err = UpdateModule(mtaPath, string(jsonModuleData), Marshal)
 			Ω(err).Should(MatchError("the 'testModule2' module does not exist"))
 		})
 
@@ -368,7 +376,7 @@ var _ = Describe("MtaServices", func() {
 
 			jsonModuleData, err := json.Marshal(oUpdatedModule)
 			Ω(err).Should(Succeed())
-			err = UpdateModule(mtaPath, string(jsonModuleData), marshalErr)
+			_, err = UpdateModule(mtaPath, string(jsonModuleData), marshalErr)
 			Ω(err).Should(MatchError("could not marshal mta.yaml file"))
 		})
 
@@ -395,7 +403,9 @@ var _ = Describe("MtaServices", func() {
 
 			jsonModuleData, err := json.Marshal(oUpdatedModule)
 			Ω(err).Should(Succeed())
-			Ω(UpdateModule(mtaPath, string(jsonModuleData), Marshal)).Should(Succeed())
+			messages, err := UpdateModule(mtaPath, string(jsonModuleData), Marshal)
+			Ω(err).Should(Succeed())
+			Ω(messages).Should(BeEmpty())
 
 			Ω(mtaPath).Should(BeAnExistingFile())
 			yamlData, err := ioutil.ReadFile(mtaPath)
@@ -430,7 +440,9 @@ var _ = Describe("MtaServices", func() {
 
 			jsonModuleData, err := json.Marshal(oUpdatedModule)
 			Ω(err).Should(Succeed())
-			Ω(UpdateModule(mtaPath, string(jsonModuleData), Marshal)).Should(Succeed())
+			messages, err := UpdateModule(mtaPath, string(jsonModuleData), Marshal)
+			Ω(err).Should(Succeed())
+			Ω(messages).Should(BeEmpty())
 
 			Ω(mtaPath).Should(BeAnExistingFile())
 			yamlData, err := ioutil.ReadFile(mtaPath)
@@ -443,36 +455,85 @@ var _ = Describe("MtaServices", func() {
 		})
 	})
 
-	var _ = Describe("getModules", func() {
-		It("Get modules", func() {
-			mtaPath := getTestPath("result", "temp.mta.yaml")
+	var _ = Describe("GetModules", func() {
+		It("returns the modules from the mta.yaml when there are no extensions", func() {
+			mtaPath := getTestPath("mta_module.yaml")
 
-			jsonRootData, err := json.Marshal(getMtaInput())
+			modules, messages, err := GetModules(mtaPath, nil)
 			Ω(err).Should(Succeed())
-			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
-
-			jsonModuleData, err := json.Marshal(oModule)
-			Ω(err).Should(Succeed())
-			Ω(AddModule(mtaPath, string(jsonModuleData), Marshal)).Should(Succeed())
-
-			oMtaInput := getMtaInput()
-			oMtaInput.Modules = append(oMtaInput.Modules, &oModule)
-			Ω(mtaPath).Should(BeAnExistingFile())
-
-			modules, err := GetModules(mtaPath)
-			Ω(err).Should(Succeed())
-			Ω(reflect.DeepEqual(oMtaInput.Modules, modules)).Should(BeTrue())
+			Ω(modules).Should(Equal([]*Module{&oModule}))
+			Ω(messages).Should(BeEmpty())
 		})
 
-		It("Get modules from a non existing mta.yaml file", func() {
+		It("returns the modules from the mta.yaml when the extensions don't exist", func() {
+			mtaPath := getTestPath("mta_module.yaml")
+
+			mtaExtPath := getTestPath("result", "nonExisting.mtaext")
+			modules, messages, err := GetModules(mtaPath, []string{mtaExtPath})
+			Ω(err).Should(Succeed())
+			Ω(modules).Should(Equal([]*Module{&oModule}))
+			Ω(messages).Should(ContainElement(ContainSubstring(fs.PathNotFoundMsg, mtaExtPath)))
+		})
+
+		It("returns the merged modules from the mta.yaml and extensions", func() {
+			mtaPath := getTestPath("mta_module.yaml")
+
+			mergedModule := Module{
+				Name: "testModule",
+				Type: "testType",
+				Path: "test",
+				Properties: map[string]interface{}{
+					`commonProp`: `value2`,
+					"newProp":    "new value",
+					"newProp2":   "new value2",
+				},
+			}
+			expectedModules := []*Module{&mergedModule}
+
+			modules, messages, err := GetModules(mtaPath, []string{
+				getTestPath("module_valid1.mtaext"),
+				getTestPath("module_valid2.mtaext"),
+			})
+			Ω(err).Should(Succeed())
+			Ω(modules).Should(Equal(expectedModules))
+			Ω(messages).Should(BeEmpty())
+		})
+
+		It("returns the partially merged modules from the mta.yaml and extensions until reaching an invalid extension", func() {
+			mtaPath := getTestPath("mta_module.yaml")
+
+			mergedModule := Module{
+				Name: "testModule",
+				Type: "testType",
+				Path: "test",
+				Properties: map[string]interface{}{
+					`commonProp`: `value2`,
+					"newProp":    "new value",
+					"newProp2":   "new value2",
+				},
+			}
+			expectedModules := []*Module{&mergedModule}
+
+			modules, messages, err := GetModules(mtaPath, []string{
+				getTestPath("module_valid1.mtaext"),
+				getTestPath("module_invalid2.mtaext"),
+				getTestPath("module_valid3.mtaext"),
+			})
+			Ω(err).Should(Succeed())
+			Ω(modules).Should(Equal(expectedModules))
+			Ω(messages).Should(ContainElement(ContainSubstring(`testModuleNonExisting`)))
+		})
+
+		It("returns an error when mta.yaml does not exist", func() {
 			mtaPath := getTestPath("result", "mta.yaml")
-			modules, err := GetModules(mtaPath)
+			modules, messages, err := GetModules(mtaPath, nil)
 			Ω(err).Should(HaveOccurred())
 			Ω(modules).Should(BeNil())
+			Ω(messages).Should(BeEmpty())
 		})
 	})
 
-	var _ = Describe("addResource", func() {
+	var _ = Describe("AddResource", func() {
 		It("Add resource", func() {
 			mtaPath := getTestPath("result", "temp.mta.yaml")
 
@@ -482,7 +543,9 @@ var _ = Describe("MtaServices", func() {
 
 			jsonResourceData, err := json.Marshal(oResource)
 			Ω(err).Should(Succeed())
-			Ω(AddResource(mtaPath, string(jsonResourceData), Marshal)).Should(Succeed())
+			messages, err := AddResource(mtaPath, string(jsonResourceData), Marshal)
+			Ω(err).Should(Succeed())
+			Ω(messages).Should(BeEmpty())
 
 			oMtaInput := getMtaInput()
 			oMtaInput.Resources = append(oMtaInput.Resources, &oResource)
@@ -497,7 +560,8 @@ var _ = Describe("MtaServices", func() {
 		It("Add resource to non existing mta.yaml file", func() {
 			const json = "{name:fff}"
 			mtaPath := getTestPath("result", "mta.yaml")
-			Ω(AddResource(mtaPath, json, Marshal)).Should(HaveOccurred())
+			_, err := AddResource(mtaPath, json, Marshal)
+			Ω(err).Should(HaveOccurred())
 		})
 
 		It("Add resource to wrong mta.yaml format", func() {
@@ -507,7 +571,8 @@ var _ = Describe("MtaServices", func() {
 
 			jsonResourceData, err := json.Marshal(oResource)
 			Ω(err).Should(Succeed())
-			Ω(AddResource(mtaPath, string(jsonResourceData), Marshal)).Should(HaveOccurred())
+			_, err = AddResource(mtaPath, string(jsonResourceData), Marshal)
+			Ω(err).Should(HaveOccurred())
 		})
 
 		It("Add resource with wrong json format", func() {
@@ -518,7 +583,8 @@ var _ = Describe("MtaServices", func() {
 			Ω(err).Should(Succeed())
 			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
 
-			Ω(AddResource(mtaPath, wrongJSON, Marshal)).Should(HaveOccurred())
+			_, err = AddResource(mtaPath, wrongJSON, Marshal)
+			Ω(err).Should(HaveOccurred())
 		})
 
 		It("Add resource fails to marshal", func() {
@@ -530,15 +596,16 @@ var _ = Describe("MtaServices", func() {
 
 			jsonResourceData, err := json.Marshal(oResource)
 			Ω(err).Should(Succeed())
-			Ω(AddResource(mtaPath, string(jsonResourceData), marshalErr)).Should(HaveOccurred())
+			_, err = AddResource(mtaPath, string(jsonResourceData), marshalErr)
+			Ω(err).Should(HaveOccurred())
 		})
 	})
 
-	var _ = Describe("updateResource", func() {
+	var _ = Describe("UpdateResource", func() {
 		It("fails when mta.yaml doesn't exist", func() {
 			json := "{name:fff}"
 			mtaPath := getTestPath("result", "mta.yaml")
-			err := UpdateResource(mtaPath, json, Marshal)
+			_, err := UpdateResource(mtaPath, json, Marshal)
 			Ω(err).Should(HaveOccurred())
 		})
 
@@ -550,7 +617,7 @@ var _ = Describe("MtaServices", func() {
 
 			jsonResourceData, err := json.Marshal(oResource)
 			Ω(err).Should(Succeed())
-			err = UpdateResource(mtaPath, string(jsonResourceData), Marshal)
+			_, err = UpdateResource(mtaPath, string(jsonResourceData), Marshal)
 			Ω(err).Should(MatchError(MatchRegexp("yaml: unmarshal errors")))
 		})
 
@@ -562,7 +629,7 @@ var _ = Describe("MtaServices", func() {
 			Ω(err).Should(Succeed())
 			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
 
-			err = UpdateResource(mtaPath, wrongJSON, Marshal)
+			_, err = UpdateResource(mtaPath, wrongJSON, Marshal)
 			Ω(err).Should(MatchError(MatchRegexp("line 1: did not find expected")))
 		})
 
@@ -587,7 +654,7 @@ var _ = Describe("MtaServices", func() {
 
 			jsonResourceData, err := json.Marshal(oUpdatedResource)
 			Ω(err).Should(Succeed())
-			err = UpdateResource(mtaPath, string(jsonResourceData), Marshal)
+			_, err = UpdateResource(mtaPath, string(jsonResourceData), Marshal)
 			Ω(err).Should(MatchError("the 'testResource2' resource does not exist"))
 		})
 
@@ -612,7 +679,7 @@ var _ = Describe("MtaServices", func() {
 
 			jsonResourceData, err := json.Marshal(oUpdatedResource)
 			Ω(err).Should(Succeed())
-			err = UpdateResource(mtaPath, string(jsonResourceData), marshalErr)
+			_, err = UpdateResource(mtaPath, string(jsonResourceData), marshalErr)
 			Ω(err).Should(MatchError("could not marshal mta.yaml file"))
 		})
 
@@ -637,7 +704,9 @@ var _ = Describe("MtaServices", func() {
 
 			jsonResourceData, err := json.Marshal(oUpdatedResource)
 			Ω(err).Should(Succeed())
-			Ω(UpdateResource(mtaPath, string(jsonResourceData), Marshal)).Should(Succeed())
+			messages, err := UpdateResource(mtaPath, string(jsonResourceData), Marshal)
+			Ω(err).Should(Succeed())
+			Ω(messages).Should(BeEmpty())
 
 			Ω(mtaPath).Should(BeAnExistingFile())
 			yamlData, err := ioutil.ReadFile(mtaPath)
@@ -670,7 +739,9 @@ var _ = Describe("MtaServices", func() {
 
 			jsonResourceData, err := json.Marshal(oUpdatedResource)
 			Ω(err).Should(Succeed())
-			Ω(UpdateResource(mtaPath, string(jsonResourceData), Marshal)).Should(Succeed())
+			messages, err := UpdateResource(mtaPath, string(jsonResourceData), Marshal)
+			Ω(err).Should(Succeed())
+			Ω(messages).Should(BeEmpty())
 
 			Ω(mtaPath).Should(BeAnExistingFile())
 			yamlData, err := ioutil.ReadFile(mtaPath)
@@ -683,8 +754,8 @@ var _ = Describe("MtaServices", func() {
 		})
 	})
 
-	var _ = Describe("getResources", func() {
-		It("Get resources", func() {
+	var _ = Describe("GetResources", func() {
+		var createMta = func() string {
 			mtaPath := getTestPath("result", "temp.mta.yaml")
 
 			jsonRootData, err := json.Marshal(getMtaInput())
@@ -693,52 +764,121 @@ var _ = Describe("MtaServices", func() {
 
 			jsonResourceData, err := json.Marshal(oResource)
 			Ω(err).Should(Succeed())
-			Ω(AddResource(mtaPath, string(jsonResourceData), Marshal)).Should(Succeed())
+			messages, err := AddResource(mtaPath, string(jsonResourceData), Marshal)
+			Ω(err).Should(Succeed())
+			Ω(messages).Should(BeEmpty())
+
+			Ω(mtaPath).Should(BeAnExistingFile())
+			return mtaPath
+		}
+
+		It("returns the resources from the mta.yaml when there are no extensions", func() {
+			mtaPath := createMta()
 
 			oMtaInput := getMtaInput()
 			oMtaInput.Resources = append(oMtaInput.Resources, &oResource)
-			Ω(mtaPath).Should(BeAnExistingFile())
 
-			resources, err := GetResources(mtaPath)
+			resources, messages, err := GetResources(mtaPath, nil)
 			Ω(err).Should(Succeed())
-			Ω(reflect.DeepEqual(oMtaInput.Resources, resources)).Should(BeTrue())
+			Ω(resources).Should(Equal([]*Resource{&oResource}))
+			Ω(messages).Should(BeEmpty())
 		})
 
-		It("Get resources from a non existing mta.yaml file", func() {
+		It("returns the resources from the mta.yaml when the extensions don't exist", func() {
+			mtaPath := createMta()
+
+			mtaExtPath := getTestPath("result", "nonExisting.mtaext")
+			resources, messages, err := GetResources(mtaPath, []string{mtaExtPath})
+			Ω(err).Should(Succeed())
+			Ω(resources).Should(Equal([]*Resource{&oResource}))
+			Ω(messages).Should(ContainElement(ContainSubstring(fs.PathNotFoundMsg, mtaExtPath)))
+		})
+
+		It("returns the merged resources from the mta.yaml and extensions", func() {
+			mtaPath := createMta()
+
+			mergedResource := Resource{
+				Name: "testResource",
+				Type: "testType",
+				Properties: map[string]interface{}{
+					"newProp":  "new value",
+					"newProp2": "new value2",
+				},
+			}
+			expectedResources := []*Resource{&mergedResource}
+
+			resources, messages, err := GetResources(mtaPath, []string{
+				getTestPath("resource_valid1.mtaext"),
+				getTestPath("resource_valid2.mtaext"),
+			})
+			Ω(err).Should(Succeed())
+			Ω(resources).Should(Equal(expectedResources))
+			Ω(messages).Should(BeEmpty())
+		})
+
+		It("returns the partially merged resources from the mta.yaml and extensions until reaching an invalid extension", func() {
+			mtaPath := createMta()
+
+			mergedResource := Resource{
+				Name: "testResource",
+				Type: "testType",
+				Properties: map[string]interface{}{
+					"newProp":  "new value",
+					"newProp2": "new value2",
+				},
+			}
+			expectedResources := []*Resource{&mergedResource}
+
+			resources, messages, err := GetResources(mtaPath, []string{
+				getTestPath("resource_valid1.mtaext"),
+				getTestPath("resource_invalid2.mtaext"),
+				getTestPath("resource_valid3.mtaext"),
+			})
+			Ω(err).Should(Succeed())
+			Ω(resources).Should(Equal(expectedResources))
+			Ω(messages).Should(ContainElement(ContainSubstring(`testResourceNotExisting`)))
+		})
+
+		It("returns an error when mta.yaml does not exist", func() {
 			mtaPath := getTestPath("result", "mta.yaml")
-			resources, err := GetResources(mtaPath)
+			resources, messages, err := GetResources(mtaPath, nil)
 			Ω(err).Should(HaveOccurred())
 			Ω(resources).Should(BeNil())
+			Ω(messages).Should(BeEmpty())
 		})
 	})
 
 	var _ = Describe("GetResourceConfig", func() {
 		It("returns error when mta.yaml does not exist", func() {
 			mtaPath := getTestPath("result", "mta.yaml")
-			resourceConfig, err := GetResourceConfig(mtaPath, "myResource", "")
+			resourceConfig, messages, err := GetResourceConfig(mtaPath, nil, "myResource", "")
 			Ω(err).Should(HaveOccurred())
 			Ω(resourceConfig).Should(BeNil())
+			Ω(messages).Should(BeEmpty())
 		})
 
 		It("returns error when resource does not exist", func() {
 			mtaPath := getTestPath("mtaConfig.yaml")
-			resourceConfig, err := GetResourceConfig(mtaPath, "nonExistingResource", "")
+			resourceConfig, messages, err := GetResourceConfig(mtaPath, nil, "nonExistingResource", "")
 			Ω(err).Should(HaveOccurred())
 			Ω(resourceConfig).Should(BeNil())
+			Ω(messages).Should(BeEmpty())
 		})
 
 		It("returns error when path references a file that doesn't exist", func() {
 			mtaPath := getTestPath("mtaConfig.yaml")
-			resourceConfig, err := GetResourceConfig(mtaPath, "resourceWithPath2", "")
+			resourceConfig, messages, err := GetResourceConfig(mtaPath, nil, "resourceWithPath2", "")
 			Ω(err).Should(HaveOccurred())
 			Ω(resourceConfig).Should(BeNil())
+			Ω(messages).Should(BeEmpty())
 		})
 
 		It("returns error when path references a file that is not json", func() {
 			mtaPath := getTestPath("mtaConfig.yaml")
-			resourceConfig, err := GetResourceConfig(mtaPath, "resourceWithPath", getTestPath("otherWorkdir"))
+			resourceConfig, messages, err := GetResourceConfig(mtaPath, nil, "resourceWithPath", getTestPath("otherWorkdir"))
 			Ω(err).Should(HaveOccurred())
 			Ω(resourceConfig).Should(BeNil())
+			Ω(messages).Should(BeEmpty())
 		})
 
 		// Both xs-security.json and otherWorkdir/xs-security2.json contain this content
@@ -752,55 +892,60 @@ var _ = Describe("MtaServices", func() {
 
 		It("returns empty map when config and path aren't defined", func() {
 			mtaPath := getTestPath("mtaConfig.yaml")
-			resourceConfig, err := GetResourceConfig(mtaPath, "resourceWithNoConfigAndPath", "")
+			resourceConfig, messages, err := GetResourceConfig(mtaPath, nil, "resourceWithNoConfigAndPath", "")
 			Ω(err).Should(Succeed())
 			Ω(resourceConfig).ShouldNot(BeNil())
 			result := map[string]interface{}{}
 			Ω(resourceConfig).Should(Equal(result))
+			Ω(messages).Should(BeEmpty())
 		})
 
 		It("returns file content when config is not defined and path exists", func() {
 			mtaPath := getTestPath("mtaConfig.yaml")
-			resourceConfig, err := GetResourceConfig(mtaPath, "resourceWithPath", "")
+			resourceConfig, messages, err := GetResourceConfig(mtaPath, nil, "resourceWithPath", "")
 			Ω(err).Should(Succeed())
 			Ω(resourceConfig).ShouldNot(BeNil())
 			result := fileContent
 			Ω(resourceConfig).Should(Equal(result))
+			Ω(messages).Should(BeEmpty())
 		})
 
 		It("returns file content when config is not defined and path exists relative to workdir", func() {
 			mtaPath := getTestPath("mtaConfig.yaml")
-			resourceConfig, err := GetResourceConfig(mtaPath, "resourceWithPath2", getTestPath("otherWorkdir"))
+			resourceConfig, messages, err := GetResourceConfig(mtaPath, nil, "resourceWithPath2", getTestPath("otherWorkdir"))
 			Ω(err).Should(Succeed())
 			Ω(resourceConfig).ShouldNot(BeNil())
 			result := fileContent
 			Ω(resourceConfig).Should(Equal(result))
+			Ω(messages).Should(BeEmpty())
 		})
 
 		It("returns file content when config is not a map and path exists", func() {
 			mtaPath := getTestPath("mtaConfig.yaml")
-			resourceConfig, err := GetResourceConfig(mtaPath, "resourceWithPathAndBadConfig", "")
+			resourceConfig, messages, err := GetResourceConfig(mtaPath, nil, "resourceWithPathAndBadConfig", "")
 			Ω(err).Should(Succeed())
 			Ω(resourceConfig).ShouldNot(BeNil())
 			result := fileContent
 			Ω(resourceConfig).Should(Equal(result))
+			Ω(messages).Should(BeEmpty())
 		})
 
 		It("returns config when it is defined and path is not defined", func() {
 			mtaPath := getTestPath("mtaConfig.yaml")
-			resourceConfig, err := GetResourceConfig(mtaPath, "resourceWithConfig", "")
+			resourceConfig, messages, err := GetResourceConfig(mtaPath, nil, "resourceWithConfig", "")
 			Ω(err).Should(Succeed())
 			Ω(resourceConfig).ShouldNot(BeNil())
 			result := map[string]interface{}{
 				"xsappname": "testName",
 			}
 			Ω(resourceConfig).Should(Equal(result))
+			Ω(messages).Should(BeEmpty())
 		})
 
 		It("merges config and file when both config and path are defined", func() {
 			// Keys from config override keys from file path, and the override is shallow
 			mtaPath := getTestPath("mtaConfig.yaml")
-			resourceConfig, err := GetResourceConfig(mtaPath, "resourceWithConfigAndPath", "")
+			resourceConfig, messages, err := GetResourceConfig(mtaPath, nil, "resourceWithConfigAndPath", "")
 			Ω(err).Should(Succeed())
 			Ω(resourceConfig).ShouldNot(BeNil())
 			result := map[string]interface{}{
@@ -812,6 +957,69 @@ var _ = Describe("MtaServices", func() {
 				},
 			}
 			Ω(resourceConfig).Should(Equal(result))
+			Ω(messages).Should(BeEmpty())
+		})
+
+		It("returns config from mta.yaml only when extensions don't exist", func() {
+			mtaPath := getTestPath("mtaConfig.yaml")
+			mtaExtPath := getTestPath("nonExisting.mtaext")
+			resourceConfig, messages, err := GetResourceConfig(mtaPath, []string{mtaExtPath}, "resourceWithConfig", "")
+			Ω(err).Should(Succeed())
+			Ω(resourceConfig).ShouldNot(BeNil())
+			result := map[string]interface{}{
+				"xsappname": "testName",
+			}
+			Ω(resourceConfig).Should(Equal(result))
+			Ω(messages).Should(ContainElement(ContainSubstring(fs.PathNotFoundMsg, mtaExtPath)))
+		})
+
+		It("returns config from mta.yaml only when extensions are invalid", func() {
+			mtaPath := getTestPath("mtaConfig.yaml")
+			mtaExtPath := getTestPath("resourceConfig_invalid1.mtaext")
+			resourceConfig, messages, err := GetResourceConfig(mtaPath, []string{mtaExtPath}, "resourceWithConfig", "")
+			Ω(err).Should(Succeed())
+			Ω(resourceConfig).ShouldNot(BeNil())
+			result := map[string]interface{}{
+				"xsappname": "testName",
+			}
+			Ω(resourceConfig).Should(Equal(result))
+			Ω(messages).Should(ContainElement(ContainSubstring("resourceWithConfig_notExisting")))
+		})
+
+		It("merges config and file when file is defined in extension", func() {
+			mtaPath := getTestPath("mtaConfig.yaml")
+			mtaExtPath := getTestPath("resourceConfig_withFile.mtaext")
+			resourceConfig, messages, err := GetResourceConfig(mtaPath, []string{mtaExtPath}, "resourceWithConfig", "")
+			Ω(err).Should(Succeed())
+			Ω(resourceConfig).ShouldNot(BeNil())
+			result := map[string]interface{}{
+				"xsappname":     "testName",
+				"paramFromPath": "paramValueFromPath",
+				"deepParam": map[string]interface{}{
+					"otherValue": "deepValueFromPath",
+				},
+			}
+			Ω(resourceConfig).Should(Equal(result))
+			Ω(messages).Should(BeEmpty())
+		})
+
+		It("merges config and file when file is defined in extension and extension is partially invalid", func() {
+			mtaPath := getTestPath("mtaConfig.yaml")
+			mtaExtPath := getTestPath("resourceConfig_withFile.mtaext")
+			mtaExtPath2 := getTestPath("resourceConfig_invalid2.mtaext")
+			mtaExtPath3 := getTestPath("resourceConfig_withFile2.mtaext")
+			resourceConfig, messages, err := GetResourceConfig(mtaPath, []string{mtaExtPath, mtaExtPath2, mtaExtPath3}, "resourceWithConfig", "")
+			Ω(err).Should(Succeed())
+			Ω(resourceConfig).ShouldNot(BeNil())
+			result := map[string]interface{}{
+				"xsappname":     "testNameFromExt",
+				"paramFromPath": "paramValueFromPath",
+				"deepParam": map[string]interface{}{
+					"otherValue": "deepValueFromPath",
+				},
+			}
+			Ω(resourceConfig).Should(Equal(result))
+			Ω(messages).Should(ContainElement(ContainSubstring("resourceWithConfig_notExisting")))
 		})
 	})
 
@@ -824,48 +1032,54 @@ var _ = Describe("MtaServices", func() {
 			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
 			Ω(mtaPath).Should(BeAnExistingFile())
 
-			id, err := GetMtaID(mtaPath)
+			id, messages, err := GetMtaID(mtaPath)
 			Ω(err).Should(Succeed())
 			oMtaInput := getMtaInput()
 			Ω(id).Should(Equal(oMtaInput.ID))
+			Ω(messages).Should(BeEmpty())
 		})
 
 		It("Get MTA ID from a non existing mta.yaml file", func() {
 			mtaPath := getTestPath("result", "mta.yaml")
-			id, err := GetMtaID(mtaPath)
+			id, messages, err := GetMtaID(mtaPath)
 			Ω(err).Should(HaveOccurred())
 			Ω(id).Should(Equal(""))
+			Ω(messages).Should(BeEmpty())
 		})
 	})
 
-	var _ = Describe("isNameUnique", func() {
+	var _ = Describe("IsNameUnique", func() {
 		It("Check if name exists in mta.yaml", func() {
 			mtaPath := getTestPath("mta.yaml")
 
 			//verify module name exists
-			exists, err := IsNameUnique(mtaPath, "backend")
+			exists, messages, err := IsNameUnique(mtaPath, "backend")
 			Ω(err).Should(Succeed())
 			Ω(exists).Should(BeTrue())
+			Ω(messages).Should(BeEmpty())
 
 			//verify provides name exists
-			exists, err = IsNameUnique(mtaPath, "backend_task")
+			exists, messages, err = IsNameUnique(mtaPath, "backend_task")
 			Ω(err).Should(Succeed())
 			Ω(exists).Should(BeTrue())
+			Ω(messages).Should(BeEmpty())
 
 			//verify resource name exists
-			exists, err = IsNameUnique(mtaPath, "database")
+			exists, messages, err = IsNameUnique(mtaPath, "database")
 			Ω(err).Should(Succeed())
 			Ω(exists).Should(BeTrue())
+			Ω(messages).Should(BeEmpty())
 
 			//verify random name doesn't exist
-			exists, err = IsNameUnique(mtaPath, "blablabla")
+			exists, messages, err = IsNameUnique(mtaPath, "blablabla")
 			Ω(err).Should(Succeed())
 			Ω(exists).ShouldNot(BeTrue())
+			Ω(messages).Should(BeEmpty())
 		})
 
 		It("Check if name exists in a non existing mta.yaml file ", func() {
 			mtaPath := getTestPath("result", "mta.yaml")
-			_, err := IsNameUnique(mtaPath, oModule.Name)
+			_, _, err := IsNameUnique(mtaPath, oModule.Name)
 			Ω(err).Should(HaveOccurred())
 		})
 	})
@@ -873,8 +1087,8 @@ var _ = Describe("MtaServices", func() {
 	var _ = Describe("ModifyMta", func() {
 		It("ModifyMta fails when it cannot create the directory", func() {
 			mtaPath := getTestPath("result", "mta.yaml")
-			_, err := ModifyMta(mtaPath, func() error {
-				return nil
+			_, _, err := ModifyMta(mtaPath, func() ([]string, error) {
+				return nil, nil
 			}, 0, false, true, func(s string, mode os.FileMode) error {
 				return errors.New("cannot create directory")
 			})
@@ -883,8 +1097,8 @@ var _ = Describe("MtaServices", func() {
 
 		It("ModifyMta creates the directory for new MTA", func() {
 			mtaPath := getTestPath("result", "mta.yaml")
-			_, err := ModifyMta(mtaPath, func() error {
-				return nil
+			_, _, err := ModifyMta(mtaPath, func() ([]string, error) {
+				return nil, nil
 			}, 0, false, true, os.MkdirAll)
 			Ω(err).Should(Succeed())
 			Ω(getTestPath("result")).Should(BeAnExistingFile())
@@ -899,16 +1113,16 @@ var _ = Describe("MtaServices", func() {
 			file, err := os.OpenFile(lockFilePath, os.O_RDONLY|os.O_CREATE|os.O_EXCL, 0666)
 			Ω(err).Should(Succeed())
 			_ = file.Close()
-			_, err = ModifyMta(mtaPath, func() error {
-				return nil
+			_, _, err = ModifyMta(mtaPath, func() ([]string, error) {
+				return nil, nil
 			}, 0, false, true, os.MkdirAll)
 			Ω(err).Should(MatchError(ContainSubstring("it is locked by another process")))
 		})
 
 		It("ModifyMta returns an error that the file cannot be locked when it cannot create the lock file", func() {
 			mtaPath := getTestPath("result", "mta.yaml")
-			_, err := ModifyMta(mtaPath, func() error {
-				return nil
+			_, _, err := ModifyMta(mtaPath, func() ([]string, error) {
+				return nil, nil
 			}, 0, false, true, func(s string, mode os.FileMode) error {
 				return nil
 			})
@@ -935,7 +1149,9 @@ var _ = Describe("MtaServices", func() {
 
 			jsonBuildParametersData, err := json.Marshal(&projectBuild)
 			Ω(err).Should(Succeed())
-			Ω(UpdateBuildParameters(mtaPath, string(jsonBuildParametersData))).Should(Succeed())
+			messages, err := UpdateBuildParameters(mtaPath, string(jsonBuildParametersData))
+			Ω(err).Should(Succeed())
+			Ω(messages).Should(BeEmpty())
 
 			oMtaInput := getMtaInput()
 			oMtaInput.BuildParams = &projectBuild
@@ -965,11 +1181,15 @@ var _ = Describe("MtaServices", func() {
 
 			jsonBuildParametersData, err := json.Marshal(&projectBuild)
 			Ω(err).Should(Succeed())
-			Ω(UpdateBuildParameters(mtaPath, string(jsonBuildParametersData))).Should(Succeed())
+			messages, err := UpdateBuildParameters(mtaPath, string(jsonBuildParametersData))
+			Ω(err).Should(Succeed())
+			Ω(messages).Should(BeEmpty())
 
 			jsonUpdateBuildParametersData, err := json.Marshal(&updateProjectBuild)
 			Ω(err).Should(Succeed())
-			Ω(UpdateBuildParameters(mtaPath, string(jsonUpdateBuildParametersData))).Should(Succeed())
+			messages, err = UpdateBuildParameters(mtaPath, string(jsonUpdateBuildParametersData))
+			Ω(err).Should(Succeed())
+			Ω(messages).Should(BeEmpty())
 
 			oMtaInput := getMtaInput()
 			oMtaInput.BuildParams = &updateProjectBuild
@@ -984,7 +1204,8 @@ var _ = Describe("MtaServices", func() {
 		It("Update build parameters in a non existing mta.yaml file", func() {
 			json := "{name:fff}"
 			mtaPath := getTestPath("result", "mta.yaml")
-			Ω(UpdateBuildParameters(mtaPath, json)).Should(HaveOccurred())
+			_, err := UpdateBuildParameters(mtaPath, json)
+			Ω(err).Should(HaveOccurred())
 		})
 
 		It("Update build parameters with bad json format", func() {
@@ -994,12 +1215,13 @@ var _ = Describe("MtaServices", func() {
 			jsonRootData, err := json.Marshal(getMtaInput())
 			Ω(err).Should(Succeed())
 			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
-			Ω(UpdateBuildParameters(mtaPath, wrongJSON)).Should(HaveOccurred())
+			_, err = UpdateBuildParameters(mtaPath, wrongJSON)
+			Ω(err).Should(HaveOccurred())
 		})
 	})
 })
 
-var _ = Describe("Module", func() {
+var _ = Describe("Locking", func() {
 	oModule := Module{
 		Name: "testModule",
 		Type: "testType",
@@ -1024,16 +1246,17 @@ var _ = Describe("Module", func() {
 		jsonData, err := json.Marshal(oModule)
 		Ω(err).Should(Succeed())
 		moduleJSON := string(jsonData)
-		mtaHashCodeResult, err := ModifyMta(mtaPath, func() error {
+		mtaHashCodeResult, messages, err := ModifyMta(mtaPath, func() ([]string, error) {
 			return AddModule(mtaPath, moduleJSON, Marshal)
 		}, mtaHashCode, false, false, os.MkdirAll)
 		Ω(err).Should(Succeed())
+		Ω(messages).Should(BeEmpty())
 		Ω(mtaHashCodeResult).ShouldNot(Equal(mtaHashCode))
 		mtaHashCodeAfterModify, _, err := GetMtaHash(mtaPath)
 		Ω(err).Should(Succeed())
 		Ω(mtaHashCodeResult).Should(Equal(mtaHashCodeAfterModify))
 		// wrong yaml
-		_, err = ModifyMta(getTestPath("result", "mtaX.yaml"), func() error {
+		_, _, err = ModifyMta(getTestPath("result", "mtaX.yaml"), func() ([]string, error) {
 			return AddModule(getTestPath("result", "mtaX.yaml"), moduleJSON, Marshal)
 		}, mtaHashCode, false, false, os.MkdirAll)
 		Ω(err).Should(HaveOccurred())
@@ -1043,7 +1266,7 @@ var _ = Describe("Module", func() {
 		Ω(err).Should(Succeed())
 		moduleJSON = string(jsonData)
 		// hashcode of the mta.yaml is wrong now
-		_, err = ModifyMta(mtaPath, func() error {
+		_, _, err = ModifyMta(mtaPath, func() ([]string, error) {
 			return AddModule(mtaPath, moduleJSON, Marshal)
 		}, mtaHashCode, false, false, os.MkdirAll)
 		Ω(err).Should(HaveOccurred())
@@ -1062,16 +1285,17 @@ var _ = Describe("Module", func() {
 		jsonData, err := json.Marshal(oModule)
 		Ω(err).Should(Succeed())
 		moduleJSON := string(jsonData)
-		mtaHashCodeResult, err := ModifyMta(mtaPath, func() error {
+		mtaHashCodeResult, messages, err := ModifyMta(mtaPath, func() ([]string, error) {
 			return AddModule(mtaPath, moduleJSON, Marshal)
 		}, mtaHashCode, false, false, os.MkdirAll)
 		Ω(err).Should(Succeed())
+		Ω(messages).Should(BeEmpty())
 		Ω(mtaHashCodeResult).ShouldNot(Equal(mtaHashCode))
 		mtaHashCodeAfterModify, _, err := GetMtaHash(mtaPath)
 		Ω(err).Should(Succeed())
 		Ω(mtaHashCodeResult).Should(Equal(mtaHashCodeAfterModify))
 		// hashcode of the mta.yaml is wrong now but force is true
-		_, err = ModifyMta(mtaPath, func() error {
+		_, _, err = ModifyMta(mtaPath, func() ([]string, error) {
 			return AddModule(mtaPath, moduleJSON, Marshal)
 		}, mtaHashCode, true, false, os.MkdirAll)
 		Ω(err).Should(Succeed())
@@ -1088,9 +1312,9 @@ var _ = Describe("Module", func() {
 		wg.Add(1)
 		var err1 error
 		go func() {
-			_, err1 = ModifyMta(mtaPath, func() error {
+			_, _, err1 = ModifyMta(mtaPath, func() ([]string, error) {
 				time.Sleep(time.Second)
-				return nil
+				return nil, nil
 			}, mtaHashCode, false, false, os.MkdirAll)
 			defer wg.Done()
 		}()
@@ -1098,9 +1322,9 @@ var _ = Describe("Module", func() {
 		wg.Add(1)
 		var err2 error
 		go func() {
-			_, err2 = ModifyMta(mtaPath, func() error {
+			_, _, err2 = ModifyMta(mtaPath, func() ([]string, error) {
 				time.Sleep(time.Second)
-				return nil
+				return nil, nil
 			}, mtaHashCode, false, false, os.MkdirAll)
 			defer wg.Done()
 		}()
@@ -1120,15 +1344,33 @@ var _ = Describe("RunE helper functions", func() {
 		Ω(err).Should(Succeed())
 	})
 
-	It("RunModifyAndWriteHash performs the action and writes the hashcode to the output when there is no error", func() {
+	It("RunModifyAndWriteHash performs the action and writes the messages and hashcode to the output when there is no error", func() {
 		err := os.MkdirAll(getTestPath("result"), os.ModePerm)
 		Ω(err).Should(Succeed())
 		mtaPath := getTestPath("result", "temp.mta.yaml")
 		json, err := json.Marshal(getMtaInput())
 		Ω(err).Should(Succeed())
 		output := executeAndProvideOutput(func() {
-			err = RunModifyAndWriteHash("info message", mtaPath, false, func() error {
-				return CreateMta(mtaPath, string(json), os.MkdirAll)
+			err = RunModifyAndWriteHash("info message", mtaPath, false, func() ([]string, error) {
+				return []string{"some message"}, CreateMta(mtaPath, string(json), os.MkdirAll)
+			}, 0, true)
+			Ω(err).Should(Succeed())
+		})
+		// Check the last line of the result is a json with messages and hashcode and that the hashcode is not 0
+		Ω(output).Should(MatchRegexp(`{"messages":\["some message"\],"hashcode":[1-9][0-9]*}$`))
+		// Note: the info message is written to the logger but we don't test it because the logger is initialized
+		// with stdout before it's replaced in the test
+	})
+
+	It("RunModifyAndWriteHash performs the action and writes the hashcode to the output when there is no error and messages", func() {
+		err := os.MkdirAll(getTestPath("result"), os.ModePerm)
+		Ω(err).Should(Succeed())
+		mtaPath := getTestPath("result", "temp.mta.yaml")
+		json, err := json.Marshal(getMtaInput())
+		Ω(err).Should(Succeed())
+		output := executeAndProvideOutput(func() {
+			err = RunModifyAndWriteHash("info message", mtaPath, false, func() ([]string, error) {
+				return nil, CreateMta(mtaPath, string(json), os.MkdirAll)
 			}, 0, true)
 			Ω(err).Should(Succeed())
 		})
@@ -1143,8 +1385,8 @@ var _ = Describe("RunE helper functions", func() {
 		Ω(err).Should(Succeed())
 		mtaPath := getTestPath("result", "temp.mta.yaml")
 		output := executeAndProvideOutput(func() {
-			err := RunModifyAndWriteHash("info message", mtaPath, false, func() error {
-				return errors.New("some error")
+			err := RunModifyAndWriteHash("info message", mtaPath, false, func() ([]string, error) {
+				return []string{"some warning"}, errors.New("some error")
 			}, 0, true)
 			Ω(err).Should(MatchError("some error"))
 		})
@@ -1154,22 +1396,56 @@ var _ = Describe("RunE helper functions", func() {
 		// with stdout before it's replaced in the test
 	})
 
-	It("RunAndWriteResultAndHash performs the action and writes the hashcode and result to the output when there is no error", func() {
+	It("RunAndWriteResultAndHash performs the action and writes the hashcode, messages and result to the output when there is no error", func() {
 		err := os.MkdirAll(getTestPath("result"), os.ModePerm)
 		Ω(err).Should(Succeed())
 		mtaPath := getTestPath("result", "temp.mta.yaml")
 		output := executeAndProvideOutput(func() {
-			err = RunAndWriteResultAndHash("info message", mtaPath, func() (interface{}, error) {
+			err = RunAndWriteResultAndHash("info message", mtaPath, nil, func() (interface{}, []string, error) {
 				err1 := CopyFile(getTestPath("mta.yaml"), mtaPath, os.Create)
 				Ω(err1).Should(Succeed())
-				return 1, nil
+				return 1, []string{"some message"}, nil
 			})
 			Ω(err).Should(Succeed())
 		})
-		// Check the last line of the result is a json with hashcode and that it's is not 0
+		// Check the last line of the result is a json with messages and hashcode and that the hashcode is not 0
+		Ω(output).Should(MatchRegexp(`{"result":1,"messages":\["some message"\],"hashcode":[1-9][0-9]*}$`))
+		// Note: the info message is written to the logger but we don't test it because the logger is initialized
+		// with stdout before it's replaced in the test
+	})
+
+	It("RunAndWriteResultAndHash performs the action and writes the hashcode and result to the output when there is no error and messages", func() {
+		err := os.MkdirAll(getTestPath("result"), os.ModePerm)
+		Ω(err).Should(Succeed())
+		mtaPath := getTestPath("result", "temp.mta.yaml")
+		output := executeAndProvideOutput(func() {
+			err = RunAndWriteResultAndHash("info message", mtaPath, nil, func() (interface{}, []string, error) {
+				err1 := CopyFile(getTestPath("mta.yaml"), mtaPath, os.Create)
+				Ω(err1).Should(Succeed())
+				return 1, nil, nil
+			})
+			Ω(err).Should(Succeed())
+		})
+		// Check the last line of the result is a json with hashcode and that it's not 0
 		Ω(output).Should(MatchRegexp(`{"result":1,"hashcode":[1-9][0-9]*}$`))
 		// Note: the info message is written to the logger but we don't test it because the logger is initialized
 		// with stdout before it's replaced in the test
+	})
+
+	It("RunAndWriteResultAndHash performs the action and writes result with hashcode 0 to the output when there are extensions", func() {
+		err := os.MkdirAll(getTestPath("result"), os.ModePerm)
+		Ω(err).Should(Succeed())
+		mtaPath := getTestPath("result", "temp.mta.yaml")
+		output := executeAndProvideOutput(func() {
+			err = RunAndWriteResultAndHash("info message", mtaPath, []string{"some ext"}, func() (interface{}, []string, error) {
+				err1 := CopyFile(getTestPath("mta.yaml"), mtaPath, os.Create)
+				Ω(err1).Should(Succeed())
+				return 1, []string{"some message"}, nil
+			})
+			Ω(err).Should(Succeed())
+		})
+		// Check the last line of the result is a json with hashcode 0
+		Ω(output).Should(Equal(`{"result":1,"messages":["some message"],"hashcode":0}`))
 	})
 
 	It("RunAndWriteResultAndHash writes the error when the action fails", func() {
@@ -1177,8 +1453,8 @@ var _ = Describe("RunE helper functions", func() {
 		Ω(err).Should(Succeed())
 		mtaPath := getTestPath("result", "temp.mta.yaml")
 		output := executeAndProvideOutput(func() {
-			err := RunAndWriteResultAndHash("info message", mtaPath, func() (interface{}, error) {
-				return nil, errors.New("some error")
+			err := RunAndWriteResultAndHash("info message", mtaPath, nil, func() (interface{}, []string, error) {
+				return nil, []string{"some message"}, errors.New("some error")
 			})
 			Ω(err).Should(MatchError("some error"))
 		})

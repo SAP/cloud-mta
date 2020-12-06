@@ -1,0 +1,9 @@
+_schema-version: 1.1
+ID: test3
+extends: test2
+
+modules:
+  - name: testModule
+    properties:
+      commonProp: value3
+      newProp3: new value3

@@ -3,20 +3,21 @@ package mta
 import (
 	"crypto/sha256"
 	"fmt"
+	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 
 	ghodss "github.com/ghodss/yaml"
 	"github.com/json-iterator/go"
-	"github.com/pkg/errors"
 
 	"github.com/SAP/cloud-mta/internal/fs"
 	"github.com/SAP/cloud-mta/internal/logs"
 )
+
+const UnmarshalFailsMsg = `the "%s" file is not a valid MTA development descriptor`
 
 func createMtaYamlFile(path string, mkDirs func(string, os.FileMode) error) (rerr error) {
 	folder := filepath.Dir(path)
@@ -37,15 +38,22 @@ func createMtaYamlFile(path string, mkDirs func(string, os.FileMode) error) (rer
 	return
 }
 
-func getMtaFromFile(path string) (*MTA, error) {
-	mtaContent, err := ioutil.ReadFile(filepath.Join(path))
+func GetMtaFromFile(path string, extensions []string) (mta *MTA, messages []string, err error) {
+	mtaContent, err := fs.ReadFile(filepath.Join(path))
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed when reading the '%s' file", path)
+		return nil, nil, err
 	}
-	s := string(mtaContent)
-	s = strings.Replace(s, "\r\n", "\r", -1)
-	mtaContent = []byte(s)
-	return Unmarshal(mtaContent)
+	mta, err = Unmarshal(mtaContent)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, UnmarshalFailsMsg, path)
+	}
+
+	// If there is an error during the merge return the result so far and return the error as a message.
+	err = mergeWithExtensionFiles(mta, extensions)
+	if err != nil {
+		messages = []string{err.Error()}
+	}
+	return mta, messages, nil
 }
 
 func unmarshalData(dataJSON string, o interface{}) error {
@@ -83,63 +91,63 @@ func DeleteMta(path string) error {
 }
 
 //AddModule - adds a new module.
-func AddModule(path string, moduleDataJSON string, marshal func(*MTA) ([]byte, error)) error {
-	mta, err := getMtaFromFile(filepath.Join(path))
+func AddModule(path string, moduleDataJSON string, marshal func(*MTA) ([]byte, error)) ([]string, error) {
+	mta, messages, err := GetMtaFromFile(filepath.Join(path), nil)
 	if err != nil {
-		return err
+		return messages, err
 	}
 
 	module := Module{}
 	err = unmarshalData(moduleDataJSON, &module)
 	if err != nil {
-		return err
+		return messages, err
 	}
 
 	mta.Modules = append(mta.Modules, &module)
-	return saveMTA(path, mta, marshal)
+	return messages, saveMTA(path, mta, marshal)
 }
 
 //AddResource - adds a new resource.
-func AddResource(path string, resourceDataJSON string, marshal func(*MTA) ([]byte, error)) error {
-	mta, err := getMtaFromFile(path)
+func AddResource(path string, resourceDataJSON string, marshal func(*MTA) ([]byte, error)) ([]string, error) {
+	mta, messages, err := GetMtaFromFile(path, nil)
 	if err != nil {
-		return err
+		return messages, err
 	}
 
 	resource := Resource{}
 	err = unmarshalData(resourceDataJSON, &resource)
 	if err != nil {
-		return err
+		return messages, err
 	}
 
 	mta.Resources = append(mta.Resources, &resource)
-	return saveMTA(path, mta, marshal)
+	return messages, saveMTA(path, mta, marshal)
 }
 
 //GetModules - gets all modules.
-func GetModules(path string) ([]*Module, error) {
-	mta, err := getMtaFromFile(path)
+func GetModules(path string, extensions []string) ([]*Module, []string, error) {
+	mta, messages, err := GetMtaFromFile(path, extensions)
 	if err != nil {
-		return nil, err
+		return nil, messages, err
 	}
-	return mta.Modules, nil
+	return mta.Modules, messages, nil
 }
 
 //GetResources - gets all resources.
-func GetResources(path string) ([]*Resource, error) {
-	mta, err := getMtaFromFile(path)
+func GetResources(path string, extensions []string) ([]*Resource, []string, error) {
+	mta, messages, err := GetMtaFromFile(path, extensions)
 	if err != nil {
-		return nil, err
+		return nil, messages, err
 	}
-	return mta.Resources, nil
+	return mta.Resources, messages, nil
 }
 
 // GetResourceConfig returns the configuration for a resource (its service creation parameters).
 // If both the config and path parameters are defined, the result is merged.
-func GetResourceConfig(path string, resourceName string, workspaceDir string) (map[string]interface{}, error) {
-	mta, err := getMtaFromFile(path)
+func GetResourceConfig(path string, extensions []string, resourceName string, workspaceDir string) (map[string]interface{}, []string, error) {
+	mta, messages, err := GetMtaFromFile(path, extensions)
 	if err != nil {
-		return nil, err
+		return nil, messages, err
 	}
 	if len(workspaceDir) == 0 {
 		workspaceDir = filepath.Dir(path)
@@ -147,7 +155,7 @@ func GetResourceConfig(path string, resourceName string, workspaceDir string) (m
 
 	resource := mta.GetResourceByName(resourceName)
 	if resource == nil {
-		return nil, fmt.Errorf("the '%s' resource does not exist", resourceName)
+		return nil, messages, fmt.Errorf("the '%s' resource does not exist", resourceName)
 	}
 
 	// Get the resource config from its parameters
@@ -164,11 +172,11 @@ func GetResourceConfig(path string, resourceName string, workspaceDir string) (m
 	if filePath != nil {
 		fileConfig, err = fs.GetJSONContent(filepath.Join(workspaceDir, filePath.(string)))
 		if err != nil {
-			return nil, err
+			return nil, messages, err
 		}
 	}
 
-	return mergeMaps(config, fileConfig), nil
+	return mergeMaps(config, fileConfig), messages, nil
 }
 
 // Shallow merge the maps. If the first map is not nil the merge result is inlined in it.
@@ -202,103 +210,103 @@ func mergeMaps(first map[string]interface{}, second map[string]interface{}) map[
 
 // UpdateModule updates an existing module according to the module name. If more than one module with this
 // name exists, one of the modules is updated to the existing structure.
-func UpdateModule(path string, moduleDataJSON string, marshal func(*MTA) ([]byte, error)) error {
-	mtaObj, err := getMtaFromFile(path)
+func UpdateModule(path string, moduleDataJSON string, marshal func(*MTA) ([]byte, error)) ([]string, error) {
+	mtaObj, messages, err := GetMtaFromFile(path, nil)
 	if err != nil {
-		return err
+		return messages, err
 	}
 
 	module := Module{}
 	err = unmarshalData(moduleDataJSON, &module)
 	if err != nil {
-		return err
+		return messages, err
 	}
 
 	// Replaces the first existing module with the same name.
 	for index, existingModule := range mtaObj.Modules {
 		if existingModule.Name == module.Name {
 			mtaObj.Modules[index] = &module
-			return saveMTA(path, mtaObj, marshal)
+			return messages, saveMTA(path, mtaObj, marshal)
 		}
 	}
 
-	return fmt.Errorf("the '%s' module does not exist", module.Name)
+	return messages, fmt.Errorf("the '%s' module does not exist", module.Name)
 }
 
 // UpdateResource updates an existing resource according to the resource name. If more than one resource with this
 // name exists, one of the resources is updated in the existing structure.
-func UpdateResource(path string, resourceDataJSON string, marshal func(*MTA) ([]byte, error)) error {
-	mtaObj, err := getMtaFromFile(path)
+func UpdateResource(path string, resourceDataJSON string, marshal func(*MTA) ([]byte, error)) ([]string, error) {
+	mtaObj, messages, err := GetMtaFromFile(path, nil)
 	if err != nil {
-		return err
+		return messages, err
 	}
 
 	resource := Resource{}
 	err = unmarshalData(resourceDataJSON, &resource)
 	if err != nil {
-		return err
+		return messages, err
 	}
 
 	// Replaces the first existing resource with the same name.
 	for index, existingResource := range mtaObj.Resources {
 		if existingResource.Name == resource.Name {
 			mtaObj.Resources[index] = &resource
-			return saveMTA(path, mtaObj, marshal)
+			return messages, saveMTA(path, mtaObj, marshal)
 		}
 	}
 
-	return fmt.Errorf("the '%s' resource does not exist", resource.Name)
+	return messages, fmt.Errorf("the '%s' resource does not exist", resource.Name)
 }
 
 //GetMtaID - gets MTA ID.
-func GetMtaID(path string) (string, error) {
-	mta, err := getMtaFromFile(path)
+func GetMtaID(path string) (string, []string, error) {
+	mta, messages, err := GetMtaFromFile(path, nil)
 	if err != nil {
-		return "", err
+		return "", messages, err
 	}
-	return mta.ID, nil
+	return mta.ID, messages, nil
 }
 
 //IsNameUnique - checks if the name already exists as a `module`/`resource`/`provide` name.
-func IsNameUnique(path string, name string) (bool, error) {
-	mta, err := getMtaFromFile(path)
+func IsNameUnique(path string, name string) (bool, []string, error) {
+	mta, messages, err := GetMtaFromFile(path, nil)
 	if err != nil {
-		return true, err
+		return true, messages, err
 	}
 
 	for _, module := range mta.Modules {
 		if name == module.Name {
-			return true, nil
+			return true, messages, nil
 		}
 		for _, provide := range module.Provides {
 			if name == provide.Name {
-				return true, nil
+				return true, messages, nil
 			}
 		}
 	}
 	for _, resource := range mta.Resources {
 		if name == resource.Name {
-			return true, nil
+			return true, messages, nil
 		}
 	}
-	return false, nil
+	return false, messages, nil
 }
 
 //UpdateBuildParameters - updates the MTA build parameters.
-func UpdateBuildParameters(path string, buildParamsDataJSON string) error {
-	mta, err := getMtaFromFile(path)
+func UpdateBuildParameters(path string, buildParamsDataJSON string) ([]string, error) {
+	mta, messages, err := GetMtaFromFile(path, nil)
 	if err != nil {
-		return err
+		return messages, err
 	}
 
 	buildParams := ProjectBuild{}
 	err = unmarshalData(buildParamsDataJSON, &buildParams)
 	if err != nil {
-		return err
+		return messages, err
 	}
 
 	mta.BuildParams = &buildParams
-	return saveMTA(path, mta, Marshal)
+	return messages, saveMTA(path, mta, Marshal)
 }
 
 // CopyFile - copies a file from the source path to the target path.
@@ -352,20 +360,20 @@ func GetMtaHash(path string) (int, bool, error) {
 }
 
 // ModifyMta - locks and modifies the "mta.yaml" file.
-func ModifyMta(path string, modify func() error, hashcode int, force bool, isNew bool, mkDirs func(string, os.FileMode) error) (newHashcode int, rerr error) {
+func ModifyMta(path string, modify func() ([]string, error), hashcode int, force bool, isNew bool, mkDirs func(string, os.FileMode) error) (newHashcode int, messages []string, rerr error) {
 	// Creates the lock file.
 	// Makes sure the directory of the lock file exists (it might not exist if it is a new MTA).
 	folder := filepath.Dir(path)
 	rerr = mkDirs(folder, os.ModePerm)
 	if rerr != nil {
-		return 0, rerr
+		return 0, nil, rerr
 	}
 	lockFilePath := filepath.Join(filepath.Dir(path), "mta-lock.lock")
 	file, err := os.OpenFile(lockFilePath, os.O_RDONLY|os.O_CREATE|os.O_EXCL, 0666)
 	if os.IsExist(err) {
-		return 0, fmt.Errorf("could not modify the \"%s\" file; it is locked by another process", path)
+		return 0, nil, fmt.Errorf("could not modify the \"%s\" file; it is locked by another process", path)
 	} else if err != nil {
-		return 0, fmt.Errorf("could not lock the \"%s\" file for modification; %s", path, err)
+		return 0, nil, fmt.Errorf("could not lock the \"%s\" file for modification; %s", path, err)
 	}
 	// Unlocks and removes the lock file at the end of modification.
 	defer func() {
@@ -387,13 +395,13 @@ func ModifyMta(path string, modify func() error, hashcode int, force bool, isNew
 		err = ifFileChangeable(path, isNew, exists, currentHash == hashcode, force)
 	}
 	if err == nil {
-		err = modify()
+		messages, err = modify()
 	}
 	if err != nil {
-		return 0, err
+		return 0, messages, err
 	}
 	newHashcode, _, err = GetMtaHash(path)
-	return newHashcode, err
+	return newHashcode, messages, err
 }
 
 func ifFileChangeable(path string, isNew, exists, sameHash bool, force bool) error {
@@ -409,6 +417,7 @@ func ifFileChangeable(path string, isNew, exists, sameHash bool, force bool) err
 
 type outputResult struct {
 	Result   interface{} `json:"result,omitempty"`
+	Messages []string    `json:"messages,omitempty"`
 	Hashcode int         `json:"hashcode"`
 }
 type outputError struct {
@@ -416,11 +425,11 @@ type outputError struct {
 }
 
 // WriteResult - writes the result of an operation to the output in JSON format. If successful, the hashcode and results are written; otherwise an error is displayed.
-func WriteResult(result interface{}, hashcode int, err error) error {
-	return printResult(result, hashcode, err, fmt.Print, jsoniter.Marshal)
+func WriteResult(result interface{}, messages []string, hashcode int, err error) error {
+	return printResult(result, messages, hashcode, err, fmt.Print, jsoniter.Marshal)
 }
 
-func printResult(result interface{}, hashcode int, err error, print func(...interface{}) (n int, err error), jsonMarshal func(v interface{}) ([]byte, error)) error {
+func printResult(result interface{}, messages []string, hashcode int, err error, print func(...interface{}) (n int, err error), jsonMarshal func(v interface{}) ([]byte, error)) error {
 	if err != nil {
 		outputErr := outputError{err.Error()}
 		bytes, err1 := jsonMarshal(outputErr)
@@ -431,7 +440,7 @@ func printResult(result interface{}, hashcode int, err error, print func(...inte
 		_, err1 = print(string(bytes))
 		return err1
 	}
-	output := outputResult{result, hashcode}
+	output := outputResult{result, messages, hashcode}
 	bytes, err := jsonMarshal(output)
 	if err != nil {
 		_, _ = print(err.Error())
@@ -443,10 +452,10 @@ func printResult(result interface{}, hashcode int, err error, print func(...inte
 
 // RunModifyAndWriteHash - logs the info, executes the action while locking the MTA file in the path, and writes the
 // result and hashcode (or error, if needed) to the output.
-func RunModifyAndWriteHash(info string, path string, force bool, action func() error, hashcode int, isNew bool) error {
+func RunModifyAndWriteHash(info string, path string, force bool, action func() ([]string, error), hashcode int, isNew bool) error {
 	logs.Logger.Info(info)
-	newHashcode, err := ModifyMta(path, action, hashcode, force, isNew, os.MkdirAll)
-	writeErr := WriteResult(nil, newHashcode, err)
+	newHashcode, messages, err := ModifyMta(path, action, hashcode, force, isNew, os.MkdirAll)
+	writeErr := WriteResult(nil, messages, newHashcode, err)
 	if err != nil {
 		// If there is an error in both the “ModifyMta” function and the “WriteResult” function, only the “ModifyMta”
 		// function returns the error.
@@ -457,14 +466,14 @@ func RunModifyAndWriteHash(info string, path string, force bool, action func() e
 
 // RunAndWriteResultAndHash - logs the info, executes the action, and writes the result and hashcode of the MTA in the
 // path (or an error, if needed) to the output
-func RunAndWriteResultAndHash(info string, path string, action func() (interface{}, error)) error {
+func RunAndWriteResultAndHash(info string, path string, extensions []string, action func() (interface{}, []string, error)) error {
 	logs.Logger.Info(info)
-	result, err := action()
+	result, messages, err := action()
 	hashcode := 0
-	if err == nil {
+	if err == nil && len(extensions) == 0 {
 		hashcode, _, err = GetMtaHash(path)
 	}
-	writeErr := WriteResult(result, hashcode, err)
+	writeErr := WriteResult(result, messages, hashcode, err)
 	if err != nil {
 		// If there is an error in both the “GetMtaHash” function and the “WriteResult” function, only the “GetMtaHash”
 		// function returns the error.

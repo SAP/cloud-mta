@@ -1,0 +1,3 @@
+propFromEnv=propFromEnv
+env_var1=vvv
+VCAP_SERVICES={"aaa": [{"name": "testResource1Service","instance_name": "aaa","label": "aaa","tags": ["mta-resource-name:testResource1"],"plan": "aaa"}]}

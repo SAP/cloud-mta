@@ -19,10 +19,10 @@ var _ = Describe("Resource", func() {
 	It("Sanity", func() {
 		err := os.MkdirAll(getTestPath("result"), os.ModePerm)
 		Ω(err).Should(Succeed())
-		addResourceMtaCmdPath = getTestPath("result", "mta.yaml")
-		Ω(mta.CopyFile(getTestPath("mta.yaml"), addResourceMtaCmdPath, os.Create)).Should(Succeed())
+		addResourceCmdPath = getTestPath("result", "mta.yaml")
+		Ω(mta.CopyFile(getTestPath("mta.yaml"), addResourceCmdPath, os.Create)).Should(Succeed())
 
-		hash, exists, err := mta.GetMtaHash(addResourceMtaCmdPath)
+		hash, exists, err := mta.GetMtaHash(addResourceCmdPath)
 		addResourceCmdHashcode = hash
 		Ω(err).Should(Succeed())
 		Ω(exists).Should(BeTrue())
