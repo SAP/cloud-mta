@@ -11,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-const PathNotFoundMsg = `could not read from the "%s" path`
+const PathNotFoundMsg = `could not read from the "%s" file`
 
 // CreateFile - creates a new file.
 func CreateFile(path string) (file *os.File, err error) {
