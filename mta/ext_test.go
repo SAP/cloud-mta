@@ -2628,7 +2628,8 @@ var _ = Describe("MTA Extensions", func() {
 			Ω(err.Error()).Should(ContainSubstring(unknownExtendsMsg, ""))
 			Ω(err.Error()).Should(ContainSubstring(extendsMsg, filepath.Join(folderPath, "third.mtaext"), "mtahtml5ext2"))
 			Ω(err.Error()).Should(ContainSubstring(extendsMsg, filepath.Join(folderPath, "unknown_extends.mtaext"), "mtahtml5unknown"))
-			Ω(err.fileName).Should(Equal(filepath.Join(folderPath, "third.mtaext")))
+			// The error could be returned on any of the files
+			Ω(err.fileName).Should(Or(Equal(filepath.Join(folderPath, "third.mtaext")), Equal(filepath.Join(folderPath, "unknown_extends.mtaext"))))
 		})
 		It("fails when there is an extension with the MTA ID", func() {
 			// This covers the cyclic case too (cf-mtaext.yaml <-> mtaid.mtaext)
@@ -2653,7 +2654,8 @@ var _ = Describe("MTA Extensions", func() {
 			Ω(err.Error()).Should(ContainSubstring(unknownExtendsMsg, ""))
 			Ω(err.Error()).Should(ContainSubstring(extendsMsg, filepath.Join(folderPath, "other.mtaext"), "mtahtml5ext"))
 			Ω(err.Error()).Should(ContainSubstring(extendsMsg, filepath.Join(folderPath, "third.mtaext"), "mtahtml5ext2"))
-			Ω(err.fileName).Should(Equal(filepath.Join(folderPath, "other.mtaext")))
+			// The error could be returned on any of the files
+			Ω(err.fileName).Should(Or(Equal(filepath.Join(folderPath, "other.mtaext")), Equal(filepath.Join(folderPath, "third.mtaext"))))
 		})
 		DescribeTable("returns the extensions sorted by extends chain order", func(fileNames []string, expectedIDsOrder []string) {
 			filePaths := make([]string, len(fileNames))

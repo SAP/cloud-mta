@@ -179,14 +179,15 @@ func sortAndVerifyExtendsChain(extensionFileNames []string, mtaID string, extend
 		// Build an error that looks like this:
 		// `some MTA extension descriptors extend unknown IDs: file "myext.mtaext" extends "ext1"; file "aaa.mtaext" extends "ext2"`
 		fileParts := make([]string, 0, len(extendsMap))
-		var fileName string
+		fileName := ""
 		for extends, details := range extendsMap {
 			if fileName == "" {
 				fileName = details.fileName
 			}
 			fileParts = append(fileParts, fmt.Sprintf(extendsMsg, details.fileName, extends))
 		}
-		// Return the error on the first extension since we only support one error currently
+		// Return the error on the first encountered extension since we only support one error currently.
+		// Note that it's not necessarily the first extension in the list of extension files (since the map iteration order is undefined).
 		return nil, &extensionError{fileName, errors.Errorf(unknownExtendsMsg, strings.Join(fileParts, `; `))}
 	}
 	return sortedExtFiles, nil
