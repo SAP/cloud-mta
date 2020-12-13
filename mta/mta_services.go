@@ -49,12 +49,12 @@ func GetMtaFromFile(path string, extensions []string, returnMergeError bool) (mt
 	}
 
 	// If there is an error during the merge return the result so far and return the error as a message (or error if required).
-	err = mergeWithExtensionFiles(mta, extensions, path)
-	if err != nil {
+	extErr := mergeWithExtensionFiles(mta, extensions, path)
+	if extErr != nil {
 		if returnMergeError {
-			return mta, nil, err
+			return mta, nil, extErr
 		}
-		messages = []string{err.Error()}
+		messages = []string{extErr.Error()}
 	}
 	return mta, messages, nil
 }

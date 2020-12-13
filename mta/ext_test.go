@@ -2442,6 +2442,7 @@ var _ = Describe("MTA Extensions", func() {
 			err := mergeWithExtensionFiles(mtaObj, []string{extPath}, mtaPath)
 			Ω(err).Should(HaveOccurred())
 			Ω(err.Error()).Should(ContainSubstring(extendsMsg, extPath, "test1"))
+			Ω(err.fileName).Should(Equal(extPath))
 		})
 		It("returns merged result when there are multiple extension files in the correct extends order", func() {
 			mtaObj := getMta()
@@ -2497,9 +2498,10 @@ var _ = Describe("MTA Extensions", func() {
 				getTestPath("module_invalid2.mtaext"),
 				getTestPath("module_valid3.mtaext"),
 			}, mtaPath)
-			Ω(err).ShouldNot(Succeed())
+			Ω(err).Should(HaveOccurred())
 			Ω(err.Error()).Should(ContainSubstring(mergeExtPathErrorMsg, getTestPath("module_invalid2.mtaext")))
 			Ω(err.Error()).Should(ContainSubstring("testModuleNonExisting"))
+			Ω(err.fileName).Should(Equal(getTestPath("module_invalid2.mtaext")))
 			Ω(mtaObj).Should(Equal(&MTA{
 				ID:            `test`,
 				SchemaVersion: &expectedSchemaVersion,
@@ -2526,8 +2528,9 @@ var _ = Describe("MTA Extensions", func() {
 				getTestPath("unmarshalled.mtaext"),
 				getTestPath("module_valid3.mtaext"),
 			}, mtaPath)
-			Ω(err).ShouldNot(Succeed())
+			Ω(err).Should(HaveOccurred())
 			Ω(err.Error()).Should(ContainSubstring(extUnmarshalErrorMsg, getTestPath("unmarshalled.mtaext")))
+			Ω(err.fileName).Should(Equal(getTestPath("unmarshalled.mtaext")))
 			Ω(mtaObj).Should(Equal(&MTA{
 				ID:            `test`,
 				SchemaVersion: &expectedSchemaVersion,
@@ -2549,8 +2552,9 @@ var _ = Describe("MTA Extensions", func() {
 				getTestPath("nonExisting.mtaext"),
 				getTestPath("module_valid3.mtaext"),
 			}, mtaPath)
-			Ω(err).ShouldNot(Succeed())
+			Ω(err).Should(HaveOccurred())
 			Ω(err.Error()).Should(ContainSubstring(fs.PathNotFoundMsg, getTestPath("nonExisting.mtaext")))
+			Ω(err.fileName).Should(Equal(getTestPath("nonExisting.mtaext")))
 			Ω(mtaObj).Should(Equal(&MTA{
 				ID:            `test`,
 				SchemaVersion: &expectedSchemaVersion,
@@ -2577,6 +2581,7 @@ var _ = Describe("MTA Extensions", func() {
 			_, err := getSortedExtensions(extensions, "mtahtml5", mtaYamlPath)
 			Ω(err).Should(HaveOccurred())
 			Ω(err.Error()).Should(ContainSubstring(fs.PathNotFoundMsg, filepath.Join(folderPath, "unknownfile.mtaext")))
+			Ω(err.fileName).Should(Equal(filepath.Join(folderPath, "unknownfile.mtaext")))
 		})
 		It("fails when there are several extensions with the same ID", func() {
 			// This takes care of the cyclic extends case too when the extension's ID is not the mta.yaml ID
@@ -2594,6 +2599,7 @@ var _ = Describe("MTA Extensions", func() {
 				filepath.Join(folderPath, "third_copy_diff_extends.mtaext"),
 				"mtahtml5ext3"),
 			)
+			Ω(err.fileName).Should(Equal(filepath.Join(folderPath, "third_copy_diff_extends.mtaext")))
 		})
 		It("fails when there are several extensions that extend the same ID", func() {
 			extensions := []string{
@@ -2609,6 +2615,7 @@ var _ = Describe("MTA Extensions", func() {
 				filepath.Join(folderPath, "third_copy_diff_id.mtaext"),
 				"mtahtml5ext2"),
 			)
+			Ω(err.fileName).Should(Equal(filepath.Join(folderPath, "third_copy_diff_id.mtaext")))
 		})
 		It("fails when there are extensions that extend unknown files", func() {
 			extensions := []string{
@@ -2621,6 +2628,7 @@ var _ = Describe("MTA Extensions", func() {
 			Ω(err.Error()).Should(ContainSubstring(unknownExtendsMsg, ""))
 			Ω(err.Error()).Should(ContainSubstring(extendsMsg, filepath.Join(folderPath, "third.mtaext"), "mtahtml5ext2"))
 			Ω(err.Error()).Should(ContainSubstring(extendsMsg, filepath.Join(folderPath, "unknown_extends.mtaext"), "mtahtml5unknown"))
+			Ω(err.fileName).Should(Equal(filepath.Join(folderPath, "third.mtaext")))
 		})
 		It("fails when there is an extension with the MTA ID", func() {
 			// This covers the cyclic case too (cf-mtaext.yaml <-> mtaid.mtaext)
@@ -2633,6 +2641,7 @@ var _ = Describe("MTA Extensions", func() {
 			Ω(err.Error()).Should(ContainSubstring(extensionIDSameAsMtaIDMsg,
 				filepath.Join(folderPath, "mtaid.mtaext"), "mtahtml5", mtaYamlPath),
 			)
+			Ω(err.fileName).Should(Equal(filepath.Join(folderPath, "mtaid.mtaext")))
 		})
 		It("fails when none of the extensions extends the MTA", func() {
 			extensions := []string{
@@ -2644,6 +2653,7 @@ var _ = Describe("MTA Extensions", func() {
 			Ω(err.Error()).Should(ContainSubstring(unknownExtendsMsg, ""))
 			Ω(err.Error()).Should(ContainSubstring(extendsMsg, filepath.Join(folderPath, "other.mtaext"), "mtahtml5ext"))
 			Ω(err.Error()).Should(ContainSubstring(extendsMsg, filepath.Join(folderPath, "third.mtaext"), "mtahtml5ext2"))
+			Ω(err.fileName).Should(Equal(filepath.Join(folderPath, "other.mtaext")))
 		})
 		DescribeTable("returns the extensions sorted by extends chain order", func(fileNames []string, expectedIDsOrder []string) {
 			filePaths := make([]string, len(fileNames))
