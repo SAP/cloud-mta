@@ -17,7 +17,7 @@ import (
 	"github.com/SAP/cloud-mta/internal/logs"
 )
 
-const UnmarshalFailsMsg = `the "%s" file is not a valid MTA development descriptor`
+const UnmarshalFailsMsg = `the "%s" file is not a valid MTA descriptor`
 
 func createMtaYamlFile(path string, mkDirs func(string, os.FileMode) error) (rerr error) {
 	folder := filepath.Dir(path)
@@ -38,7 +38,7 @@ func createMtaYamlFile(path string, mkDirs func(string, os.FileMode) error) (rer
 	return
 }
 
-func GetMtaFromFile(path string, extensions []string) (mta *MTA, messages []string, err error) {
+func GetMtaFromFile(path string, extensions []string, returnMergeError bool) (mta *MTA, messages []string, err error) {
 	mtaContent, err := fs.ReadFile(filepath.Join(path))
 	if err != nil {
 		return nil, nil, err
@@ -48,9 +48,12 @@ func GetMtaFromFile(path string, extensions []string) (mta *MTA, messages []stri
 		return nil, nil, errors.Wrapf(err, UnmarshalFailsMsg, path)
 	}
 
-	// If there is an error during the merge return the result so far and return the error as a message.
-	err = mergeWithExtensionFiles(mta, extensions)
+	// If there is an error during the merge return the result so far and return the error as a message (or error if required).
+	err = mergeWithExtensionFiles(mta, extensions, path)
 	if err != nil {
+		if returnMergeError {
+			return mta, nil, err
+		}
 		messages = []string{err.Error()}
 	}
 	return mta, messages, nil
@@ -92,7 +95,7 @@ func DeleteMta(path string) error {
 
 //AddModule - adds a new module.
 func AddModule(path string, moduleDataJSON string, marshal func(*MTA) ([]byte, error)) ([]string, error) {
-	mta, messages, err := GetMtaFromFile(filepath.Join(path), nil)
+	mta, messages, err := GetMtaFromFile(filepath.Join(path), nil, false)
 	if err != nil {
 		return messages, err
 	}
@@ -109,7 +112,7 @@ func AddModule(path string, moduleDataJSON string, marshal func(*MTA) ([]byte, e
 
 //AddResource - adds a new resource.
 func AddResource(path string, resourceDataJSON string, marshal func(*MTA) ([]byte, error)) ([]string, error) {
-	mta, messages, err := GetMtaFromFile(path, nil)
+	mta, messages, err := GetMtaFromFile(path, nil, false)
 	if err != nil {
 		return messages, err
 	}
@@ -126,7 +129,7 @@ func AddResource(path string, resourceDataJSON string, marshal func(*MTA) ([]byt
 
 //GetModules - gets all modules.
 func GetModules(path string, extensions []string) ([]*Module, []string, error) {
-	mta, messages, err := GetMtaFromFile(path, extensions)
+	mta, messages, err := GetMtaFromFile(path, extensions, false)
 	if err != nil {
 		return nil, messages, err
 	}
@@ -135,7 +138,7 @@ func GetModules(path string, extensions []string) ([]*Module, []string, error) {
 
 //GetResources - gets all resources.
 func GetResources(path string, extensions []string) ([]*Resource, []string, error) {
-	mta, messages, err := GetMtaFromFile(path, extensions)
+	mta, messages, err := GetMtaFromFile(path, extensions, false)
 	if err != nil {
 		return nil, messages, err
 	}
@@ -145,7 +148,7 @@ func GetResources(path string, extensions []string) ([]*Resource, []string, erro
 // GetResourceConfig returns the configuration for a resource (its service creation parameters).
 // If both the config and path parameters are defined, the result is merged.
 func GetResourceConfig(path string, extensions []string, resourceName string, workspaceDir string) (map[string]interface{}, []string, error) {
-	mta, messages, err := GetMtaFromFile(path, extensions)
+	mta, messages, err := GetMtaFromFile(path, extensions, false)
 	if err != nil {
 		return nil, messages, err
 	}
@@ -211,7 +214,7 @@ func mergeMaps(first map[string]interface{}, second map[string]interface{}) map[
 // UpdateModule updates an existing module according to the module name. If more than one module with this
 // name exists, one of the modules is updated to the existing structure.
 func UpdateModule(path string, moduleDataJSON string, marshal func(*MTA) ([]byte, error)) ([]string, error) {
-	mtaObj, messages, err := GetMtaFromFile(path, nil)
+	mtaObj, messages, err := GetMtaFromFile(path, nil, false)
 	if err != nil {
 		return messages, err
 	}
@@ -236,7 +239,7 @@ func UpdateModule(path string, moduleDataJSON string, marshal func(*MTA) ([]byte
 // UpdateResource updates an existing resource according to the resource name. If more than one resource with this
 // name exists, one of the resources is updated in the existing structure.
 func UpdateResource(path string, resourceDataJSON string, marshal func(*MTA) ([]byte, error)) ([]string, error) {
-	mtaObj, messages, err := GetMtaFromFile(path, nil)
+	mtaObj, messages, err := GetMtaFromFile(path, nil, false)
 	if err != nil {
 		return messages, err
 	}
@@ -260,7 +263,7 @@ func UpdateResource(path string, resourceDataJSON string, marshal func(*MTA) ([]
 
 //GetMtaID - gets MTA ID.
 func GetMtaID(path string) (string, []string, error) {
-	mta, messages, err := GetMtaFromFile(path, nil)
+	mta, messages, err := GetMtaFromFile(path, nil, false)
 	if err != nil {
 		return "", messages, err
 	}
@@ -269,7 +272,7 @@ func GetMtaID(path string) (string, []string, error) {
 
 //IsNameUnique - checks if the name already exists as a `module`/`resource`/`provide` name.
 func IsNameUnique(path string, name string) (bool, []string, error) {
-	mta, messages, err := GetMtaFromFile(path, nil)
+	mta, messages, err := GetMtaFromFile(path, nil, false)
 	if err != nil {
 		return true, messages, err
 	}
@@ -294,7 +297,7 @@ func IsNameUnique(path string, name string) (bool, []string, error) {
 
 //UpdateBuildParameters - updates the MTA build parameters.
 func UpdateBuildParameters(path string, buildParamsDataJSON string) ([]string, error) {
-	mta, messages, err := GetMtaFromFile(path, nil)
+	mta, messages, err := GetMtaFromFile(path, nil, false)
 	if err != nil {
 		return messages, err
 	}

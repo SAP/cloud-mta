@@ -1,6 +1,6 @@
 _schema-version: '2.0'
 ID: HANATestExt_WithFile2
-extends: HANATest
+extends: HANATestExt1
 
 resources:
   - name: resourceWithConfig

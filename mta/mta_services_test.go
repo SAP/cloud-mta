@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"reflect"
 	"sync"
 	"time"
@@ -48,6 +49,283 @@ var _ = Describe("MtaServices", func() {
 		Ω(err).Should(Succeed())
 		err2 := os.RemoveAll(getTestPath("result2"))
 		Ω(err2).Should(Succeed())
+	})
+
+	Describe("GetMtaFromFile", func() {
+		wd, _ := os.Getwd()
+
+		It("returns MTA for valid filename without extensions", func() {
+			mta, messages, err := GetMtaFromFile(filepath.Join(wd, "testdata", "mtaValid.yaml"), nil, true)
+			Ω(err).Should(Succeed())
+			Ω(messages).Should(BeEmpty())
+			Ω(mta).ShouldNot(BeNil())
+			schemaVersion := "2.1"
+			Ω(*mta).Should(Equal(MTA{
+				ID:            "demo",
+				SchemaVersion: &schemaVersion,
+				Version:       "0.0.1",
+				Modules: []*Module{
+					{
+						Name: "srv",
+						Type: "java",
+						Path: "srv",
+						Properties: map[string]interface{}{
+							"APPC_LOG_LEVEL":              "info",
+							"VSCODE_JAVA_DEBUG_LOG_LEVEL": "ALL",
+						},
+						Parameters: map[string]interface{}{
+							"memory": "512M",
+						},
+						Provides: []Provides{
+							{
+								Name: "srv_api",
+								Properties: map[string]interface{}{
+									"url": "${default-url}",
+								},
+							},
+						},
+						Requires: []Requires{
+							{
+								Name: "db",
+								Properties: map[string]interface{}{
+									"JBP_CONFIG_RESOURCE_CONFIGURATION": "[tomcat/webapps/ROOT/META-INF/context.xml: {\"service_name_for_DefaultDB\" : \"~{hdi-container-name}\"}]",
+								},
+							},
+						},
+					},
+					{
+						Name: "ui",
+						Type: "html5",
+						Path: "ui",
+						Parameters: map[string]interface{}{
+							"disk-quota": "256M",
+							"memory":     "256M",
+						},
+						BuildParams: map[string]interface{}{
+							"builder": "grunt",
+						},
+						Requires: []Requires{
+							{
+								Name:  "srv_api",
+								Group: "destinations",
+								Properties: map[string]interface{}{
+									"forwardAuthToken": true,
+									"strictSSL":        false,
+									"name":             "srv_api",
+									"url":              "~{url}",
+								},
+							},
+						},
+					},
+				},
+				Resources: []*Resource{
+					{
+						Name: "hdi_db",
+						Type: "com.company.xs.hdi-container",
+						Properties: map[string]interface{}{
+							"hdi-container-name": "${service-name}",
+						},
+					},
+				},
+			}))
+		})
+		It("returns error for invalid filename", func() {
+			_, messages, err := GetMtaFromFile(filepath.Join(wd, "testdata", "mtaNonExisting.yaml"), nil, true)
+			Ω(err).Should(HaveOccurred())
+			Ω(messages).Should(BeEmpty())
+		})
+		It("returns error for invalid mta yaml file", func() {
+			_, messages, err := GetMtaFromFile(filepath.Join(wd, "testdata", "mtaInvalid.yaml"), nil, true)
+			Ω(err).Should(HaveOccurred())
+			Ω(messages).Should(BeEmpty())
+		})
+		It("returns MTA with merged extensions for valid mta.yaml and extensions", func() {
+			mtaPath := filepath.Join(wd, "testdata", "testext", "mta.yaml")
+			extPath := filepath.Join(wd, "testdata", "testext", "cf-mtaext.yaml")
+			mta, messages, err := GetMtaFromFile(mtaPath, []string{extPath}, true)
+			Ω(err).Should(Succeed())
+			Ω(messages).Should(BeEmpty())
+			Ω(mta).ShouldNot(BeNil())
+			schemaVersion := "2.1"
+			activeFalse := false
+			expected := MTA{
+				ID:            "mtahtml5",
+				SchemaVersion: &schemaVersion,
+				Version:       "0.0.1",
+				Modules: []*Module{
+					{
+						Name: "ui5app",
+						Type: "html5",
+						Path: "ui5app",
+						Parameters: map[string]interface{}{
+							"disk-quota": "256M",
+							"memory":     "256M",
+						},
+						Properties: map[string]interface{}{
+							"my_prop": 1,
+						},
+						Requires: []Requires{
+							{
+								Name: "uaa_mtahtml5",
+							},
+						},
+						BuildParams: map[string]interface{}{
+							"builder": "zip",
+							"ignore":  []interface{}{"ui5app/"},
+						},
+					},
+					{
+						Name: "ui5app2",
+						Type: "html5",
+						Parameters: map[string]interface{}{
+							"disk-quota": "256M",
+							"memory":     "512M",
+						},
+						Requires: []Requires{
+							{
+								Name: "uaa_mtahtml5",
+							},
+						},
+					},
+				},
+				Resources: []*Resource{
+					{
+						Name: "uaa_mtahtml5",
+						Type: "com.company.xs.uaa",
+						Parameters: map[string]interface{}{
+							"path":         "./xs-security.json",
+							"service-plan": "application",
+						},
+						Active: &activeFalse,
+					},
+				},
+			}
+			Ω(*mta).Should(Equal(expected))
+		})
+		It("returns extensions errors in messages when extensions are invalid and returnMergeError is false", func() {
+			mtaPath := filepath.Join(wd, "testdata", "testext", "mta.yaml")
+			extPath := filepath.Join(wd, "testdata", "testext", "unknown_extends.mtaext")
+			mta, messages, err := GetMtaFromFile(mtaPath, []string{extPath}, false)
+			Ω(err).Should(Succeed())
+			Ω(messages).Should(ConsistOf(ContainSubstring(unknownExtendsMsg, "")))
+			Ω(mta).ShouldNot(BeNil())
+			schemaVersion := "2.1"
+			expected := MTA{
+				ID:            "mtahtml5",
+				SchemaVersion: &schemaVersion,
+				Version:       "0.0.1",
+				Modules: []*Module{
+					{
+						Name: "ui5app",
+						Type: "html5",
+						Path: "ui5app",
+						Parameters: map[string]interface{}{
+							"disk-quota": "256M",
+							"memory":     "256M",
+						},
+						Requires: []Requires{
+							{
+								Name: "uaa_mtahtml5",
+							},
+						},
+						BuildParams: map[string]interface{}{
+							"builder": "zip",
+							"ignore":  []interface{}{"ui5app/"},
+						},
+					},
+					{
+						Name: "ui5app2",
+						Type: "html5",
+						Parameters: map[string]interface{}{
+							"disk-quota": "256M",
+							"memory":     "256M",
+						},
+						Requires: []Requires{
+							{
+								Name: "uaa_mtahtml5",
+							},
+						},
+					},
+				},
+				Resources: []*Resource{
+					{
+						Name: "uaa_mtahtml5",
+						Type: "com.company.xs.uaa",
+						Parameters: map[string]interface{}{
+							"path":         "./xs-security.json",
+							"service-plan": "application",
+						},
+					},
+				},
+			}
+			Ω(*mta).Should(Equal(expected))
+		})
+		It("returns extensions errors as error when extensions are invalid and returnMergeError is true", func() {
+			mtaPath := filepath.Join(wd, "testdata", "testext", "mta.yaml")
+			extPath := filepath.Join(wd, "testdata", "testext", "unknown_extends.mtaext")
+			mta, messages, err := GetMtaFromFile(mtaPath, []string{extPath}, true)
+			Ω(err).Should(HaveOccurred())
+			Ω(err.Error()).Should(ContainSubstring(unknownExtendsMsg, ""))
+			Ω(messages).Should(BeEmpty())
+			Ω(mta).ShouldNot(BeNil())
+			schemaVersion := "2.1"
+			expected := MTA{
+				ID:            "mtahtml5",
+				SchemaVersion: &schemaVersion,
+				Version:       "0.0.1",
+				Modules: []*Module{
+					{
+						Name: "ui5app",
+						Type: "html5",
+						Path: "ui5app",
+						Parameters: map[string]interface{}{
+							"disk-quota": "256M",
+							"memory":     "256M",
+						},
+						Requires: []Requires{
+							{
+								Name: "uaa_mtahtml5",
+							},
+						},
+						BuildParams: map[string]interface{}{
+							"builder": "zip",
+							"ignore":  []interface{}{"ui5app/"},
+						},
+					},
+					{
+						Name: "ui5app2",
+						Type: "html5",
+						Parameters: map[string]interface{}{
+							"disk-quota": "256M",
+							"memory":     "256M",
+						},
+						Requires: []Requires{
+							{
+								Name: "uaa_mtahtml5",
+							},
+						},
+					},
+				},
+				Resources: []*Resource{
+					{
+						Name: "uaa_mtahtml5",
+						Type: "com.company.xs.uaa",
+						Parameters: map[string]interface{}{
+							"path":         "./xs-security.json",
+							"service-plan": "application",
+						},
+					},
+				},
+			}
+			Ω(*mta).Should(Equal(expected))
+		})
+		It("returns error on extension when an extension version mismatches the MTA version", func() {
+			mtaPath := filepath.Join(wd, "testdata", "testext", "mta.yaml")
+			extPath := filepath.Join(wd, "testdata", "testext", "bad_version.mtaext")
+			_, _, err := GetMtaFromFile(mtaPath, []string{extPath}, true)
+			Ω(err).Should(HaveOccurred())
+			Ω(err.Error()).Should(ContainSubstring(versionMismatchMsg, "3.1", extPath, "2.1"))
+		})
 	})
 
 	var _ = Describe("CreateMta", func() {

@@ -36,7 +36,7 @@ func Resolve(workspaceDir, moduleName, path string, extensions []string, envFile
 	if len(moduleName) == 0 {
 		return result, nil, errors.New(emptyModuleNameMsg)
 	}
-	mtaRaw, messages, err := mta.GetMtaFromFile(path, extensions)
+	mtaRaw, messages, err := mta.GetMtaFromFile(path, extensions, false)
 	if err != nil {
 		return result, messages, err
 	}
