@@ -53,16 +53,16 @@ var _ = Describe("MtaServices", func() {
 
 	Describe("GetMtaFromFile", func() {
 		wd, _ := os.Getwd()
+		mtaYamlSchemaVersion := "2.1"
 
 		It("returns MTA for valid filename without extensions", func() {
 			mta, messages, err := GetMtaFromFile(filepath.Join(wd, "testdata", "mtaValid.yaml"), nil, true)
 			Ω(err).Should(Succeed())
 			Ω(messages).Should(BeEmpty())
 			Ω(mta).ShouldNot(BeNil())
-			schemaVersion := "2.1"
 			Ω(*mta).Should(Equal(MTA{
 				ID:            "demo",
-				SchemaVersion: &schemaVersion,
+				SchemaVersion: &mtaYamlSchemaVersion,
 				Version:       "0.0.1",
 				Modules: []*Module{
 					{
@@ -146,11 +146,10 @@ var _ = Describe("MtaServices", func() {
 			Ω(err).Should(Succeed())
 			Ω(messages).Should(BeEmpty())
 			Ω(mta).ShouldNot(BeNil())
-			schemaVersion := "2.1"
 			activeFalse := false
 			expected := MTA{
 				ID:            "mtahtml5",
-				SchemaVersion: &schemaVersion,
+				SchemaVersion: &mtaYamlSchemaVersion,
 				Version:       "0.0.1",
 				Modules: []*Module{
 					{
@@ -209,10 +208,9 @@ var _ = Describe("MtaServices", func() {
 			Ω(err).Should(Succeed())
 			Ω(messages).Should(ConsistOf(ContainSubstring(unknownExtendsMsg, "")))
 			Ω(mta).ShouldNot(BeNil())
-			schemaVersion := "2.1"
 			expected := MTA{
 				ID:            "mtahtml5",
-				SchemaVersion: &schemaVersion,
+				SchemaVersion: &mtaYamlSchemaVersion,
 				Version:       "0.0.1",
 				Modules: []*Module{
 					{
@@ -268,10 +266,9 @@ var _ = Describe("MtaServices", func() {
 			Ω(err.Error()).Should(ContainSubstring(unknownExtendsMsg, ""))
 			Ω(messages).Should(BeEmpty())
 			Ω(mta).ShouldNot(BeNil())
-			schemaVersion := "2.1"
 			expected := MTA{
 				ID:            "mtahtml5",
-				SchemaVersion: &schemaVersion,
+				SchemaVersion: &mtaYamlSchemaVersion,
 				Version:       "0.0.1",
 				Modules: []*Module{
 					{
@@ -324,7 +321,7 @@ var _ = Describe("MtaServices", func() {
 			extPath := filepath.Join(wd, "testdata", "testext", "bad_version.mtaext")
 			_, _, err := GetMtaFromFile(mtaPath, []string{extPath}, true)
 			Ω(err).Should(HaveOccurred())
-			Ω(err.Error()).Should(ContainSubstring(versionMismatchMsg, "3.1", extPath, "2.1"))
+			Ω(err.Error()).Should(ContainSubstring(versionMismatchMsg, "3.1", extPath, mtaYamlSchemaVersion))
 		})
 	})
 
