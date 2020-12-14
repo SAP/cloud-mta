@@ -2364,7 +2364,7 @@ var _ = Describe("MTA Extensions", func() {
 			Ω(err.Error()).Should(ContainSubstring(overwriteScalarWithStructuredErrorMsg, "name"))
 		})
 
-		It("returns error message with extension path when sent", func() {
+		It("returns error message with extension path when merge fails", func() {
 			mtaObj := MTA{
 				Parameters: map[string]interface{}{
 					"p1p1": "value",
@@ -2384,34 +2384,13 @@ var _ = Describe("MTA Extensions", func() {
 			Ω(err).Should(HaveOccurred())
 			Ω(err.Error()).Should(ContainSubstring(mergeExtPathErrorMsg, "my.mtaext"))
 		})
-
-		It("returns error message with extension ID when path is empty", func() {
-			mtaObj := MTA{
-				Parameters: map[string]interface{}{
-					"p1p1": "value",
-				},
-			}
-			err := Merge(&mtaObj, &EXT{
-				ID: "my_extension_id",
-				Parameters: map[string]interface{}{
-					"p1p1": map[string]interface{}{
-						"p1p2c1": "added",
-					},
-					"p1p2": map[string]interface{}{
-						"p1p2c1": "changed",
-					},
-				},
-			}, "")
-
-			Ω(err).Should(HaveOccurred())
-			Ω(err.Error()).Should(ContainSubstring(mergeExtIDErrorMsg, "my_extension_id"))
-		})
 	})
 
 	var _ = Describe("mergeWithExtensionFiles", func() {
 		expectedSchemaVersion := `1.1`
+		mtaPath := getTestPath("mta_module.yaml")
 		var getMta = func() *MTA {
-			mtaContent, err := fs.ReadFile(getTestPath("mta_module.yaml"))
+			mtaContent, err := fs.ReadFile(mtaPath)
 			Ω(err).Should(Succeed())
 			mtaObj, err := Unmarshal(mtaContent)
 			Ω(err).Should(Succeed())
@@ -2419,7 +2398,7 @@ var _ = Describe("MTA Extensions", func() {
 		}
 		It("returns mta.yaml content when there are no extension files", func() {
 			mtaObj := getMta()
-			err := mergeWithExtensionFiles(mtaObj, nil)
+			err := mergeWithExtensionFiles(mtaObj, nil, mtaPath)
 			Ω(err).Should(Succeed())
 			Ω(mtaObj).Should(Equal(&MTA{
 				ID:            `test`,
@@ -2437,7 +2416,7 @@ var _ = Describe("MTA Extensions", func() {
 		})
 		It("returns the merged result when there is one extension file with correct extends", func() {
 			mtaObj := getMta()
-			err := mergeWithExtensionFiles(mtaObj, []string{getTestPath("module_valid1.mtaext")})
+			err := mergeWithExtensionFiles(mtaObj, []string{getTestPath("module_valid1.mtaext")}, mtaPath)
 			Ω(err).Should(Succeed())
 			Ω(mtaObj).Should(Equal(&MTA{
 				ID:            `test`,
@@ -2457,31 +2436,17 @@ var _ = Describe("MTA Extensions", func() {
 				},
 			}))
 		})
-		It("returns the merged result when there is one extension file with incorrect extends", func() {
+		It("returns error when there is one extension file with incorrect extends", func() {
 			mtaObj := getMta()
-			err := mergeWithExtensionFiles(mtaObj, []string{getTestPath("module_valid2.mtaext")})
-			Ω(err).Should(Succeed())
-			Ω(mtaObj).Should(Equal(&MTA{
-				ID:            `test`,
-				SchemaVersion: &expectedSchemaVersion,
-				Version:       `1.2`,
-				Description:   `test mta creation`,
-				Modules: []*Module{
-					{
-						Name: `testModule`,
-						Type: `testType`,
-						Path: `test`,
-						Properties: map[string]interface{}{
-							`commonProp`: `value2`,
-							`newProp2`:   `new value2`,
-						},
-					},
-				},
-			}))
+			extPath := getTestPath("module_valid2.mtaext")
+			err := mergeWithExtensionFiles(mtaObj, []string{extPath}, mtaPath)
+			Ω(err).Should(HaveOccurred())
+			Ω(err.Error()).Should(ContainSubstring(extendsMsg, extPath, "test1"))
+			Ω(err.fileName).Should(Equal(extPath))
 		})
 		It("returns merged result when there are multiple extension files in the correct extends order", func() {
 			mtaObj := getMta()
-			err := mergeWithExtensionFiles(mtaObj, []string{getTestPath("module_valid1.mtaext"), getTestPath("module_valid2.mtaext")})
+			err := mergeWithExtensionFiles(mtaObj, []string{getTestPath("module_valid1.mtaext"), getTestPath("module_valid2.mtaext")}, mtaPath)
 			Ω(err).Should(Succeed())
 			Ω(mtaObj).Should(Equal(&MTA{
 				ID:            `test`,
@@ -2502,9 +2467,9 @@ var _ = Describe("MTA Extensions", func() {
 				},
 			}))
 		})
-		It("returns merged result when there are multiple extension files in an incorrect extends order", func() {
+		It("returns merged result by correct extends order when there are multiple extension files in an incorrect extends order", func() {
 			mtaObj := getMta()
-			err := mergeWithExtensionFiles(mtaObj, []string{getTestPath("module_valid2.mtaext"), getTestPath("module_valid1.mtaext")})
+			err := mergeWithExtensionFiles(mtaObj, []string{getTestPath("module_valid2.mtaext"), getTestPath("module_valid1.mtaext")}, mtaPath)
 			Ω(err).Should(Succeed())
 			Ω(mtaObj).Should(Equal(&MTA{
 				ID:            `test`,
@@ -2517,8 +2482,8 @@ var _ = Describe("MTA Extensions", func() {
 						Type: `testType`,
 						Path: `test`,
 						Properties: map[string]interface{}{
-							// The extensions are merged in the sent order so module_valid1.mtaext is last
-							`commonProp`: `value1`,
+							// The extensions are merged in the extends order so module_valid2.mtaext is last
+							`commonProp`: `value2`,
 							`newProp`:    `new value`,
 							`newProp2`:   `new value2`,
 						},
@@ -2532,10 +2497,11 @@ var _ = Describe("MTA Extensions", func() {
 				getTestPath("module_valid1.mtaext"),
 				getTestPath("module_invalid2.mtaext"),
 				getTestPath("module_valid3.mtaext"),
-			})
-			Ω(err).ShouldNot(Succeed())
+			}, mtaPath)
+			Ω(err).Should(HaveOccurred())
 			Ω(err.Error()).Should(ContainSubstring(mergeExtPathErrorMsg, getTestPath("module_invalid2.mtaext")))
 			Ω(err.Error()).Should(ContainSubstring("testModuleNonExisting"))
+			Ω(err.fileName).Should(Equal(getTestPath("module_invalid2.mtaext")))
 			Ω(mtaObj).Should(Equal(&MTA{
 				ID:            `test`,
 				SchemaVersion: &expectedSchemaVersion,
@@ -2555,15 +2521,16 @@ var _ = Describe("MTA Extensions", func() {
 				},
 			}))
 		})
-		It("returns partially merged result when there are multiple extension files and one cannot be marshalled", func() {
+		It("returns MTA without extensions when there are multiple extension files and one cannot be marshalled", func() {
 			mtaObj := getMta()
 			err := mergeWithExtensionFiles(mtaObj, []string{
 				getTestPath("module_valid1.mtaext"),
 				getTestPath("unmarshalled.mtaext"),
 				getTestPath("module_valid3.mtaext"),
-			})
-			Ω(err).ShouldNot(Succeed())
-			Ω(err.Error()).Should(ContainSubstring(mergeExtUnmarshalErrorMsg, getTestPath("unmarshalled.mtaext")))
+			}, mtaPath)
+			Ω(err).Should(HaveOccurred())
+			Ω(err.Error()).Should(ContainSubstring(extUnmarshalErrorMsg, getTestPath("unmarshalled.mtaext")))
+			Ω(err.fileName).Should(Equal(getTestPath("unmarshalled.mtaext")))
 			Ω(mtaObj).Should(Equal(&MTA{
 				ID:            `test`,
 				SchemaVersion: &expectedSchemaVersion,
@@ -2574,23 +2541,20 @@ var _ = Describe("MTA Extensions", func() {
 						Name: `testModule`,
 						Type: `testType`,
 						Path: `test`,
-						Properties: map[string]interface{}{
-							`commonProp`: `value1`,
-							`newProp`:    `new value`,
-						},
 					},
 				},
 			}))
 		})
-		It("returns partially merged result when there are multiple extension files and one does not exist", func() {
+		It("returns MTA without extensions when there are multiple extension files and one does not exist", func() {
 			mtaObj := getMta()
 			err := mergeWithExtensionFiles(mtaObj, []string{
 				getTestPath("module_valid1.mtaext"),
 				getTestPath("nonExisting.mtaext"),
 				getTestPath("module_valid3.mtaext"),
-			})
-			Ω(err).ShouldNot(Succeed())
+			}, mtaPath)
+			Ω(err).Should(HaveOccurred())
 			Ω(err.Error()).Should(ContainSubstring(fs.PathNotFoundMsg, getTestPath("nonExisting.mtaext")))
+			Ω(err.fileName).Should(Equal(getTestPath("nonExisting.mtaext")))
 			Ω(mtaObj).Should(Equal(&MTA{
 				ID:            `test`,
 				SchemaVersion: &expectedSchemaVersion,
@@ -2601,15 +2565,145 @@ var _ = Describe("MTA Extensions", func() {
 						Name: `testModule`,
 						Type: `testType`,
 						Path: `test`,
-						Properties: map[string]interface{}{
-							`commonProp`: `value1`,
-							`newProp`:    `new value`,
-						},
 					},
 				},
 			}))
 		})
 	})
+
+	var _ = Describe("getSortedExtensions", func() {
+		wd, _ := os.Getwd()
+		folderPath := filepath.Join(wd, "testdata", "testext")
+		mtaYamlPath := filepath.Join(folderPath, "mta.yaml")
+
+		It("fails when one of the files cannot be read", func() {
+			extensions := []string{filepath.Join(folderPath, "cf-mtaext.yaml"), filepath.Join(folderPath, "unknownfile.mtaext")}
+			_, err := getSortedExtensions(extensions, "mtahtml5", mtaYamlPath)
+			Ω(err).Should(HaveOccurred())
+			Ω(err.Error()).Should(ContainSubstring(fs.PathNotFoundMsg, filepath.Join(folderPath, "unknownfile.mtaext")))
+			Ω(err.fileName).Should(Equal(filepath.Join(folderPath, "unknownfile.mtaext")))
+		})
+		It("fails when there are several extensions with the same ID", func() {
+			// This takes care of the cyclic extends case too when the extension's ID is not the mta.yaml ID
+			// (because then there will be 2 extensions with the same ID)
+			extensions := []string{
+				filepath.Join(folderPath, "cf-mtaext.yaml"),
+				filepath.Join(folderPath, "other.mtaext"),
+				filepath.Join(folderPath, "third.mtaext"),
+				filepath.Join(folderPath, "third_copy_diff_extends.mtaext"),
+			}
+			_, err := getSortedExtensions(extensions, "mtahtml5", mtaYamlPath)
+			Ω(err).Should(HaveOccurred())
+			Ω(err.Error()).Should(ContainSubstring(duplicateExtensionIDMsg,
+				filepath.Join(folderPath, "third.mtaext"),
+				filepath.Join(folderPath, "third_copy_diff_extends.mtaext"),
+				"mtahtml5ext3"),
+			)
+			Ω(err.fileName).Should(Equal(filepath.Join(folderPath, "third_copy_diff_extends.mtaext")))
+		})
+		It("fails when there are several extensions that extend the same ID", func() {
+			extensions := []string{
+				filepath.Join(folderPath, "cf-mtaext.yaml"),
+				filepath.Join(folderPath, "other.mtaext"),
+				filepath.Join(folderPath, "third.mtaext"),
+				filepath.Join(folderPath, "third_copy_diff_id.mtaext"),
+			}
+			_, err := getSortedExtensions(extensions, "mtahtml5", mtaYamlPath)
+			Ω(err).Should(HaveOccurred())
+			Ω(err.Error()).Should(ContainSubstring(duplicateExtendsMsg,
+				filepath.Join(folderPath, "third.mtaext"),
+				filepath.Join(folderPath, "third_copy_diff_id.mtaext"),
+				"mtahtml5ext2"),
+			)
+			Ω(err.fileName).Should(Equal(filepath.Join(folderPath, "third_copy_diff_id.mtaext")))
+		})
+		It("fails when there are extensions that extend unknown files", func() {
+			extensions := []string{
+				filepath.Join(folderPath, "cf-mtaext.yaml"),
+				filepath.Join(folderPath, "third.mtaext"),
+				filepath.Join(folderPath, "unknown_extends.mtaext"),
+			}
+			_, err := getSortedExtensions(extensions, "mtahtml5", mtaYamlPath)
+			Ω(err).Should(HaveOccurred())
+			Ω(err.Error()).Should(ContainSubstring(unknownExtendsMsg, ""))
+			Ω(err.Error()).Should(ContainSubstring(extendsMsg, filepath.Join(folderPath, "third.mtaext"), "mtahtml5ext2"))
+			Ω(err.Error()).Should(ContainSubstring(extendsMsg, filepath.Join(folderPath, "unknown_extends.mtaext"), "mtahtml5unknown"))
+			// The error could be returned on any of the files
+			Ω(err.fileName).Should(Or(Equal(filepath.Join(folderPath, "third.mtaext")), Equal(filepath.Join(folderPath, "unknown_extends.mtaext"))))
+		})
+		It("fails when there is an extension with the MTA ID", func() {
+			// This covers the cyclic case too (cf-mtaext.yaml <-> mtaid.mtaext)
+			extensions := []string{
+				filepath.Join(folderPath, "cf-mtaext.yaml"),
+				filepath.Join(folderPath, "mtaid.mtaext"),
+			}
+			_, err := getSortedExtensions(extensions, "mtahtml5", mtaYamlPath)
+			Ω(err).Should(HaveOccurred())
+			Ω(err.Error()).Should(ContainSubstring(extensionIDSameAsMtaIDMsg,
+				filepath.Join(folderPath, "mtaid.mtaext"), "mtahtml5", mtaYamlPath),
+			)
+			Ω(err.fileName).Should(Equal(filepath.Join(folderPath, "mtaid.mtaext")))
+		})
+		It("fails when none of the extensions extends the MTA", func() {
+			extensions := []string{
+				filepath.Join(folderPath, "other.mtaext"),
+				filepath.Join(folderPath, "third.mtaext"),
+			}
+			_, err := getSortedExtensions(extensions, "mtahtml5", mtaYamlPath)
+			Ω(err).Should(HaveOccurred())
+			Ω(err.Error()).Should(ContainSubstring(unknownExtendsMsg, ""))
+			Ω(err.Error()).Should(ContainSubstring(extendsMsg, filepath.Join(folderPath, "other.mtaext"), "mtahtml5ext"))
+			Ω(err.Error()).Should(ContainSubstring(extendsMsg, filepath.Join(folderPath, "third.mtaext"), "mtahtml5ext2"))
+			// The error could be returned on any of the files
+			Ω(err.fileName).Should(Or(Equal(filepath.Join(folderPath, "other.mtaext")), Equal(filepath.Join(folderPath, "third.mtaext"))))
+		})
+		DescribeTable("returns the extensions sorted by extends chain order", func(fileNames []string, expectedIDsOrder []string) {
+			filePaths := make([]string, len(fileNames))
+			for i, fileName := range fileNames {
+				filePaths[i] = filepath.Join(folderPath, fileName)
+			}
+			extensions, err := getSortedExtensions(filePaths, "mtahtml5", mtaYamlPath)
+			Ω(err).Should(Succeed())
+			extIDs := make([]string, 0)
+			for _, ext := range extensions {
+				extIDs = append(extIDs, ext.ext.ID)
+			}
+			Ω(extIDs).Should(Equal(expectedIDsOrder))
+		},
+			Entry("nil table", nil, []string{}),
+			Entry("empty table", []string{}, []string{}),
+			Entry("there is only one entry", []string{"cf-mtaext.yaml"}, []string{"mtahtml5ext"}),
+			Entry("extensions are in order of chain", []string{"cf-mtaext.yaml", "other.mtaext", "third.mtaext"}, []string{"mtahtml5ext", "mtahtml5ext2", "mtahtml5ext3"}),
+			Entry("extensions are not in the order of the chain", []string{"third.mtaext", "cf-mtaext.yaml", "other.mtaext"}, []string{"mtahtml5ext", "mtahtml5ext2", "mtahtml5ext3"}),
+		)
+	})
+
+	ptr := func(str string) *string {
+		return &str
+	}
+	var _ = DescribeTable("checkSchemaVersionMatches", func(mtaVersion *string, extVersion *string, expectedError bool) {
+		err := checkSchemaVersionMatches(&MTA{SchemaVersion: mtaVersion}, extensionDetails{ext: &EXT{SchemaVersion: extVersion}, fileName: "my.mtaext"})
+		if expectedError {
+			Ω(err).Should(HaveOccurred())
+		} else {
+			Ω(err).Should(Succeed())
+		}
+	},
+		Entry("nil versions", nil, nil, false),
+		Entry("empty versions", ptr(""), ptr(""), false),
+		Entry("mta version is empty, ext version isn't empty", ptr(""), ptr("3.1"), true),
+		Entry("mta version isn't empty, ext version is empty", ptr("2.1"), ptr(""), true),
+		Entry("different major versions when minor version is specified", ptr("2.1"), ptr("3.1"), true),
+		Entry("different major versions when minor version isn't specified", ptr("2"), ptr("3"), true),
+		Entry("different minor versions", ptr("3.3"), ptr("3.1"), false),
+		Entry("mta version is major.minor, ext only has major part", ptr("3.1"), ptr("3"), false),
+		Entry("mta version only has major part, ext is major.minor", ptr("3"), ptr("3.2"), false),
+		Entry("different patch version", ptr("3.2.1"), ptr("3.2.2"), false),
+		Entry("only mta has patch version", ptr("3.2.1"), ptr("3.2"), false),
+		Entry("same version - major", ptr("3"), ptr("3"), false),
+		Entry("same version - major.minor", ptr("3.3"), ptr("3.3"), false),
+		Entry("same version - major.minor.patch", ptr("3.4.5"), ptr("3.4.5"), false),
+	)
 })
 
 func checkMerge(mtaObj MTA, extMta EXT, expected MTA) {

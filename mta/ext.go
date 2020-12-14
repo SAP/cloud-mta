@@ -2,17 +2,25 @@ package mta
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 	"path/filepath"
+	"strings"
 
 	"github.com/SAP/cloud-mta/internal/fs"
 )
 
 const (
-	mergeExtIDErrorMsg        = `could not merge the MTA extension with the "%s" ID`
-	mergeExtUnmarshalErrorMsg = `the "%s" file is not a valid MTA extension descriptor`
+	extUnmarshalErrorMsg      = `the "%s" file is not a valid MTA extension descriptor`
 	mergeExtPathErrorMsg      = `could not merge the "%s" MTA extension`
+	duplicateExtendsMsg       = `more than 1 extension descriptor file ("%s", "%s", ...) extends the same ID ("%s")`
+	extensionIDSameAsMtaIDMsg = `the "%s" extension descriptor file has the same ID ("%s") as the "%s" file`
+	duplicateExtensionIDMsg   = `more than 1 extension descriptor file ("%s", "%s", ...) has the same ID ("%s")`
+	extendsMsg                = `the "%s" file extends "%s"`
+	unknownExtendsMsg         = `some MTA extension descriptors extend unknown IDs: %s`
+
+	versionMismatchMsg = `the "%s" schema version found in the "%s" MTA extension descriptor file does not match the "%s" schema version found in the MTA descriptor`
 
 	mergeRootParametersErrorMsg = `could not merge parameters`
 
@@ -54,23 +62,152 @@ func UnmarshalExt(content []byte) (*EXT, error) {
 	return &mtaExt, err
 }
 
-// mergeWithExtensionFiles merges the extensions in the sent order.
-// There are currently no validations performed on the ID, extends or schema version fields of the extensions.
-func mergeWithExtensionFiles(mta *MTA, extensions []string) error {
-	for _, extPath := range extensions {
-		mtaExtContent, err := fs.ReadFile(filepath.Join(extPath))
+func parseExtFile(extPath string) (*EXT, error) {
+	mtaExtContent, err := fs.ReadFile(filepath.Join(extPath))
+	if err != nil {
+		return nil, err
+	}
+	mtaExt, err := UnmarshalExt(mtaExtContent)
+	if err != nil {
+		return nil, errors.Wrapf(err, extUnmarshalErrorMsg, extPath)
+	}
+	return mtaExt, nil
+}
+
+type extensionDetails struct {
+	fileName string
+	ext      *EXT
+}
+
+type extensionError struct {
+	fileName string
+	err      error
+}
+
+func (e extensionError) Error() string {
+	return e.err.Error()
+}
+
+// mergeWithExtensionFiles merges the extensions in the order of the 'extends' chain.
+// The extends chain, and the ID and schema version of each mtaext file is validated.
+func mergeWithExtensionFiles(mta *MTA, extensions []string, mtaPath string) *extensionError {
+	extensionsDetails, extErr := getSortedExtensions(extensions, mta.ID, mtaPath)
+	if extErr != nil {
+		return extErr
+	}
+
+	for _, extDetails := range extensionsDetails {
+		err := checkSchemaVersionMatches(mta, extDetails)
 		if err != nil {
-			return err
+			return &extensionError{extDetails.fileName, err}
 		}
-		mtaExt, err := UnmarshalExt(mtaExtContent)
+		err = Merge(mta, extDetails.ext, extDetails.fileName)
 		if err != nil {
-			return errors.Wrapf(err, mergeExtUnmarshalErrorMsg, extPath)
-		}
-		err = Merge(mta, mtaExt, extPath)
-		if err != nil {
-			return err
+			return &extensionError{extDetails.fileName, err}
 		}
 	}
+	return nil
+}
+
+func getSortedExtensions(extensionFileNames []string, mtaID string, mtaPath string) ([]extensionDetails, *extensionError) {
+	// Parse all extension files and put them in a slice of extension details (the extension with the file name)
+	extensions, err := parseExtensionsWithDetails(extensionFileNames)
+	if err != nil {
+		return nil, err
+	}
+
+	// Make sure each extension has its own ID
+	err = checkExtensionIDsUniqueness(extensions, mtaID, mtaPath)
+	if err != nil {
+		return nil, err
+	}
+
+	// Make sure each extension extends a different ID and put them in a map of extends -> extension details
+	extendsMap := make(map[string]extensionDetails, len(extensionFileNames))
+	for _, details := range extensions {
+		if value, ok := extendsMap[details.ext.Extends]; ok {
+			return nil, &extensionError{details.fileName, errors.Errorf(duplicateExtendsMsg,
+				value.fileName, details.fileName, details.ext.Extends)}
+		}
+		extendsMap[details.ext.Extends] = details
+	}
+
+	// Verify chain of extensions and put the extensions in a slice by extends order
+	return sortAndVerifyExtendsChain(extensionFileNames, mtaID, extendsMap)
+}
+
+func parseExtensionsWithDetails(extensionFileNames []string) ([]extensionDetails, *extensionError) {
+	extensions := make([]extensionDetails, len(extensionFileNames))
+	for i, extFileName := range extensionFileNames {
+		extFile, err := parseExtFile(extFileName)
+		if err != nil {
+			return nil, &extensionError{extFileName, err}
+		}
+		extensions[i] = extensionDetails{extFileName, extFile}
+	}
+	return extensions, nil
+}
+
+func checkExtensionIDsUniqueness(extensions []extensionDetails, mtaID string, mtaPath string) *extensionError {
+	extensionIDMap := make(map[string]extensionDetails, len(extensions))
+	for _, details := range extensions {
+		if details.ext.ID == mtaID {
+			return &extensionError{details.fileName, errors.Errorf(extensionIDSameAsMtaIDMsg,
+				details.fileName, mtaID, mtaPath)}
+		}
+		if value, ok := extensionIDMap[details.ext.ID]; ok {
+			return &extensionError{details.fileName, errors.Errorf(duplicateExtensionIDMsg,
+				value.fileName, details.fileName, details.ext.ID)}
+		}
+		extensionIDMap[details.ext.ID] = details
+	}
+	return nil
+}
+
+func sortAndVerifyExtendsChain(extensionFileNames []string, mtaID string, extendsMap map[string]extensionDetails) ([]extensionDetails, *extensionError) {
+	sortedExtFiles := make([]extensionDetails, 0, len(extensionFileNames))
+	currExtends := mtaID
+	value, ok := extendsMap[currExtends]
+	for ok {
+		sortedExtFiles = append(sortedExtFiles, value)
+		delete(extendsMap, currExtends)
+		currExtends = value.ext.ID
+		value, ok = extendsMap[currExtends]
+	}
+	// Check if there are extensions which extend unknown files
+	if len(extendsMap) > 0 {
+		// Build an error that looks like this:
+		// `some MTA extension descriptors extend unknown IDs: file "myext.mtaext" extends "ext1"; file "aaa.mtaext" extends "ext2"`
+		fileParts := make([]string, 0, len(extendsMap))
+		fileName := ""
+		for extends, details := range extendsMap {
+			if fileName == "" {
+				fileName = details.fileName
+			}
+			fileParts = append(fileParts, fmt.Sprintf(extendsMsg, details.fileName, extends))
+		}
+		// Return the error on the first encountered extension since we only support one error currently.
+		// Note that it's not necessarily the first extension in the list of extension files (since the map iteration order is undefined).
+		return nil, &extensionError{fileName, errors.Errorf(unknownExtendsMsg, strings.Join(fileParts, `; `))}
+	}
+	return sortedExtFiles, nil
+}
+
+func checkSchemaVersionMatches(mta *MTA, extDetails extensionDetails) error {
+	mtaVersion := ""
+	if mta.SchemaVersion != nil {
+		mtaVersion = *mta.SchemaVersion
+	}
+	extVersion := ""
+	if extDetails.ext.SchemaVersion != nil {
+		extVersion = *extDetails.ext.SchemaVersion
+	}
+
+	// Check major version matches
+	if strings.SplitN(mtaVersion, ".", 2)[0] != strings.SplitN(extVersion, ".", 2)[0] {
+		return errors.Errorf(versionMismatchMsg, extVersion, extDetails.fileName, mtaVersion)
+	}
+
 	return nil
 }
 
@@ -80,25 +217,22 @@ func Merge(mta *MTA, mtaExt *EXT, extFilePath string) error {
 		extendMap(&mta.Parameters, mta.ParametersMetaData, mtaExt.Parameters, mergeRootParametersErrorMsg).
 		err
 	if err != nil {
-		return wrapMergeError(err, extFilePath, mtaExt.ID)
+		return wrapMergeError(err, extFilePath)
 	}
 
 	if err = mergeModules(*mta, mtaExt.Modules); err != nil {
-		return wrapMergeError(err, extFilePath, mtaExt.ID)
+		return wrapMergeError(err, extFilePath)
 	}
 
 	if err = mergeResources(*mta, mtaExt.Resources); err != nil {
-		return wrapMergeError(err, extFilePath, mtaExt.ID)
+		return wrapMergeError(err, extFilePath)
 	}
 
 	return nil
 }
 
-func wrapMergeError(err error, extFilePath string, extID string) error {
-	if extFilePath != "" {
-		return errors.Wrapf(err, mergeExtPathErrorMsg, extFilePath)
-	}
-	return errors.Wrapf(err, mergeExtIDErrorMsg, extID)
+func wrapMergeError(err error, extFilePath string) error {
+	return errors.Wrapf(err, mergeExtPathErrorMsg, extFilePath)
 }
 
 // mergeModules is responsible for handling the rules of merging modules
