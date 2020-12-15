@@ -99,7 +99,10 @@ const childProcess = spawn(mtaPath, args);
 ```
 
 #### Packaging with webpack
-To use these npm libraries from an application packaged with webpack, you have to copy the `bin/mta` file to the webpack output directory (keeping the same file structure) and enable `__dirname` to be used.
+To use these npm libraries from an application packaged with webpack, you have to copy the `bin/mta` file to the webpack output directory (keeping the same file structure), make it executable and enable `__dirname` to be used.
+
+**Note:** while the packaged `bin/mta` file is already executable, the `CopyWebpackPlugin` loses the executable bits during the copy. See [this issue](https://github.com/webpack-contrib/copy-webpack-plugin/issues/35).
+
 For example, if the results are in the `dist` folder, add this configuration inside your webpack configuration file:
 ```javascript
 const path = require("path");
@@ -117,7 +120,12 @@ const config = {
                   to: path.resolve(__dirname, "dist", "bin"),
                 }
             ]
-        })
+        }),
+        function (compiler) {
+          compiler.hooks.done.tap("ExecuteChmodOnBinMta", () => {
+            fs.chmodSync(path.resolve(__dirname, "dist", "bin", "mta"), "755");
+          });
+        }
     ]
 };
 ```
