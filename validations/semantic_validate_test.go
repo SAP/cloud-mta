@@ -64,9 +64,9 @@ modules:
 		err := yaml.Unmarshal(mtaContent, &mtaStr)
 		Ω(err).Should(Succeed())
 		root, _ := getContentNode(mtaContent)
-		line, exists := getIndexedNodePropLine(root, 0, "unknown")
+		line, column, exists := getIndexedNodePropLine(root, 0, "unknown")
 		Ω(line).Should(Equal(2))
+		Ω(column).Should(Equal(1))
 		Ω(exists).Should(BeFalse())
 	})
-
 })

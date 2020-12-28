@@ -17,6 +17,7 @@ func init() {
 	rootCmd.AddCommand(deleteFileCmd)
 	rootCmd.AddCommand(existCmd)
 	rootCmd.AddCommand(resolveMtaCmd)
+	rootCmd.AddCommand(validateMtaCmd)
 	addCmd.AddCommand(addModuleCmd, addResourceCmd)
 	getCmd.AddCommand(getModulesCmd, getResourcesCmd, getMtaIDCmd, getResourceConfigCmd)
 	updateCmd.AddCommand(updateModuleCmd, updateResourceCmd, updateBuildParametersCmd)

@@ -125,36 +125,36 @@ lastName: duck
 `, property("firstName", optional(typeIsNotMapArray()))),
 	)
 
-	DescribeTable("Invalid runSchemaValidations", func(data, message string, line int, validations ...YamlCheck) {
+	DescribeTable("Invalid runSchemaValidations", func(data, message string, line int, column int, validations ...YamlCheck) {
 		node, _ := getContentNode([]byte(data))
 		validateIssues := runSchemaValidations(node, validations...)
 
-		expectSingleValidationError(validateIssues, message, line)
+		expectSingleValidationError(validateIssues, message, line, column)
 	},
 		Entry("matchesRegExp", `
 firstName: Donald
 lastName: duck
-`, `the "Donald" value of the "root.firstName" property does not match the "^[0-9_\-\.]+$" pattern`, 2,
+`, `the "Donald" value of the "root.firstName" property does not match the "^[0-9_\-\.]+$" pattern`, 2, 12,
 			property("firstName", matchesRegExp("^[0-9_\\-\\.]+$"))),
 
 		Entry("required", `
 firstName: Donald
 lastName: duck
-`, `missing the "age" required property in the root .yaml node`, 2,
+`, `missing the "age" required property in the root .yaml node`, 2, 1,
 			property("age", required())),
 
 		Entry("doesNotExist on property name", `
 firstName: Donald
 lastName: 
   - duck
-`, fmt.Sprintf(propertyExistsErrorMsg, "lastName", "root"), 3,
+`, fmt.Sprintf(propertyExistsErrorMsg, "lastName", "root"), 3, 1,
 			propertyName("lastName", doesNotExist())),
 
 		Entry("doesNotExist on property value", `
 firstName: Donald
 lastName: 
   - duck
-`, fmt.Sprintf(propertyExistsErrorMsg, "lastName", "root"), 4,
+`, fmt.Sprintf(propertyExistsErrorMsg, "lastName", "root"), 4, 3,
 			property("lastName", doesNotExist())),
 
 		Entry("TypeIsString", `
@@ -163,13 +163,13 @@ firstName:
    - 2
    - 3
 lastName: duck
-`, `the "root.firstName" property must be a string`, 3,
+`, `the "root.firstName" property must be a string`, 3, 4,
 			property("firstName", typeIsNotMapArray())),
 
 		Entry("TypeIsBool", `
 name: bamba
 registered: 123
-`, `the "root.registered" property must be a boolean`, 3,
+`, `the "root.registered" property must be a boolean`, 3, 13,
 			property("registered", typeIsBoolean())),
 
 		Entry("typeIsArray", `
@@ -178,7 +178,7 @@ firstName:
    - 2
    - 3
 lastName: duck
-`, `the "root.lastName" property must be an array`, 6,
+`, `the "root.lastName" property must be an array`, 6, 11,
 			property("lastName", typeIsArray())),
 
 		Entry("typeIsMap", `
@@ -189,13 +189,13 @@ firstName:
 lastName:
    a : 1
    b : 2
-`, `the "root.firstName" property must be a map`, 3,
+`, `the "root.firstName" property must be a map`, 3, 4,
 			property("firstName", typeIsMap())),
 
 		Entry("sequenceFailFast", `
 firstName: Hello
 lastName: World
-`, `missing the "missing" required property in the root .yaml node`, 2,
+`, `missing the "missing" required property in the root .yaml node`, 2, 1,
 			property("missing", sequenceFailFast(
 				required(),
 				// This second validation should not be executed as sequence breaks early.
@@ -206,7 +206,7 @@ firstName:
   - 1
   - 2
 lastName: duck
-`, `the "root.firstName" property must be a string`, 3,
+`, `the "root.firstName" property must be a string`, 3, 3,
 			property("firstName", optional(typeIsNotMapArray()))),
 	)
 
@@ -249,9 +249,9 @@ optionalClasses:
 		validateIssues := runSchemaValidations(node, validations)
 
 		Ω(validateIssues).Should(ConsistOf(
-			YamlValidationIssue{`the "oops" value of the "classes[0].room" property does not match the "^[0-9]+$" pattern`, 6},
-			YamlValidationIssue{`missing the "name" required property in the classes[1] .yaml node`, 8},
-			YamlValidationIssue{`the "optionalClasses.english" property must be a boolean`, 13},
+			YamlValidationIssue{`the "oops" value of the "classes[0].room" property does not match the "^[0-9]+$" pattern`, 6, 10},
+			YamlValidationIssue{`missing the "name" required property in the classes[1] .yaml node`, 8, 4},
+			YamlValidationIssue{`the "optionalClasses.english" property must be a boolean`, 13, 12},
 		))
 	})
 })
@@ -306,35 +306,44 @@ prop1: *alias1
 	})
 })
 
-var _ = DescribeTable("sort validation issues", func(lines []int) {
+var _ = DescribeTable("sort validation issues", func(lines []int, columns []int) {
 	var issues YamlValidationIssues
 	if lines == nil {
 		issues = nil
 	} else {
-		issues = make(YamlValidationIssues, len(lines))
+		if len(columns) == 0 {
+			columns = []int{0}
+		}
+		issues = make(YamlValidationIssues, len(lines)*len(columns))
 		for i, line := range lines {
-			issues[i] = YamlValidationIssue{Line: line, Msg: fmt.Sprintf("line %d issue", line)}
+			for j, column := range columns {
+				issues[i*len(columns)+j] = YamlValidationIssue{Line: line, Column: column, Msg: fmt.Sprintf("line %d col %d issue", line, column)}
+			}
 		}
 
 		issues.Sort()
 
 		// Check it's sorted
 		isSorted := sort.SliceIsSorted(issues, func(i, j int) bool {
-			return issues[i].Line < issues[j].Line
+			return (issues[i].Line < issues[j].Line) ||
+				(issues[i].Line == issues[j].Line && issues[i].Column < issues[j].Column)
 		})
 		Ω(isSorted).Should(Equal(true), fmt.Sprintf("slice is not sorted: %v", issues))
 
 		// Check the values are correct
 		for _, issue := range issues {
-			Ω(issue.Msg).Should(Equal(fmt.Sprintf("line %d issue", issue.Line)))
+			Ω(issue.Msg).Should(Equal(fmt.Sprintf("line %d col %d issue", issue.Line, issue.Column)))
 		}
 	}
 },
-	Entry("nil slice", nil),
-	Entry("empty slice", []int{}),
-	Entry("slice with one value", []int{300}),
-	Entry("sorted slice", []int{1, 2, 3, 4, 12, 65}),
-	Entry("backwards sorted slice", []int{12, 2, 0}),
-	Entry("slice with equal values", []int{1, 1, 4, 23, 32, 5, 32}),
-	Entry("unsorted slice", []int{3, 84, 600, 2, 0, 5, 0, 7, 5, 12}),
+	Entry("nil slice", nil, nil),
+	Entry("empty slice", []int{}, nil),
+	Entry("slice with one value", []int{300}, nil),
+	Entry("sorted slice", []int{1, 2, 3, 4, 12, 65}, nil),
+	Entry("backwards sorted slice", []int{12, 2, 0}, nil),
+	Entry("slice with equal values", []int{1, 1, 4, 23, 32, 5, 32}, nil),
+	Entry("slice with equal values and several unsorted columns for each line", []int{1, 1, 4, 23, 32, 5, 32}, []int{2, 1}),
+	Entry("unsorted slice", []int{3, 84, 600, 2, 0, 5, 0, 7, 5, 12}, nil),
+	Entry("unsorted slice with several columns for each line", []int{3, 84, 600, 2, 0, 5, 0, 7, 5, 12}, []int{5, 6}),
+	Entry("unsorted slice with several unsorted columns for each line", []int{3, 84, 600, 2, 0, 5, 0, 7, 5, 12}, []int{2, 1}),
 )

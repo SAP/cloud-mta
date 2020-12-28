@@ -14,6 +14,67 @@ import (
 	"github.com/SAP/cloud-mta/mta"
 )
 
+const (
+	SeverityError   = "error"
+	SeverityWarning = "warning"
+)
+
+type ValidationResult map[string][]FileValidationIssue
+type FileValidationIssue struct {
+	// Severity - the severity of the message. Possible values: "error", "warning".
+	Severity string `json:"severity"`
+	// Message - the validation message
+	Message string `json:"message"`
+	// Line - the line number of the issue
+	Line int `json:"line"`
+	// Column - the column number of the issue
+	Column int `json:"column"`
+}
+
+// Validate validates an mta.yaml file and a list of mta extension files, and returns the issues for each file.
+func Validate(mtaPath string, extensions []string) (ValidationResult, []string, error) {
+	allIssues := make(ValidationResult)
+	// Assuming the project path is the folder of the mta.yaml
+	projectPath := filepath.Dir(mtaPath)
+	mtaYamlFileName := filepath.Base(mtaPath)
+	warningIssues, errorIssues, e := validateMtaYaml(projectPath, mtaYamlFileName, true, true, true, "")
+	if e != nil {
+		errorIssues = appendIssue(errorIssues, e.Error(), 0, 0)
+	}
+	allIssues[mtaPath] = createFileIssues(warningIssues, errorIssues)
+
+	for _, extPath := range extensions {
+		warningIssues, errorIssues, e = validateMtaext(projectPath, extPath, true, true, true, "")
+		if e != nil {
+			errorIssues = appendIssue(errorIssues, e.Error(), 0, 0)
+		}
+		allIssues[extPath] = createFileIssues(warningIssues, errorIssues)
+	}
+
+	_, _, e = mta.GetMtaFromFile(mtaPath, extensions, true)
+	if e != nil {
+		// Ignore errors which are not on a specific extension (if they are on the mta.yaml we already got them earlier)
+		// and parse errors from extensions (we already got them earlier too)
+		if extErr, ok := e.(*mta.ExtensionError); ok && !extErr.IsParseError {
+			allIssues[extErr.FileName] = append(allIssues[extErr.FileName], FileValidationIssue{SeverityError, e.Error(), 0, 0})
+		}
+	}
+
+	return allIssues, nil, nil
+}
+
+func createFileIssues(warningIssues YamlValidationIssues, errorIssues YamlValidationIssues) []FileValidationIssue {
+	allIssues := make([]FileValidationIssue, 0)
+	for _, issue := range errorIssues {
+		allIssues = append(allIssues, FileValidationIssue{SeverityError, issue.Msg, issue.Line, issue.Column})
+	}
+	for _, issue := range warningIssues {
+		allIssues = append(allIssues, FileValidationIssue{SeverityWarning, issue.Msg, issue.Line, issue.Column})
+	}
+
+	return allIssues
+}
+
 // GetValidationMode converts validation mode flags to validation process flags.
 func GetValidationMode(validationFlag string) (bool, bool, error) {
 	switch validationFlag {
@@ -32,28 +93,35 @@ func GetValidationMode(validationFlag string) (bool, bool, error) {
 // MtaYaml validates an MTA.yaml file.
 func MtaYaml(projectPath, mtaFilename string,
 	validateSchema, validateSemantic, strict bool, exclude string) (warning string, err error) {
-	if validateSemantic || validateSchema {
+	errIssues, warnIssues, err := validateMtaYaml(projectPath, mtaFilename, validateSchema, validateSemantic, strict, exclude)
+	if err != nil {
+		return "", err
+	}
+	if len(errIssues) > 0 {
+		return warnIssues.String(), errors.Errorf(`the "%v" file is not valid: `+"\n%v",
+			filepath.Join(projectPath, mtaFilename), errIssues.String())
+	}
+	return warnIssues.String(), nil
+}
 
+func validateMtaYaml(projectPath, mtaFilename string, validateSchema, validateSemantic, strict bool,
+	exclude string) (errIssues YamlValidationIssues, warnIssues YamlValidationIssues, err error) {
+	if validateSemantic || validateSchema {
 		mtaPath := filepath.Join(projectPath, mtaFilename)
 		// ParseFile contains MTA yaml content.
 		yamlContent, e := fs.ReadFile(mtaPath)
 		if e != nil {
-			return "", errors.Wrapf(e, `could not read the "%v" file; the validation failed`, mtaPath)
+			return nil, nil, errors.Wrapf(e, `could not read the "%v" file; the validation failed`, mtaPath)
 		}
 
 		// Validates MTA content.
-		errIssues, warnIssues := validate(yamlContent, projectPath,
-			validateSchema, validateSemantic, strict, exclude)
+		errIssues, warnIssues := validate(yamlContent, projectPath, validateSchema, validateSemantic, strict, exclude)
 		errIssues.Sort()
 		warnIssues.Sort()
-		if len(errIssues) > 0 {
-			return warnIssues.String(), errors.Errorf(`the "%v" file is not valid: `+"\n%v",
-				mtaPath, errIssues.String())
-		}
-		return warnIssues.String(), nil
+		return errIssues, warnIssues, nil
 	}
 
-	return "", nil
+	return nil, nil, nil
 }
 
 // validate - validates the MTA descriptor
@@ -134,8 +202,8 @@ func convertError(err error) []YamlValidationIssue {
 				line = 1
 			}
 
-			// add converted issue to the issues list
-			issues = appendIssue(issues, e, line)
+			// Add converted issue to the issues list. We only have the line number here.
+			issues = appendIssue(issues, e, line, 0)
 		}
 	}
 	return issues

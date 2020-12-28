@@ -160,11 +160,13 @@
   version = "v1.14.2"
 
 [[projects]]
-  digest = "1:1128d06a3325ffe250c66e3e2cf8ba83208b4aafd3b6366f388dddc014f643f2"
+  digest = "1:e2dfd002bc4804c967050aadf24df537b616119322c0e534980febed746c092f"
   name = "github.com/onsi/gomega"
   packages = [
     ".",
     "format",
+    "gstruct",
+    "gstruct/errors",
     "internal/assertion",
     "internal/asyncassertion",
     "internal/oraclematcher",
@@ -391,6 +393,7 @@
     "github.com/onsi/ginkgo",
     "github.com/onsi/ginkgo/extensions/table",
     "github.com/onsi/gomega",
+    "github.com/onsi/gomega/gstruct",
     "github.com/onsi/gomega/types",
     "github.com/pkg/errors",
     "github.com/sirupsen/logrus",

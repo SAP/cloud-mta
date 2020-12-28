@@ -24,7 +24,7 @@ func checkNoDatatypeInParametersMetadata(m map[string]interface{}, metadata map[
 		valueNode := getPropValueByName(metadataNode, key)
 		datatypeKeyNode := getPropByName(valueNode, datatypeYamlField)
 		if datatypeKeyNode != nil {
-			issues = append(issues, YamlValidationIssue{Msg: fmt.Sprintf(propertyExistsErrorMsg, datatypeYamlField, parametersMetadataField), Line: datatypeKeyNode.Line})
+			issues = append(issues, YamlValidationIssue{Msg: fmt.Sprintf(propertyExistsErrorMsg, datatypeYamlField, parametersMetadataField), Line: datatypeKeyNode.Line, Column: datatypeKeyNode.Column})
 		}
 	}
 

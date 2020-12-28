@@ -21,6 +21,8 @@ type YamlValidationIssue struct {
 	Msg string
 	// Line - line number indicating issue
 	Line int
+	// Column - column number of the issue
+	Column int
 }
 
 // YamlValidationIssues - list of issue's
@@ -34,10 +36,11 @@ func (issues YamlValidationIssues) String() string {
 	return strings.Join(messages, "\n")
 }
 
-// Sort sorts the validation issues by line number
+// Sort sorts the validation issues by line and column number
 func (issues YamlValidationIssues) Sort() {
 	sort.SliceStable(issues, func(i, j int) bool {
-		return issues[i].Line < issues[j].Line
+		return (issues[i].Line < issues[j].Line) ||
+			(issues[i].Line == issues[j].Line && issues[i].Column < issues[j].Column)
 	})
 }
 
@@ -245,7 +248,10 @@ func required() YamlCheck {
 				{
 					Msg: fmt.Sprintf(`missing the "%s" required property in the %s .yaml node`,
 						last(path), buildPathString(dropRight(path))),
-					Line: yParentNode.Line}}
+					Line:   yParentNode.Line,
+					Column: yParentNode.Column,
+				},
+			}
 		}
 
 		return []YamlValidationIssue{}
@@ -264,7 +270,10 @@ func doesNotExist() YamlCheck {
 				{
 					Msg: fmt.Sprintf(propertyExistsErrorMsg,
 						last(path), buildPathString(dropRight(path))),
-					Line: yNode.Line}}
+					Line:   yNode.Line,
+					Column: yNode.Column,
+				},
+			}
 		}
 
 		return []YamlValidationIssue{}
@@ -301,8 +310,9 @@ func typeIsNotMapArray() YamlCheck {
 		if yNode.Kind == yaml.SequenceNode || yNode.Kind == yaml.MappingNode {
 			return []YamlValidationIssue{
 				{
-					Msg:  fmt.Sprintf(`the "%s" property must be a string`, buildPathString(path)),
-					Line: yNode.Line,
+					Msg:    fmt.Sprintf(`the "%s" property must be a string`, buildPathString(path)),
+					Line:   yNode.Line,
+					Column: yNode.Column,
 				},
 			}
 		}
@@ -318,8 +328,9 @@ func typeIsArray() YamlCheck {
 			if yNode.Kind != yaml.SequenceNode {
 				return []YamlValidationIssue{
 					{
-						Msg:  fmt.Sprintf(`the "%s" property must be an array`, buildPathString(path)),
-						Line: yNode.Line,
+						Msg:    fmt.Sprintf(`the "%s" property must be an array`, buildPathString(path)),
+						Line:   yNode.Line,
+						Column: yNode.Column,
 					},
 				}
 			}
@@ -335,8 +346,9 @@ func typeIsMap() YamlCheck {
 			if yNode.Kind != yaml.MappingNode {
 				return []YamlValidationIssue{
 					{
-						Msg:  fmt.Sprintf(`the "%s" property must be a map`, buildPathString(path)),
-						Line: yNode.Line,
+						Msg:    fmt.Sprintf(`the "%s" property must be a map`, buildPathString(path)),
+						Line:   yNode.Line,
+						Column: yNode.Column,
 					},
 				}
 			}
@@ -353,7 +365,8 @@ func typeIsBoolean() YamlCheck {
 				return []YamlValidationIssue{
 
 					{Msg: fmt.Sprintf(`the "%s" property must be a boolean`, buildPathString(path)),
-						Line: yNode.Line,
+						Line:   yNode.Line,
+						Column: yNode.Column,
 					},
 				}
 			}
@@ -378,7 +391,8 @@ func matchesRegExp(pattern string) YamlCheck {
 				{
 					Msg: fmt.Sprintf(`the "%s" value of the "%s" property does not match the "%s" pattern`,
 						strValue, buildPathString(path), pattern),
-					Line: yNode.Line,
+					Line:   yNode.Line,
+					Column: yNode.Column,
 				},
 			}
 		}
@@ -421,7 +435,8 @@ func matchesEnumValues(enumValues []string) YamlCheck {
 					Msg: fmt.Sprintf(
 						`the "%s" value of the "%s" enum property is invalid; expected one of the following: %s`,
 						value, buildPathString(path), expectedSubset),
-					Line: yNode.Line,
+					Line:   yNode.Line,
+					Column: yNode.Column,
 				},
 			}
 		}

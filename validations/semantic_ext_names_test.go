@@ -162,7 +162,7 @@ modules:
 		mta, _ := mta.UnmarshalExt(mtaContent)
 		node, _ := getContentNode(mtaContent)
 		issues, _ := checkSingleExtendNames(mta, node, "", true)
-		Ω(issues).Should(ConsistOf(YamlValidationIssue{getDuplicateExtendsErrorMsg("m1", moduleEntityKind, 7), 11}))
+		Ω(issues).Should(ConsistOf(YamlValidationIssue{getDuplicateExtendsErrorMsg("m1", moduleEntityKind, 7), 11, 10}))
 	})
 	It("returns issue when module provides is extended twice", func() {
 		mtaContent := []byte(`
@@ -179,7 +179,7 @@ modules:
 		mta, _ := mta.UnmarshalExt(mtaContent)
 		node, _ := getContentNode(mtaContent)
 		issues, _ := checkSingleExtendNames(mta, node, "", true)
-		Ω(issues).Should(ConsistOf(YamlValidationIssue{getDuplicateExtendsErrorMsg("p1", providedPropEntityKind, 9), 10}))
+		Ω(issues).Should(ConsistOf(YamlValidationIssue{getDuplicateExtendsErrorMsg("p1", providedPropEntityKind, 9), 10, 14}))
 	})
 	It("returns issue when module requires is extended twice", func() {
 		mtaContent := []byte(`
@@ -196,7 +196,7 @@ modules:
 		mta, _ := mta.UnmarshalExt(mtaContent)
 		node, _ := getContentNode(mtaContent)
 		issues, _ := checkSingleExtendNames(mta, node, "", true)
-		Ω(issues).Should(ConsistOf(YamlValidationIssue{getDuplicateExtendsErrorMsg("r1", requiresPropEntityKind, 9), 10}))
+		Ω(issues).Should(ConsistOf(YamlValidationIssue{getDuplicateExtendsErrorMsg("r1", requiresPropEntityKind, 9), 10, 14}))
 	})
 	It("returns issue when module hook is extended twice", func() {
 		mtaContent := []byte(`
@@ -213,7 +213,7 @@ modules:
 		mta, _ := mta.UnmarshalExt(mtaContent)
 		node, _ := getContentNode(mtaContent)
 		issues, _ := checkSingleExtendNames(mta, node, "", true)
-		Ω(issues).Should(ConsistOf(YamlValidationIssue{getDuplicateExtendsErrorMsg("h1", hookPropEntityKind, 9), 10}))
+		Ω(issues).Should(ConsistOf(YamlValidationIssue{getDuplicateExtendsErrorMsg("h1", hookPropEntityKind, 9), 10, 12}))
 	})
 	It("returns issue when module hook requires is extended twice", func() {
 		mtaContent := []byte(`
@@ -232,7 +232,7 @@ modules:
 		mta, _ := mta.UnmarshalExt(mtaContent)
 		node, _ := getContentNode(mtaContent)
 		issues, _ := checkSingleExtendNames(mta, node, "", true)
-		Ω(issues).Should(ConsistOf(YamlValidationIssue{getDuplicateExtendsErrorMsg("r1", requiresPropEntityKind, 11), 12}))
+		Ω(issues).Should(ConsistOf(YamlValidationIssue{getDuplicateExtendsErrorMsg("r1", requiresPropEntityKind, 11), 12, 16}))
 	})
 	It("returns issue when resource is extended twice", func() {
 		mtaContent := []byte(`
@@ -252,7 +252,7 @@ resources:
 		mta, _ := mta.UnmarshalExt(mtaContent)
 		node, _ := getContentNode(mtaContent)
 		issues, _ := checkSingleExtendNames(mta, node, "", true)
-		Ω(issues).Should(ConsistOf(YamlValidationIssue{getDuplicateExtendsErrorMsg("r1", resourceEntityKind, 7), 11}))
+		Ω(issues).Should(ConsistOf(YamlValidationIssue{getDuplicateExtendsErrorMsg("r1", resourceEntityKind, 7), 11, 10}))
 	})
 	It("returns issue when resource requires is extended twice", func() {
 		mtaContent := []byte(`
@@ -269,7 +269,7 @@ resources:
 		mta, _ := mta.UnmarshalExt(mtaContent)
 		node, _ := getContentNode(mtaContent)
 		issues, _ := checkSingleExtendNames(mta, node, "", true)
-		Ω(issues).Should(ConsistOf(YamlValidationIssue{getDuplicateExtendsErrorMsg("req1", requiresPropEntityKind, 9), 10}))
+		Ω(issues).Should(ConsistOf(YamlValidationIssue{getDuplicateExtendsErrorMsg("req1", requiresPropEntityKind, 9), 10, 14}))
 	})
 
 	It("returns the expected issues when several entities are extended twice", func() {
@@ -296,10 +296,10 @@ resources:
 		node, _ := getContentNode(mtaContent)
 		issues, _ := checkSingleExtendNames(mta, node, "", true)
 		Ω(issues).Should(ConsistOf(
-			YamlValidationIssue{getDuplicateExtendsErrorMsg("m1", moduleEntityKind, 7), 11},
-			YamlValidationIssue{getDuplicateExtendsErrorMsg("p1", providedPropEntityKind, 9), 10},
-			YamlValidationIssue{getDuplicateExtendsErrorMsg("r1", requiresPropEntityKind, 13), 14},
-			YamlValidationIssue{getDuplicateExtendsErrorMsg("r1", resourceEntityKind, 17), 18},
+			YamlValidationIssue{getDuplicateExtendsErrorMsg("m1", moduleEntityKind, 7), 11, 10},
+			YamlValidationIssue{getDuplicateExtendsErrorMsg("p1", providedPropEntityKind, 9), 10, 14},
+			YamlValidationIssue{getDuplicateExtendsErrorMsg("r1", requiresPropEntityKind, 13), 14, 14},
+			YamlValidationIssue{getDuplicateExtendsErrorMsg("r1", resourceEntityKind, 17), 18, 11},
 		))
 	})
 })

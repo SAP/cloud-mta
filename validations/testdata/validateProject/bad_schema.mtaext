@@ -1,0 +1,16 @@
+ID: mtahtml5ext
+extends: mtahtml5
+_schema-version: '2.1'
+version: 0.0.1
+
+modules:
+ - name: ui5app
+   parameters:
+      disk-quota: 256M
+      memory: 256M
+
+ - name: ui5app2
+   parameters:
+      disk-quota: 256M
+      memory: 256M
+   type: html5

@@ -8,6 +8,7 @@ import (
 
 	"github.com/SAP/cloud-mta/internal/logs"
 	"github.com/SAP/cloud-mta/mta"
+	"github.com/SAP/cloud-mta/validations"
 )
 
 var createMtaCmdPath string
@@ -23,6 +24,8 @@ var updateBuildParametersCmdData string
 var updateBuildParametersCmdForce bool
 var updateBuildParametersCmdHashcode int
 var getMtaIDCmdPath string
+var validateMtaCmdPath string
+var validateMtaCmdExtensions []string
 
 func init() {
 
@@ -31,18 +34,23 @@ func init() {
 		"the path to the yaml file")
 	createMtaCmd.Flags().StringVarP(&createMtaCmdData, "data", "d", "",
 		"data in JSON format")
+
 	deleteMtaCmd.Flags().StringVarP(&deleteMtaCmdPath, "path", "p", "",
 		"the path to the MTA project")
+
 	copyCmd.Flags().StringVarP(&copyCmdSourcePath, "source", "s", "",
 		"the path to the source file")
 	copyCmd.Flags().StringVarP(&copyCmdTargetPath, "target", "t", "",
 		"the path to the target file")
+
 	deleteFileCmd.Flags().StringVarP(&deleteFileCmdPath, "path", "p", "",
 		"the path to the file")
+
 	existCmd.Flags().StringVarP(&existCmdPath, "path", "p", "",
 		"the path to the file")
 	existCmd.Flags().StringVarP(&existCmdName, "name", "n", "",
 		"the name to check")
+
 	updateBuildParametersCmd.Flags().StringVarP(&updateBuildParametersCmdPath, "path", "p", "",
 		"the path to the file")
 	updateBuildParametersCmd.Flags().StringVarP(&updateBuildParametersCmdData, "data", "d", "",
@@ -51,8 +59,15 @@ func init() {
 		"force action")
 	updateBuildParametersCmd.Flags().IntVarP(&updateBuildParametersCmdHashcode, "hashcode", "c", 0,
 		"data hashcode")
+
 	getMtaIDCmd.Flags().StringVarP(&getMtaIDCmdPath, "path", "p", "",
 		"the path to the file")
+
+	validateMtaCmd.Flags().StringVarP(&validateMtaCmdPath, "path", "p", "",
+		"the path to the yaml file")
+	validateMtaCmd.Flags().StringSliceVarP(&validateMtaCmdExtensions, "extensions", "x", nil,
+		"the paths to the MTA extension descriptors")
+
 }
 
 // createMtaCmd Create new MTA project
@@ -181,6 +196,23 @@ var getMtaIDCmd = &cobra.Command{
 		// Extensions don't change the mta ID
 		return mta.RunAndWriteResultAndHash("get MTA ID", getMtaIDCmdPath, nil, func() (interface{}, []string, error) {
 			return mta.GetMtaID(getMtaIDCmdPath)
+		})
+	},
+	Hidden:        true,
+	SilenceUsage:  true,
+	SilenceErrors: true,
+}
+
+// validateMtaCmd - validate mta.yaml file and its extensions
+var validateMtaCmd = &cobra.Command{
+	Use:   "validate",
+	Short: "Validate MTA",
+	Long:  "Validate mta.yaml file and MTA extension files",
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		// Extensions don't change the mta ID
+		return mta.RunAndWriteResultAndHash("validate MTA", validateMtaCmdPath, validateMtaCmdExtensions, func() (interface{}, []string, error) {
+			return validate.Validate(validateMtaCmdPath, validateMtaCmdExtensions)
 		})
 	},
 	Hidden:        true,

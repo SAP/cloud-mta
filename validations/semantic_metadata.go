@@ -70,7 +70,7 @@ func checkMetadataKeyIsDefinedInMap(metadata map[string]mta.MetaData, m map[stri
 		_, ok := m[key]
 		if !ok {
 			keyNode := getPropByName(metadataNodeValue, key)
-			issues = append(issues, YamlValidationIssue{Msg: fmt.Sprintf(unknownNameInMetadataMsg, key, mapTypes[mapType].entityKind), Line: keyNode.Line})
+			issues = append(issues, YamlValidationIssue{Msg: fmt.Sprintf(unknownNameInMetadataMsg, key, mapTypes[mapType].entityKind), Line: keyNode.Line, Column: keyNode.Column})
 		}
 	}
 	return issues
@@ -83,7 +83,7 @@ func checkNoEmptyRequiredFields(metadata map[string]mta.MetaData, m map[string]i
 			if meta, ok := metadata[key]; ok {
 				if !isPropertyOptional(meta.Optional) && !isPropertyOverWritable(meta.OverWritable) && value == nil {
 					keyNode := getPropByName(mapNode, key)
-					issues = append(issues, YamlValidationIssue{Msg: fmt.Sprintf(emptyRequiredFieldMsg, key, mapTypes[mapType].entityKind), Line: keyNode.Line})
+					issues = append(issues, YamlValidationIssue{Msg: fmt.Sprintf(emptyRequiredFieldMsg, key, mapTypes[mapType].entityKind), Line: keyNode.Line, Column: keyNode.Column})
 				}
 			}
 		}
@@ -108,7 +108,7 @@ func isPropertyOptional(value *bool) bool {
 func checkPropertiesMetadataWithListOrGroup(mapType int, metadataNodeName *yaml.Node, parentNode *yaml.Node, issues []YamlValidationIssue) []YamlValidationIssue {
 	if mapType == mapTypeProperties && metadataNodeName != nil {
 		if getPropByName(parentNode, listYamlField) != nil || getPropByName(parentNode, groupYamlField) != nil {
-			issues = append(issues, YamlValidationIssue{Msg: propertiesMetadataWithListOrGroupMsg, Line: metadataNodeName.Line})
+			issues = append(issues, YamlValidationIssue{Msg: propertiesMetadataWithListOrGroupMsg, Line: metadataNodeName.Line, Column: metadataNodeName.Column})
 		}
 	}
 	return issues

@@ -18,15 +18,15 @@ func checkSingleExtendNames(mta *mta.EXT, root *yaml.Node, source string, strict
 	moduleNames := make(map[string]nameInfo)
 	for i, module := range mta.Modules {
 		moduleNode := getNamedObjectNodeByIndex(root, modulesYamlField, i)
-		line := getNamedObjectLineByIndex(root, modulesYamlField, i)
+		line, column := getNamedObjectLineByIndex(root, modulesYamlField, i)
 		// validate module name
-		issues = validateNameIsExtendedOnce(moduleNames, module.Name, moduleEntityKind, issues, line)
+		issues = validateNameIsExtendedOnce(moduleNames, module.Name, moduleEntityKind, issues, line, column)
 
 		providesNames := make(map[string]nameInfo)
 		for j, provide := range module.Provides {
-			providesLine := getNamedObjectLineByIndex(moduleNode, providesYamlField, j)
+			providesLine, providesColumn := getNamedObjectLineByIndex(moduleNode, providesYamlField, j)
 			// validate name of provided service
-			issues = validateNameIsExtendedOnce(providesNames, provide.Name, providedPropEntityKind, issues, providesLine)
+			issues = validateNameIsExtendedOnce(providesNames, provide.Name, providedPropEntityKind, issues, providesLine, providesColumn)
 		}
 
 		// validate requires
@@ -35,9 +35,9 @@ func checkSingleExtendNames(mta *mta.EXT, root *yaml.Node, source string, strict
 		hookNames := make(map[string]nameInfo)
 		for j, hook := range module.Hooks {
 			hookNode := getNamedObjectNodeByIndex(moduleNode, hooksYamlField, j)
-			hookLine := getNamedObjectLineByIndex(moduleNode, hooksYamlField, j)
+			hookLine, hookColumn := getNamedObjectLineByIndex(moduleNode, hooksYamlField, j)
 			// validate hook name
-			issues = validateNameIsExtendedOnce(hookNames, hook.Name, hookPropEntityKind, issues, hookLine)
+			issues = validateNameIsExtendedOnce(hookNames, hook.Name, hookPropEntityKind, issues, hookLine, hookColumn)
 			// validate requires
 			issues = validateRequiresIsExtendedOnce(hook.Requires, hookNode, issues)
 		}
@@ -46,9 +46,9 @@ func checkSingleExtendNames(mta *mta.EXT, root *yaml.Node, source string, strict
 	resourceNames := make(map[string]nameInfo)
 	for i, resource := range mta.Resources {
 		resourceNode := getNamedObjectNodeByIndex(root, resourcesYamlField, i)
-		line := getNamedObjectLineByIndex(root, resourcesYamlField, i)
+		line, column := getNamedObjectLineByIndex(root, resourcesYamlField, i)
 		// validate resource name
-		issues = validateNameIsExtendedOnce(resourceNames, resource.Name, resourceEntityKind, issues, line)
+		issues = validateNameIsExtendedOnce(resourceNames, resource.Name, resourceEntityKind, issues, line, column)
 		// validate requires
 		issues = validateRequiresIsExtendedOnce(resource.Requires, resourceNode, issues)
 	}
@@ -58,15 +58,15 @@ func checkSingleExtendNames(mta *mta.EXT, root *yaml.Node, source string, strict
 func validateRequiresIsExtendedOnce(requiresList []mta.Requires, parentNode *yaml.Node, issues []YamlValidationIssue) []YamlValidationIssue {
 	requiresNames := make(map[string]nameInfo)
 	for i, requires := range requiresList {
-		requiresLine := getNamedObjectLineByIndex(parentNode, requiresYamlField, i)
-		issues = validateNameIsExtendedOnce(requiresNames, requires.Name, requiresPropEntityKind, issues, requiresLine)
+		requiresLine, requiresColumn := getNamedObjectLineByIndex(parentNode, requiresYamlField, i)
+		issues = validateNameIsExtendedOnce(requiresNames, requires.Name, requiresPropEntityKind, issues, requiresLine, requiresColumn)
 	}
 	return issues
 }
 
 // validateNameIsExtendedOnce - validate that name not defined already (not exists in the 'names' map)
 func validateNameIsExtendedOnce(names map[string]nameInfo, name string,
-	objectName string, issues []YamlValidationIssue, line int) []YamlValidationIssue {
+	objectName string, issues []YamlValidationIssue, line int, column int) []YamlValidationIssue {
 	result := issues
 	// try to find name in the global map
 	prevObject, ok := names[name]
@@ -77,10 +77,10 @@ func validateNameIsExtendedOnce(names map[string]nameInfo, name string,
 			article = "another"
 		}
 		result = appendIssue(result,
-			fmt.Sprintf(nameAlreadyExtendedMsg, name, objectName, article, prevObject.object, prevObject.Line), line)
+			fmt.Sprintf(nameAlreadyExtendedMsg, name, objectName, article, prevObject.object, prevObject.Line), line, column)
 	} else {
 		// name not found -> add it to the global map
-		names[name] = nameInfo{object: objectName, Line: line}
+		names[name] = nameInfo{object: objectName, Line: line, Column: column}
 	}
 	return result
 }

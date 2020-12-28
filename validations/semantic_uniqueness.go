@@ -10,6 +10,7 @@ import (
 type nameInfo struct {
 	object string
 	Line   int
+	Column int
 }
 
 // isNameUnique - validates the global uniqueness of the names of modules, provided services and resources
@@ -18,41 +19,41 @@ func isNameUnique(mta *mta.MTA, mtaNode *yaml.Node, source string, strict bool) 
 	// map: name -> object kind (module, provided services or resource)
 	names := make(map[string]nameInfo)
 	for i, module := range mta.Modules {
-		line := getModuleLineByIndex(mtaNode, i)
+		line, column := getModuleLineByIndex(mtaNode, i)
 		// validate module name
-		issues = validateNameUniqueness(names, module.Name, moduleEntityKind, issues, line)
+		issues = validateNameUniqueness(names, module.Name, moduleEntityKind, issues, line, column)
 		for j, provide := range module.Provides {
-			setLine := getProvidedSetByIndex(mtaNode, i, j)
+			setLine, setColumn := getProvidedSetByIndex(mtaNode, i, j)
 			// validate name of provided service
-			issues = validateNameUniqueness(names, provide.Name, providedPropEntityKind, issues, setLine)
+			issues = validateNameUniqueness(names, provide.Name, providedPropEntityKind, issues, setLine, setColumn)
 		}
 	}
 	for i, resource := range mta.Resources {
-		line := getResourceLineByIndex(mtaNode, i)
+		line, column := getResourceLineByIndex(mtaNode, i)
 		// validate resource name
-		issues = validateNameUniqueness(names, resource.Name, "resource", issues, line)
+		issues = validateNameUniqueness(names, resource.Name, "resource", issues, line, column)
 	}
 	return issues, nil
 }
 
-func getModuleLineByIndex(mtaNode *yaml.Node, index int) int {
+func getModuleLineByIndex(mtaNode *yaml.Node, index int) (line int, column int) {
 	return getNamedObjectLineByIndex(mtaNode, modulesYamlField, index)
 }
 
-func getResourceLineByIndex(mtaNode *yaml.Node, index int) int {
+func getResourceLineByIndex(mtaNode *yaml.Node, index int) (line int, column int) {
 	return getNamedObjectLineByIndex(mtaNode, resourcesYamlField, index)
 }
 
-func getProvidedSetByIndex(mtaNode *yaml.Node, moduleIndex, providedSetIndex int) int {
+func getProvidedSetByIndex(mtaNode *yaml.Node, moduleIndex, providedSetIndex int) (line int, column int) {
 	moduleNode := getNamedObjectNodeByIndex(mtaNode, modulesYamlField, moduleIndex)
 	provided := getPropValueByName(moduleNode, providesYamlField)
-	line, _ := getIndexedNodePropLine(provided, providedSetIndex, nameYamlField)
-	return line
+	line, column, _ = getIndexedNodePropLine(provided, providedSetIndex, nameYamlField)
+	return line, column
 }
 
 // validateNameUniqueness - validate that name not defined already (not exists in the 'names' map)
 func validateNameUniqueness(names map[string]nameInfo, name string,
-	objectName string, issues []YamlValidationIssue, line int) []YamlValidationIssue {
+	objectName string, issues []YamlValidationIssue, line int, column int) []YamlValidationIssue {
 	result := issues
 	// try to find name in the global map
 	prevObject, ok := names[name]
@@ -66,10 +67,10 @@ func validateNameUniqueness(names map[string]nameInfo, name string,
 		}
 		result = appendIssue(result,
 			fmt.Sprintf(`the "%s" %s name is already in use; %s %s was found with the same name on line %d`,
-				name, objectName, article, prevObject.object, prevObject.Line), line)
+				name, objectName, article, prevObject.object, prevObject.Line), line, column)
 	} else {
 		// name not found -> add it to the global map
-		names[name] = nameInfo{object: objectName, Line: line}
+		names[name] = nameInfo{object: objectName, Line: line, Column: column}
 	}
 	return result
 }

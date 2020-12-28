@@ -16,7 +16,7 @@ func checkDeprecatedOpt(buildParams map[string]interface{}, buildParamsNode *yam
 
 	if buildParams[optFieldName] != nil {
 		optsNode := getPropByName(buildParamsNode, optFieldName)
-		return []YamlValidationIssue{{Msg: fmt.Sprintf(deprecatedOptMsg, optFieldName, customBuilderDocLink), Line: optsNode.Line}}
+		return []YamlValidationIssue{{Msg: fmt.Sprintf(deprecatedOptMsg, optFieldName, customBuilderDocLink), Line: optsNode.Line, Column: optsNode.Column}}
 	}
 	return nil
 }

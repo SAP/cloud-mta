@@ -172,14 +172,14 @@ resources:
 			true, false, true, "")
 		Ω(warn).Should(BeNil())
 		Ω(err).Should(ConsistOf(
-			YamlValidationIssue{fmt.Sprintf(propertyExistsErrorMsg, "public", "modules[0].provides[0]"), 10},
-			YamlValidationIssue{fmt.Sprintf(propertyExistsErrorMsg, "list", "modules[0].requires[0]"), 13},
-			YamlValidationIssue{fmt.Sprintf(propertyExistsErrorMsg, "list", "modules[0].hooks[0].requires[0]"), 18},
-			YamlValidationIssue{`field optional not found in type mta.ResourceExt`, 21},
-			YamlValidationIssue{fmt.Sprintf(propertyExistsErrorMsg, "list", "resources[0].requires[0]"), 24},
-			YamlValidationIssue{fmt.Sprintf(propertyExistsErrorMsg, "properties-metadata", "resources[1].requires[0]"), 28},
-			YamlValidationIssue{fmt.Sprintf(propertyExistsErrorMsg, "parameters-metadata", "resources[1].requires[1]"), 30},
-			YamlValidationIssue{fmt.Sprintf(propertyExistsErrorMsg, "properties-metadata", "resources[2].requires[0]"), 34},
+			YamlValidationIssue{fmt.Sprintf(propertyExistsErrorMsg, "public", "modules[0].provides[0]"), 10, 5},
+			YamlValidationIssue{fmt.Sprintf(propertyExistsErrorMsg, "list", "modules[0].requires[0]"), 13, 5},
+			YamlValidationIssue{fmt.Sprintf(propertyExistsErrorMsg, "list", "modules[0].hooks[0].requires[0]"), 18, 7},
+			YamlValidationIssue{`field optional not found in type mta.ResourceExt`, 21, 0},
+			YamlValidationIssue{fmt.Sprintf(propertyExistsErrorMsg, "list", "resources[0].requires[0]"), 24, 5},
+			YamlValidationIssue{fmt.Sprintf(propertyExistsErrorMsg, "properties-metadata", "resources[1].requires[0]"), 28, 5},
+			YamlValidationIssue{fmt.Sprintf(propertyExistsErrorMsg, "parameters-metadata", "resources[1].requires[1]"), 30, 5},
+			YamlValidationIssue{fmt.Sprintf(propertyExistsErrorMsg, "properties-metadata", "resources[2].requires[0]"), 34, 5},
 		))
 	})
 })
