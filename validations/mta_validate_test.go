@@ -96,7 +96,7 @@ var _ = Describe("MTA tests", func() {
 				result, messages, err := Validate(mtaYamlPath, []string{mtaExtPath})
 				Ω(result).Should(MatchAllKeys(Keys{
 					mtaYamlPath: BeEmpty(),
-					mtaExtPath: BeEmpty(),
+					mtaExtPath:  BeEmpty(),
 				}))
 				Ω(messages).Should(BeEmpty())
 				Ω(err).Should(Succeed())
