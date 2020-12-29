@@ -54,7 +54,7 @@ resources:
 		Ω(len(issues)).Should(Equal(0))
 	})
 
-	It("getIndexedNodePropLine - missing property", func() {
+	It("getIndexedNodePropPosition - missing property", func() {
 		mtaContent := []byte(`
 modules:
  - name: ui5app
@@ -64,7 +64,7 @@ modules:
 		err := yaml.Unmarshal(mtaContent, &mtaStr)
 		Ω(err).Should(Succeed())
 		root, _ := getContentNode(mtaContent)
-		line, column, exists := getIndexedNodePropLine(root, 0, "unknown")
+		line, column, exists := getIndexedNodePropPosition(root, 0, "unknown")
 		Ω(line).Should(Equal(2))
 		Ω(column).Should(Equal(1))
 		Ω(exists).Should(BeFalse())

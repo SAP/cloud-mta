@@ -32,7 +32,7 @@ type FileValidationIssue struct {
 }
 
 // Validate validates an mta.yaml file and a list of mta extension files, and returns the issues for each file.
-func Validate(mtaPath string, extensions []string) (ValidationResult, []string, error) {
+func Validate(mtaPath string, extensions []string) ValidationResult {
 	allIssues := make(ValidationResult)
 	// Assuming the project path is the folder of the mta.yaml
 	projectPath := filepath.Dir(mtaPath)
@@ -60,7 +60,7 @@ func Validate(mtaPath string, extensions []string) (ValidationResult, []string, 
 		}
 	}
 
-	return allIssues, nil, nil
+	return allIssues
 }
 
 func createFileIssues(warningIssues YamlValidationIssues, errorIssues YamlValidationIssues) []FileValidationIssue {
@@ -98,7 +98,7 @@ func MtaYaml(projectPath, mtaFilename string,
 		return "", err
 	}
 	if len(errIssues) > 0 {
-		return warnIssues.String(), errors.Errorf(`the "%v" file is not valid: `+"\n%v",
+		return warnIssues.String(), errors.Errorf(`the %q file is not valid: `+"\n%v",
 			filepath.Join(projectPath, mtaFilename), errIssues.String())
 	}
 	return warnIssues.String(), nil
@@ -111,7 +111,7 @@ func validateMtaYaml(projectPath, mtaFilename string, validateSchema, validateSe
 		// ParseFile contains MTA yaml content.
 		yamlContent, e := fs.ReadFile(mtaPath)
 		if e != nil {
-			return nil, nil, errors.Wrapf(e, `could not read the "%v" file; the validation failed`, mtaPath)
+			return nil, nil, errors.Wrapf(e, `could not read the %q file; the validation failed`, mtaPath)
 		}
 
 		// Validates MTA content.

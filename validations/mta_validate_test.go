@@ -83,27 +83,23 @@ var _ = Describe("MTA tests", func() {
 		var _ = Describe("Validate", func() {
 			It("doesn't return issues when mta.yaml is valid", func() {
 				mtaYamlPath := getTestPath("validateProject", "valid_mta.yaml")
-				result, messages, err := Validate(mtaYamlPath, nil)
+				result := Validate(mtaYamlPath, nil)
 				Ω(result).Should(MatchAllKeys(Keys{
 					mtaYamlPath: BeEmpty(),
 				}))
-				Ω(messages).Should(BeEmpty())
-				Ω(err).Should(Succeed())
 			})
 			It("doesn't return issues when mta.yaml and mtaext file are valid", func() {
 				mtaYamlPath := getTestPath("validateProject", "valid_mta.yaml")
 				mtaExtPath := getTestPath("validateProject", "valid.mtaext")
-				result, messages, err := Validate(mtaYamlPath, []string{mtaExtPath})
+				result := Validate(mtaYamlPath, []string{mtaExtPath})
 				Ω(result).Should(MatchAllKeys(Keys{
 					mtaYamlPath: BeEmpty(),
 					mtaExtPath:  BeEmpty(),
 				}))
-				Ω(messages).Should(BeEmpty())
-				Ω(err).Should(Succeed())
 			})
 			It("returns an error on the mta.yaml when mta.yaml file is not found", func() {
 				mtaYamlPath := getTestPath("validateProject", "doesNotExistMta.yaml")
-				result, messages, err := Validate(mtaYamlPath, nil)
+				result := Validate(mtaYamlPath, nil)
 				Ω(result).Should(MatchAllKeys(Keys{
 					mtaYamlPath: ConsistOf(MatchAllFields(Fields{
 						"Severity": Equal("error"),
@@ -112,14 +108,12 @@ var _ = Describe("MTA tests", func() {
 						"Column":   Equal(0),
 					})),
 				}))
-				Ω(messages).Should(BeEmpty())
-				Ω(err).Should(Succeed())
 			})
 
 			It("returns an error on an mtaext file when the mtaext file is not found", func() {
 				mtaYamlPath := getTestPath("validateProject", "valid_mta.yaml")
 				mtaExtPath := getTestPath("validateProject", "nonExisting.mtaext")
-				result, messages, err := Validate(mtaYamlPath, []string{mtaExtPath})
+				result := Validate(mtaYamlPath, []string{mtaExtPath})
 				Ω(result).Should(MatchAllKeys(Keys{
 					mtaYamlPath: BeEmpty(),
 					mtaExtPath: ConsistOf(MatchAllFields(Fields{
@@ -129,14 +123,12 @@ var _ = Describe("MTA tests", func() {
 						"Column":   Equal(0),
 					})),
 				}))
-				Ω(messages).Should(BeEmpty())
-				Ω(err).Should(Succeed())
 			})
 
 			It("returns warnings for schema validations for mta.yaml and mtaext", func() {
 				mtaYamlPath := getTestPath("validateProject", "bad_schema_mta.yaml")
 				mtaExtPath := getTestPath("validateProject", "bad_schema.mtaext")
-				result, messages, err := Validate(mtaYamlPath, []string{mtaExtPath})
+				result := Validate(mtaYamlPath, []string{mtaExtPath})
 				Ω(result).Should(MatchAllKeys(Keys{
 					mtaYamlPath: ConsistOf(
 						MatchAllFields(Fields{
@@ -165,14 +157,12 @@ var _ = Describe("MTA tests", func() {
 						"Column":   Equal(0),
 					})),
 				}))
-				Ω(messages).Should(BeEmpty())
-				Ω(err).Should(Succeed())
 			})
 
 			It("returns an error when merge fails", func() {
 				mtaYamlPath := getTestPath("validateProject", "valid_mta.yaml")
 				mtaExtPath := getTestPath("validateProject", "bad_merge.mtaext")
-				result, messages, err := Validate(mtaYamlPath, []string{mtaExtPath})
+				result := Validate(mtaYamlPath, []string{mtaExtPath})
 				Ω(result).Should(MatchAllKeys(Keys{
 					mtaYamlPath: BeEmpty(),
 					mtaExtPath: ConsistOf(MatchAllFields(Fields{
@@ -182,15 +172,13 @@ var _ = Describe("MTA tests", func() {
 						"Column":   Equal(0),
 					})),
 				}))
-				Ω(messages).Should(BeEmpty())
-				Ω(err).Should(Succeed())
 			})
 
 			It("returns issues from mta.yaml, mtaext and merge", func() {
 				mtaYamlPath := getTestPath("validateProject", "bad_semantic_mta.yaml")
 				mtaExtPath1 := getTestPath("validateProject", "bad_semantic.mtaext")
 				mtaExtPath2 := getTestPath("validateProject", "bad_id.mtaext")
-				result, messages, err := Validate(mtaYamlPath, []string{mtaExtPath1, mtaExtPath2})
+				result := Validate(mtaYamlPath, []string{mtaExtPath1, mtaExtPath2})
 				Ω(result).Should(MatchAllKeys(Keys{
 					mtaYamlPath: ConsistOf(
 						MatchAllFields(Fields{
@@ -225,8 +213,6 @@ var _ = Describe("MTA tests", func() {
 						}),
 					),
 				}))
-				Ω(messages).Should(BeEmpty())
-				Ω(err).Should(Succeed())
 			})
 		})
 

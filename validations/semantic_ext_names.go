@@ -18,13 +18,13 @@ func checkSingleExtendNames(mta *mta.EXT, root *yaml.Node, source string, strict
 	moduleNames := make(map[string]nameInfo)
 	for i, module := range mta.Modules {
 		moduleNode := getNamedObjectNodeByIndex(root, modulesYamlField, i)
-		line, column := getNamedObjectLineByIndex(root, modulesYamlField, i)
+		line, column := getNamedObjectPositionByIndex(root, modulesYamlField, i)
 		// validate module name
 		issues = validateNameIsExtendedOnce(moduleNames, module.Name, moduleEntityKind, issues, line, column)
 
 		providesNames := make(map[string]nameInfo)
 		for j, provide := range module.Provides {
-			providesLine, providesColumn := getNamedObjectLineByIndex(moduleNode, providesYamlField, j)
+			providesLine, providesColumn := getNamedObjectPositionByIndex(moduleNode, providesYamlField, j)
 			// validate name of provided service
 			issues = validateNameIsExtendedOnce(providesNames, provide.Name, providedPropEntityKind, issues, providesLine, providesColumn)
 		}
@@ -35,7 +35,7 @@ func checkSingleExtendNames(mta *mta.EXT, root *yaml.Node, source string, strict
 		hookNames := make(map[string]nameInfo)
 		for j, hook := range module.Hooks {
 			hookNode := getNamedObjectNodeByIndex(moduleNode, hooksYamlField, j)
-			hookLine, hookColumn := getNamedObjectLineByIndex(moduleNode, hooksYamlField, j)
+			hookLine, hookColumn := getNamedObjectPositionByIndex(moduleNode, hooksYamlField, j)
 			// validate hook name
 			issues = validateNameIsExtendedOnce(hookNames, hook.Name, hookPropEntityKind, issues, hookLine, hookColumn)
 			// validate requires
@@ -46,7 +46,7 @@ func checkSingleExtendNames(mta *mta.EXT, root *yaml.Node, source string, strict
 	resourceNames := make(map[string]nameInfo)
 	for i, resource := range mta.Resources {
 		resourceNode := getNamedObjectNodeByIndex(root, resourcesYamlField, i)
-		line, column := getNamedObjectLineByIndex(root, resourcesYamlField, i)
+		line, column := getNamedObjectPositionByIndex(root, resourcesYamlField, i)
 		// validate resource name
 		issues = validateNameIsExtendedOnce(resourceNames, resource.Name, resourceEntityKind, issues, line, column)
 		// validate requires
@@ -58,7 +58,7 @@ func checkSingleExtendNames(mta *mta.EXT, root *yaml.Node, source string, strict
 func validateRequiresIsExtendedOnce(requiresList []mta.Requires, parentNode *yaml.Node, issues []YamlValidationIssue) []YamlValidationIssue {
 	requiresNames := make(map[string]nameInfo)
 	for i, requires := range requiresList {
-		requiresLine, requiresColumn := getNamedObjectLineByIndex(parentNode, requiresYamlField, i)
+		requiresLine, requiresColumn := getNamedObjectPositionByIndex(parentNode, requiresYamlField, i)
 		issues = validateNameIsExtendedOnce(requiresNames, requires.Name, requiresPropEntityKind, issues, requiresLine, requiresColumn)
 	}
 	return issues

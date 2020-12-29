@@ -212,7 +212,7 @@ var validateMtaCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Extensions don't change the mta ID
 		return mta.RunAndWriteResultAndHash("validate MTA", validateMtaCmdPath, validateMtaCmdExtensions, func() (interface{}, []string, error) {
-			return validate.Validate(validateMtaCmdPath, validateMtaCmdExtensions)
+			return validate.Validate(validateMtaCmdPath, validateMtaCmdExtensions), nil, nil
 		})
 	},
 	Hidden:        true,

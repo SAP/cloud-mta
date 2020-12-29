@@ -19,35 +19,35 @@ func isNameUnique(mta *mta.MTA, mtaNode *yaml.Node, source string, strict bool) 
 	// map: name -> object kind (module, provided services or resource)
 	names := make(map[string]nameInfo)
 	for i, module := range mta.Modules {
-		line, column := getModuleLineByIndex(mtaNode, i)
+		line, column := getModulePositionByIndex(mtaNode, i)
 		// validate module name
 		issues = validateNameUniqueness(names, module.Name, moduleEntityKind, issues, line, column)
 		for j, provide := range module.Provides {
-			setLine, setColumn := getProvidedSetByIndex(mtaNode, i, j)
+			setLine, setColumn := getProvidedSetPositionByIndex(mtaNode, i, j)
 			// validate name of provided service
 			issues = validateNameUniqueness(names, provide.Name, providedPropEntityKind, issues, setLine, setColumn)
 		}
 	}
 	for i, resource := range mta.Resources {
-		line, column := getResourceLineByIndex(mtaNode, i)
+		line, column := getResourcePositionByIndex(mtaNode, i)
 		// validate resource name
 		issues = validateNameUniqueness(names, resource.Name, "resource", issues, line, column)
 	}
 	return issues, nil
 }
 
-func getModuleLineByIndex(mtaNode *yaml.Node, index int) (line int, column int) {
-	return getNamedObjectLineByIndex(mtaNode, modulesYamlField, index)
+func getModulePositionByIndex(mtaNode *yaml.Node, index int) (line int, column int) {
+	return getNamedObjectPositionByIndex(mtaNode, modulesYamlField, index)
 }
 
-func getResourceLineByIndex(mtaNode *yaml.Node, index int) (line int, column int) {
-	return getNamedObjectLineByIndex(mtaNode, resourcesYamlField, index)
+func getResourcePositionByIndex(mtaNode *yaml.Node, index int) (line int, column int) {
+	return getNamedObjectPositionByIndex(mtaNode, resourcesYamlField, index)
 }
 
-func getProvidedSetByIndex(mtaNode *yaml.Node, moduleIndex, providedSetIndex int) (line int, column int) {
+func getProvidedSetPositionByIndex(mtaNode *yaml.Node, moduleIndex, providedSetIndex int) (line int, column int) {
 	moduleNode := getNamedObjectNodeByIndex(mtaNode, modulesYamlField, moduleIndex)
 	provided := getPropValueByName(moduleNode, providesYamlField)
-	line, column, _ = getIndexedNodePropLine(provided, providedSetIndex, nameYamlField)
+	line, column, _ = getIndexedNodePropPosition(provided, providedSetIndex, nameYamlField)
 	return line, column
 }
 

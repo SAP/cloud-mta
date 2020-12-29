@@ -37,7 +37,7 @@ func ifModulePathExists(mta *mta.MTA, mtaNode *yaml.Node, source string, strict 
 			// check existence of file/folder
 			_, err := os.Stat(fullPath)
 			if err != nil {
-				line, column, _ := getIndexedNodePropLine(modulesNode, index, pathYamlField)
+				line, column, _ := getIndexedNodePropPosition(modulesNode, index, pathYamlField)
 				// path not exists -> add an issue
 				issues = appendIssue(issues, fmt.Sprintf(`the "%s" path of the "%s" module does not exist`,
 					module.Path, module.Name), line, column)
