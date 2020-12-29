@@ -53,22 +53,25 @@ func checkHTML5ModuleParams(module *mta.Module, moduleNode *yaml.Node) []YamlVal
 	if !supportedPlatformsDefined && !buildResultDefined {
 		return []YamlValidationIssue{
 			{
-				Msg:  fmt.Sprintf(missingConfigsMsg, module.Name, missingConfigDocLink),
-				Line: moduleNode.Line,
+				Msg:    fmt.Sprintf(missingConfigsMsg, module.Name, missingConfigDocLink),
+				Line:   moduleNode.Line,
+				Column: moduleNode.Column,
 			},
 		}
 	} else if !supportedPlatformsDefined {
 		return []YamlValidationIssue{
 			{
-				Msg:  fmt.Sprintf(missingConfigMsg, module.Name, supportedPlatformsYamlField, missingConfigDocLink),
-				Line: moduleNode.Line,
+				Msg:    fmt.Sprintf(missingConfigMsg, module.Name, supportedPlatformsYamlField, missingConfigDocLink),
+				Line:   moduleNode.Line,
+				Column: moduleNode.Column,
 			},
 		}
 	} else if !buildResultDefined {
 		return []YamlValidationIssue{
 			{
-				Msg:  fmt.Sprintf(missingConfigMsg, module.Name, buildResultYamlField, missingConfigDocLink),
-				Line: moduleNode.Line,
+				Msg:    fmt.Sprintf(missingConfigMsg, module.Name, buildResultYamlField, missingConfigDocLink),
+				Line:   moduleNode.Line,
+				Column: moduleNode.Column,
 			},
 		}
 	}

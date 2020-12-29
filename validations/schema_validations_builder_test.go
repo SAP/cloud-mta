@@ -15,7 +15,7 @@ var _ = Describe("Schema tests Issues", func() {
 	var _ = DescribeTable("Schema issues",
 		func(schema string, message string) {
 			_, schemaIssues := buildValidationsFromSchemaText([]byte(schema))
-			expectSingleValidationError(schemaIssues, message, 0) // We don't pass the line number to schema issues
+			expectSingleValidationError(schemaIssues, message, 0, 0) // We don't pass the line and column numbers to schema issues
 		},
 		Entry("Parsing", `
 type: map
@@ -210,12 +210,12 @@ isHappy: false
 	)
 
 	var _ = DescribeTable("Invalid input",
-		func(schema, input, message string, line int) {
+		func(schema, input, message string, line int, column int) {
 			schemaValidations, schemaIssues := buildValidationsFromSchemaText([]byte(schema))
 			assertNoSchemaIssues(schemaIssues)
 			node, _ := getContentNode([]byte(input))
 			validateIssues := runSchemaValidations(node, schemaValidations...)
-			expectSingleValidationError(validateIssues, message, line)
+			expectSingleValidationError(validateIssues, message, line, column)
 		},
 		Entry("required", `
 type: map
@@ -224,7 +224,7 @@ mapping:
 `, `
 firstName: Donald
 lastName: duck
-`, `missing the "age" required property in the root .yaml node`, 2),
+`, `missing the "age" required property in the root .yaml node`, 2, 1),
 
 		Entry("required mapping field", `
 type: map
@@ -234,7 +234,7 @@ mapping:
     required: true
     mapping:
       firstName: {type: string}
-`, `{}`, `missing the "inner" required property in the root .yaml node`, 1),
+`, `{}`, `missing the "inner" required property in the root .yaml node`, 1, 1),
 
 		Entry("required mapping field with inner required field", `
 type: map
@@ -244,7 +244,7 @@ mapping:
     required: true
     mapping:
       firstName: {required: true}
-`, `{}`, `missing the "inner" required property in the root .yaml node`, 1),
+`, `{}`, `missing the "inner" required property in the root .yaml node`, 1, 1),
 
 		Entry("Enum", `
 type: str
@@ -254,7 +254,7 @@ enum:
    - cat
    - mouse
    - elephant
-`, `bird`, `the "bird" value of the "root" enum property is invalid; expected one of the following: duck,dog,cat,mouse`, 1),
+`, `bird`, `the "bird" value of the "root" enum property is invalid; expected one of the following: duck,dog,cat,mouse`, 1, 1),
 
 		Entry("sequence", `
 type: seq
@@ -268,7 +268,7 @@ sequence:
 
 - age: 80
   lastName: Bunny
-`, `missing the "name" required property in the root[1] .yaml node`, 5),
+`, `missing the "name" required property in the root[1] .yaml node`, 5, 3),
 
 		Entry("sequence of mapping with default value - value is sequence", `
 type: seq
@@ -284,7 +284,7 @@ sequence:
   - true
   - b
   key2: []
-`, `the "[0].firstKey[1]" property must be a boolean`, 4),
+`, `the "[0].firstKey[1]" property must be a boolean`, 4, 5),
 
 		Entry("mapping with default value - value is mapping", `
 type: map
@@ -300,7 +300,7 @@ firstKey:
 key2:
   age: 30
   lastName: Bunny
-`, `missing the "name" required property in the root.key2 .yaml node`, 6),
+`, `missing the "name" required property in the root.key2 .yaml node`, 6, 3),
 
 		Entry("Pattern", `
 type: map
@@ -309,7 +309,7 @@ mapping:
 `, `
 name: Bamba
 age: NaN
-`, `the "NaN" value of the "root.age" property does not match the "^[0-9]+$" pattern`, 3),
+`, `the "NaN" value of the "root.age" property does not match the "^[0-9]+$" pattern`, 3, 6),
 
 		Entry("optional With Pattern", `
 type: map
@@ -318,7 +318,7 @@ mapping:
 `, `
 firstName: Donald123
 lastName: duck
-`, `the "Donald123" value of the "root.firstName" property does not match the "^[a-zA-Z]+$" pattern`, 2),
+`, `the "Donald123" value of the "root.firstName" property does not match the "^[a-zA-Z]+$" pattern`, 2, 12),
 
 		Entry("Type Is Bool", `
 type: map
@@ -327,6 +327,6 @@ mapping:
 `, `
 firstName: John
 isHappy: 123
-`, `the "root.isHappy" property must be a boolean`, 3),
+`, `the "root.isHappy" property must be a boolean`, 3, 10),
 	)
 })

@@ -79,18 +79,19 @@ type extensionDetails struct {
 	ext      *EXT
 }
 
-type extensionError struct {
-	fileName string
-	err      error
+type ExtensionError struct {
+	FileName     string
+	err          error
+	IsParseError bool
 }
 
-func (e extensionError) Error() string {
+func (e ExtensionError) Error() string {
 	return e.err.Error()
 }
 
 // mergeWithExtensionFiles merges the extensions in the order of the 'extends' chain.
 // The extends chain, and the ID and schema version of each mtaext file is validated.
-func mergeWithExtensionFiles(mta *MTA, extensions []string, mtaPath string) *extensionError {
+func mergeWithExtensionFiles(mta *MTA, extensions []string, mtaPath string) *ExtensionError {
 	extensionsDetails, extErr := getSortedExtensions(extensions, mta.ID, mtaPath)
 	if extErr != nil {
 		return extErr
@@ -99,17 +100,17 @@ func mergeWithExtensionFiles(mta *MTA, extensions []string, mtaPath string) *ext
 	for _, extDetails := range extensionsDetails {
 		err := checkSchemaVersionMatches(mta, extDetails)
 		if err != nil {
-			return &extensionError{extDetails.fileName, err}
+			return &ExtensionError{extDetails.fileName, err, false}
 		}
 		err = Merge(mta, extDetails.ext, extDetails.fileName)
 		if err != nil {
-			return &extensionError{extDetails.fileName, err}
+			return &ExtensionError{extDetails.fileName, err, false}
 		}
 	}
 	return nil
 }
 
-func getSortedExtensions(extensionFileNames []string, mtaID string, mtaPath string) ([]extensionDetails, *extensionError) {
+func getSortedExtensions(extensionFileNames []string, mtaID string, mtaPath string) ([]extensionDetails, *ExtensionError) {
 	// Parse all extension files and put them in a slice of extension details (the extension with the file name)
 	extensions, err := parseExtensionsWithDetails(extensionFileNames)
 	if err != nil {
@@ -126,8 +127,8 @@ func getSortedExtensions(extensionFileNames []string, mtaID string, mtaPath stri
 	extendsMap := make(map[string]extensionDetails, len(extensionFileNames))
 	for _, details := range extensions {
 		if value, ok := extendsMap[details.ext.Extends]; ok {
-			return nil, &extensionError{details.fileName, errors.Errorf(duplicateExtendsMsg,
-				value.fileName, details.fileName, details.ext.Extends)}
+			return nil, &ExtensionError{details.fileName, errors.Errorf(duplicateExtendsMsg,
+				value.fileName, details.fileName, details.ext.Extends), false}
 		}
 		extendsMap[details.ext.Extends] = details
 	}
@@ -136,35 +137,35 @@ func getSortedExtensions(extensionFileNames []string, mtaID string, mtaPath stri
 	return sortAndVerifyExtendsChain(extensionFileNames, mtaID, extendsMap)
 }
 
-func parseExtensionsWithDetails(extensionFileNames []string) ([]extensionDetails, *extensionError) {
+func parseExtensionsWithDetails(extensionFileNames []string) ([]extensionDetails, *ExtensionError) {
 	extensions := make([]extensionDetails, len(extensionFileNames))
 	for i, extFileName := range extensionFileNames {
 		extFile, err := parseExtFile(extFileName)
 		if err != nil {
-			return nil, &extensionError{extFileName, err}
+			return nil, &ExtensionError{extFileName, err, true}
 		}
 		extensions[i] = extensionDetails{extFileName, extFile}
 	}
 	return extensions, nil
 }
 
-func checkExtensionIDsUniqueness(extensions []extensionDetails, mtaID string, mtaPath string) *extensionError {
+func checkExtensionIDsUniqueness(extensions []extensionDetails, mtaID string, mtaPath string) *ExtensionError {
 	extensionIDMap := make(map[string]extensionDetails, len(extensions))
 	for _, details := range extensions {
 		if details.ext.ID == mtaID {
-			return &extensionError{details.fileName, errors.Errorf(extensionIDSameAsMtaIDMsg,
-				details.fileName, mtaID, mtaPath)}
+			return &ExtensionError{details.fileName, errors.Errorf(extensionIDSameAsMtaIDMsg,
+				details.fileName, mtaID, mtaPath), false}
 		}
 		if value, ok := extensionIDMap[details.ext.ID]; ok {
-			return &extensionError{details.fileName, errors.Errorf(duplicateExtensionIDMsg,
-				value.fileName, details.fileName, details.ext.ID)}
+			return &ExtensionError{details.fileName, errors.Errorf(duplicateExtensionIDMsg,
+				value.fileName, details.fileName, details.ext.ID), false}
 		}
 		extensionIDMap[details.ext.ID] = details
 	}
 	return nil
 }
 
-func sortAndVerifyExtendsChain(extensionFileNames []string, mtaID string, extendsMap map[string]extensionDetails) ([]extensionDetails, *extensionError) {
+func sortAndVerifyExtendsChain(extensionFileNames []string, mtaID string, extendsMap map[string]extensionDetails) ([]extensionDetails, *ExtensionError) {
 	sortedExtFiles := make([]extensionDetails, 0, len(extensionFileNames))
 	currExtends := mtaID
 	value, ok := extendsMap[currExtends]
@@ -188,7 +189,7 @@ func sortAndVerifyExtendsChain(extensionFileNames []string, mtaID string, extend
 		}
 		// Return the error on the first encountered extension since we only support one error currently.
 		// Note that it's not necessarily the first extension in the list of extension files (since the map iteration order is undefined).
-		return nil, &extensionError{fileName, errors.Errorf(unknownExtendsMsg, strings.Join(fileParts, `; `))}
+		return nil, &ExtensionError{fileName, errors.Errorf(unknownExtendsMsg, strings.Join(fileParts, `; `)), false}
 	}
 	return sortedExtFiles, nil
 }

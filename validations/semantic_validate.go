@@ -118,13 +118,13 @@ func getSemanticValidations(exclude string) []checkSemantic {
 	return validations
 }
 
-func getIndexedNodePropLine(node *yaml.Node, index int, propName string) (line int, propFound bool) {
+func getIndexedNodePropPosition(node *yaml.Node, index int, propName string) (line int, column int, propFound bool) {
 	indexedNode := node.Content[index]
 	nameNode := getPropValueByName(indexedNode, propName)
 	if nameNode == nil {
-		return indexedNode.Line, false // First line of the indexed node (in case we can't find the property inside the node)
+		return indexedNode.Line, indexedNode.Column, false // First line of the indexed node (in case we can't find the property inside the node)
 	}
-	return nameNode.Line, true
+	return nameNode.Line, nameNode.Column, true
 }
 
 func getNamedObjectNodeByIndex(parentNode *yaml.Node, fieldName string, index int) *yaml.Node {
@@ -132,8 +132,8 @@ func getNamedObjectNodeByIndex(parentNode *yaml.Node, fieldName string, index in
 	return objectsNode.Content[index]
 }
 
-func getNamedObjectLineByIndex(parentNode *yaml.Node, fieldName string, index int) int {
+func getNamedObjectPositionByIndex(parentNode *yaml.Node, fieldName string, index int) (line int, column int) {
 	objectsNode := getPropValueByName(parentNode, fieldName)
-	line, _ := getIndexedNodePropLine(objectsNode, index, nameYamlField)
-	return line
+	line, column, _ = getIndexedNodePropPosition(objectsNode, index, nameYamlField)
+	return line, column
 }

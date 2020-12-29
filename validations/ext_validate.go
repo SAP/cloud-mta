@@ -17,13 +17,25 @@ const (
 // Mtaext validates an MTA extension file.
 func Mtaext(projectPath, extPath string,
 	validateSchema, validateSemantic, strict bool, exclude string) (warning string, err error) {
+	errIssues, warnIssues, e := validateMtaext(projectPath, extPath, validateSchema, validateSemantic, strict, exclude)
+	if e != nil {
+		return "", e
+	}
+	if len(errIssues) > 0 {
+		return warnIssues.String(), errors.Errorf(validationErrorsMsg, extPath, errIssues.String())
+	}
+	return warnIssues.String(), nil
+}
+
+func validateMtaext(projectPath, extPath string, validateSchema, validateSemantic, strict bool,
+	exclude string) (errIssues YamlValidationIssues, warnIssues YamlValidationIssues, err error) {
 	if validateSemantic || validateSchema {
 		var errIssues, warnIssues YamlValidationIssues
 
 		// ParseFile contains MTA yaml content.
 		yamlContent, e := fs.ReadFile(extPath)
 		if e != nil {
-			return "", errors.Wrapf(e, couldNotValidateErrorMsg, extPath)
+			return nil, nil, errors.Wrapf(e, couldNotValidateErrorMsg, extPath)
 		}
 
 		// Validates MTA content.
@@ -33,13 +45,10 @@ func Mtaext(projectPath, extPath string,
 		errIssues.Sort()
 		warnIssues = append(warnIssues, contentWarnIssues...)
 		warnIssues.Sort()
-		if len(errIssues) > 0 {
-			return warnIssues.String(), errors.Errorf(validationErrorsMsg, extPath, errIssues.String())
-		}
-		return warnIssues.String(), nil
+		return errIssues, warnIssues, nil
 	}
 
-	return "", nil
+	return nil, nil, nil
 }
 
 // validateExt validates the MTA extension descriptor

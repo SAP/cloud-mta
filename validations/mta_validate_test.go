@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
+	. "github.com/onsi/gomega/gstruct"
 	"gopkg.in/yaml.v3"
 
 	"github.com/SAP/cloud-mta/internal/fs"
@@ -79,6 +80,142 @@ var _ = Describe("MTA tests", func() {
 	})
 
 	var _ = Describe("Validation", func() {
+		var _ = Describe("Validate", func() {
+			It("doesn't return issues when mta.yaml is valid", func() {
+				mtaYamlPath := getTestPath("validateProject", "valid_mta.yaml")
+				result := Validate(mtaYamlPath, nil)
+				Ω(result).Should(MatchAllKeys(Keys{
+					mtaYamlPath: BeEmpty(),
+				}))
+			})
+			It("doesn't return issues when mta.yaml and mtaext file are valid", func() {
+				mtaYamlPath := getTestPath("validateProject", "valid_mta.yaml")
+				mtaExtPath := getTestPath("validateProject", "valid.mtaext")
+				result := Validate(mtaYamlPath, []string{mtaExtPath})
+				Ω(result).Should(MatchAllKeys(Keys{
+					mtaYamlPath: BeEmpty(),
+					mtaExtPath:  BeEmpty(),
+				}))
+			})
+			It("returns an error on the mta.yaml when mta.yaml file is not found", func() {
+				mtaYamlPath := getTestPath("validateProject", "doesNotExistMta.yaml")
+				result := Validate(mtaYamlPath, nil)
+				Ω(result).Should(MatchAllKeys(Keys{
+					mtaYamlPath: ConsistOf(MatchAllFields(Fields{
+						"Severity": Equal("error"),
+						"Message":  ContainSubstring(fs.PathNotFoundMsg, mtaYamlPath),
+						"Line":     Equal(0),
+						"Column":   Equal(0),
+					})),
+				}))
+			})
+
+			It("returns an error on an mtaext file when the mtaext file is not found", func() {
+				mtaYamlPath := getTestPath("validateProject", "valid_mta.yaml")
+				mtaExtPath := getTestPath("validateProject", "nonExisting.mtaext")
+				result := Validate(mtaYamlPath, []string{mtaExtPath})
+				Ω(result).Should(MatchAllKeys(Keys{
+					mtaYamlPath: BeEmpty(),
+					mtaExtPath: ConsistOf(MatchAllFields(Fields{
+						"Severity": Equal("error"),
+						"Message":  ContainSubstring(fs.PathNotFoundMsg, mtaExtPath),
+						"Line":     Equal(0),
+						"Column":   Equal(0),
+					})),
+				}))
+			})
+
+			It("returns warnings for schema validations for mta.yaml and mtaext", func() {
+				mtaYamlPath := getTestPath("validateProject", "bad_schema_mta.yaml")
+				mtaExtPath := getTestPath("validateProject", "bad_schema.mtaext")
+				result := Validate(mtaYamlPath, []string{mtaExtPath})
+				Ω(result).Should(MatchAllKeys(Keys{
+					mtaYamlPath: ConsistOf(
+						MatchAllFields(Fields{
+							"Severity": Equal("warning"),
+							"Message":  ContainSubstring("path"),
+							"Line":     Equal(17),
+							"Column":   Equal(4),
+						}),
+						MatchAllFields(Fields{
+							"Severity": Equal("warning"),
+							"Message":  ContainSubstring("type1"),
+							"Line":     Equal(30),
+							"Column":   Equal(0), // Unmarhshal errors return without a column
+						}),
+						MatchAllFields(Fields{
+							"Severity": Equal("warning"),
+							"Message":  ContainSubstring("abc"),
+							"Line":     Equal(28),
+							"Column":   Equal(0), // Unmarhshal errors return without a column
+						}),
+					),
+					mtaExtPath: ConsistOf(MatchAllFields(Fields{
+						"Severity": Equal("warning"),
+						"Message":  ContainSubstring("type"),
+						"Line":     Equal(16),
+						"Column":   Equal(0),
+					})),
+				}))
+			})
+
+			It("returns an error when merge fails", func() {
+				mtaYamlPath := getTestPath("validateProject", "valid_mta.yaml")
+				mtaExtPath := getTestPath("validateProject", "bad_merge.mtaext")
+				result := Validate(mtaYamlPath, []string{mtaExtPath})
+				Ω(result).Should(MatchAllKeys(Keys{
+					mtaYamlPath: BeEmpty(),
+					mtaExtPath: ConsistOf(MatchAllFields(Fields{
+						"Severity": Equal("error"),
+						"Message":  ContainSubstring("ui5app3"),
+						"Line":     Equal(0), // We don't return the location for merge errors
+						"Column":   Equal(0),
+					})),
+				}))
+			})
+
+			It("returns issues from mta.yaml, mtaext and merge", func() {
+				mtaYamlPath := getTestPath("validateProject", "bad_semantic_mta.yaml")
+				mtaExtPath1 := getTestPath("validateProject", "bad_semantic.mtaext")
+				mtaExtPath2 := getTestPath("validateProject", "bad_id.mtaext")
+				result := Validate(mtaYamlPath, []string{mtaExtPath1, mtaExtPath2})
+				Ω(result).Should(MatchAllKeys(Keys{
+					mtaYamlPath: ConsistOf(
+						MatchAllFields(Fields{
+							"Severity": Equal("warning"),
+							"Message":  ContainSubstring("ui5appNotExisting"),
+							"Line":     Equal(8),
+							"Column":   Equal(10),
+						}),
+						MatchAllFields(Fields{
+							"Severity": Equal("warning"),
+							"Message":  ContainSubstring("dest_mtahtml5"),
+							"Line":     Equal(14),
+							"Column":   Equal(13),
+						}),
+					),
+					mtaExtPath1: ConsistOf(
+						// Only one merge error is returned, and it's from the other file because it's in the ID
+						// which is checked before the extended module names on each mtaext file
+						MatchAllFields(Fields{
+							"Severity": Equal("warning"),
+							"Message":  ContainSubstring("ui5app"),
+							"Line":     Equal(12),
+							"Column":   Equal(10),
+						}),
+					),
+					mtaExtPath2: ConsistOf(
+						MatchAllFields(Fields{
+							"Severity": Equal("error"),
+							"Message":  ContainSubstring("mtahtml5_unkmown"),
+							"Line":     Equal(0),
+							"Column":   Equal(0),
+						}),
+					),
+				}))
+			})
+		})
+
 		var _ = DescribeTable("getValidationMode", func(flag string, expectedValidateSchema, expectedValidateProject, expectedSuccess bool) {
 			res1, res2, err := GetValidationMode(flag)
 			Ω(res1).Should(Equal(expectedValidateSchema))
@@ -195,12 +332,12 @@ modules:
 					true, false, true, "")
 				Ω(warn).Should(BeNil())
 				Ω(err).Should(ConsistOf(
-					YamlValidationIssue{"cannot unmarshal !!str `abc` into bool", 10},
-					YamlValidationIssue{`the "parameters-metadata.param1.overwritable" property must be a boolean`, 10},
-					YamlValidationIssue{"cannot unmarshal !!int `12` into bool", 19},
-					YamlValidationIssue{`the "modules[0].parameters-metadata.memory.optional" property must be a boolean`, 19},
-					YamlValidationIssue{"cannot unmarshal !!str `is it?` into bool", 25},
-					YamlValidationIssue{`the "some_type" value of the "modules[0].properties-metadata.a.datatype" enum property is invalid; expected one of the following: str,int,float,bool`, 26},
+					YamlValidationIssue{"cannot unmarshal !!str `abc` into bool", 10, 0},
+					YamlValidationIssue{`the "parameters-metadata.param1.overwritable" property must be a boolean`, 10, 19},
+					YamlValidationIssue{"cannot unmarshal !!int `12` into bool", 19, 0},
+					YamlValidationIssue{`the "modules[0].parameters-metadata.memory.optional" property must be a boolean`, 19, 17},
+					YamlValidationIssue{"cannot unmarshal !!str `is it?` into bool", 25, 0},
+					YamlValidationIssue{`the "some_type" value of the "modules[0].properties-metadata.a.datatype" enum property is invalid; expected one of the following: str,int,float,bool`, 26, 17},
 				))
 			})
 
@@ -274,9 +411,9 @@ resources:
 
 				datatypeNotAllowedForParametersMetadata := fmt.Sprintf(propertyExistsErrorMsg, datatypeYamlField, parametersMetadataField)
 				Ω(err).Should(ConsistOf(
-					YamlValidationIssue{datatypeNotAllowedForParametersMetadata, 10},
-					YamlValidationIssue{datatypeNotAllowedForParametersMetadata, 22},
-					YamlValidationIssue{datatypeNotAllowedForParametersMetadata, 33},
+					YamlValidationIssue{datatypeNotAllowedForParametersMetadata, 10, 5},
+					YamlValidationIssue{datatypeNotAllowedForParametersMetadata, 22, 7},
+					YamlValidationIssue{datatypeNotAllowedForParametersMetadata, 33, 7},
 				))
 			})
 
@@ -284,6 +421,6 @@ resources:
 	})
 
 	It("convertError", func() {
-		Ω(convertError(fmt.Errorf("line 999999999999999999999999999: aaa"))).Should(BeEquivalentTo([]YamlValidationIssue{{Msg: "aaa", Line: 1}}))
+		Ω(convertError(fmt.Errorf("line 999999999999999999999999999: aaa"))).Should(BeEquivalentTo([]YamlValidationIssue{{Msg: "aaa", Line: 1, Column: 0}}))
 	})
 })

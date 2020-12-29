@@ -130,22 +130,22 @@ resources:
 			errors, warn := checkParamsAndPropertiesMetadata(mta, node, "", true)
 			Ω(len(warn)).Should(Equal(0))
 			Ω(errors).Should(ConsistOf(
-				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "b", "parameter"), 11},
-				YamlValidationIssue{fmt.Sprintf(emptyRequiredFieldMsg, "memory", "parameter"), 18},
-				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "x", "property"), 27},
-				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "b", "parameter"), 34},
-				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "a", "parameter"), 41},
-				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "b", "property"), 51},
-				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "a", "parameter"), 56},
-				YamlValidationIssue{propertiesMetadataWithListOrGroupMsg, 50},
-				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "b", "property"), 65},
-				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "m", "parameter"), 74},
-				YamlValidationIssue{fmt.Sprintf(emptyRequiredFieldMsg, "b", "property"), 81},
-				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "b", "property"), 94},
-				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "a", "parameter"), 99},
-				YamlValidationIssue{propertiesMetadataWithListOrGroupMsg, 93},
-				YamlValidationIssue{propertiesMetadataWithListOrGroupMsg, 107},
-				YamlValidationIssue{propertiesMetadataWithListOrGroupMsg, 110},
+				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "b", "parameter"), 11, 3},
+				YamlValidationIssue{fmt.Sprintf(emptyRequiredFieldMsg, "memory", "parameter"), 18, 6},
+				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "x", "property"), 27, 6},
+				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "b", "parameter"), 34, 10},
+				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "a", "parameter"), 41, 14},
+				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "b", "property"), 51, 10},
+				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "a", "parameter"), 56, 10},
+				YamlValidationIssue{propertiesMetadataWithListOrGroupMsg, 50, 8},
+				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "b", "property"), 65, 10},
+				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "m", "parameter"), 74, 6},
+				YamlValidationIssue{fmt.Sprintf(emptyRequiredFieldMsg, "b", "property"), 81, 6},
+				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "b", "property"), 94, 10},
+				YamlValidationIssue{fmt.Sprintf(unknownNameInMetadataMsg, "a", "parameter"), 99, 10},
+				YamlValidationIssue{propertiesMetadataWithListOrGroupMsg, 93, 8},
+				YamlValidationIssue{propertiesMetadataWithListOrGroupMsg, 107, 6},
+				YamlValidationIssue{propertiesMetadataWithListOrGroupMsg, 110, 6},
 			))
 		})
 

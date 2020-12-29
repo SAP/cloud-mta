@@ -37,10 +37,10 @@ func ifModulePathExists(mta *mta.MTA, mtaNode *yaml.Node, source string, strict 
 			// check existence of file/folder
 			_, err := os.Stat(fullPath)
 			if err != nil {
-				line, _ := getIndexedNodePropLine(modulesNode, index, pathYamlField)
+				line, column, _ := getIndexedNodePropPosition(modulesNode, index, pathYamlField)
 				// path not exists -> add an issue
 				issues = appendIssue(issues, fmt.Sprintf(`the "%s" path of the "%s" module does not exist`,
-					module.Path, module.Name), line)
+					module.Path, module.Name), line, column)
 			}
 		}
 	}
@@ -61,10 +61,10 @@ func ifModulePathEmpty(mta *mta.MTA, mtaNode *yaml.Node, source string, strict b
 			pathNode := getPropValueByName(moduleNode, pathYamlField)
 			if pathNode == nil {
 				issues = appendIssue(issues, fmt.Sprintf(`the path of the "%s" module is not defined`,
-					module.Name), moduleNode.Line)
+					module.Name), moduleNode.Line, moduleNode.Column)
 			} else {
 				issues = appendIssue(issues, fmt.Sprintf(`the path of the "%s" module is empty`,
-					module.Name), pathNode.Line)
+					module.Name), pathNode.Line, pathNode.Column)
 			}
 		}
 	}
@@ -82,8 +82,9 @@ func ifNoSource(module *mta.Module, modulesNode *yaml.Node, index int) (bool, *Y
 			return noSource, nil
 		}
 		return false, &YamlValidationIssue{
-			Msg:  `the "no-source" build parameter must be a boolean`,
-			Line: noSourceNode.Line,
+			Msg:    `the "no-source" build parameter must be a boolean`,
+			Line:   noSourceNode.Line,
+			Column: noSourceNode.Column,
 		}
 	}
 	return false, nil

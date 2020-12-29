@@ -14,8 +14,9 @@ func checkStringProperty(props map[string]interface{}, propsNode *yaml.Node, pro
 		propNode := getPropValueByName(propsNode, propName)
 		return []YamlValidationIssue{
 			{
-				Msg:  fmt.Sprintf(`the "%s" property is defined incorrectly; the property must be a string`, propName),
-				Line: propNode.Line,
+				Msg:    fmt.Sprintf(`the "%s" property is defined incorrectly; the property must be a string`, propName),
+				Line:   propNode.Line,
+				Column: propNode.Column,
 			},
 		}
 	}
@@ -45,7 +46,7 @@ func checkBuilderSchema(mta *mta.MTA, mtaNode *yaml.Node, source string) []YamlV
 				if !ok {
 					buildParamsNode := getPropValueByName(modulesNode[i], buildParametersYamlField)
 					commandsParamsNode := getPropValueByName(buildParamsNode, commandsYamlField)
-					issues = appendIssue(issues, `the "commands" property is defined incorrectly; the property must be a sequence of strings`, commandsParamsNode.Line)
+					issues = appendIssue(issues, `the "commands" property is defined incorrectly; the property must be a sequence of strings`, commandsParamsNode.Line, commandsParamsNode.Column)
 				}
 			}
 		}

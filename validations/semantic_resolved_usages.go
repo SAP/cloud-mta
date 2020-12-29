@@ -104,10 +104,10 @@ func checkComponent(provided map[string]map[string]interface{}, configurationPro
 		_, contains := provided[requires.Name]
 		_, containsConfiguration := configurationProvided[requires.Name]
 		if !contains && !containsConfiguration {
-			line := getPropValueByName(requiresNode.Content[i], nameYamlField).Line
+			reqNameNode := getPropValueByName(requiresNode.Content[i], nameYamlField)
 			issues = appendIssue(issues,
 				fmt.Sprintf(`the "%s" property set required by the "%s" %s is not defined`,
-					requires.Name, compName, compDesc), line)
+					requires.Name, compName, compDesc), reqNameNode.Line, reqNameNode.Column)
 		}
 		// check that each property of resource is resolved
 		reqPropsNode := getPropValueByName(requiresNode.Content[i], propertiesYamlField)
@@ -175,16 +175,16 @@ func checkStringEntityValue(providedProps map[string]map[string]interface{}, con
 				// no property set provided
 				issues = appendIssue(issues,
 					fmt.Sprintf(`the "%s" %s of the %s is unresolved; the "%s" property is not provided`,
-						entityName, entityKind, requiringObject, requiredProp), entityNode.Line)
+						entityName, entityKind, requiringObject, requiredProp), entityNode.Line, entityNode.Column)
 			} else {
 				// check existence of property if property set
 				issues = appendIssue(issues,
-					checkRequiredProperty(providedProps, configurationProvided, entityName, entityKind, requiredPropArr[0], requiredPropArr[1], requiringObject), entityNode.Line)
+					checkRequiredProperty(providedProps, configurationProvided, entityName, entityKind, requiredPropArr[0], requiredPropArr[1], requiringObject), entityNode.Line, entityNode.Column)
 			}
 		} else {
 			// check existence of property if property set
 			issues = appendIssue(issues,
-				checkRequiredProperty(providedProps, configurationProvided, entityName, entityKind, propSet, requiredProp, requiringObject), entityNode.Line)
+				checkRequiredProperty(providedProps, configurationProvided, entityName, entityKind, propSet, requiredProp, requiringObject), entityNode.Line, entityNode.Column)
 		}
 
 	}

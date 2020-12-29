@@ -32,9 +32,9 @@ func checkProjectBuilders(builders []mta.ProjectBuilder, mtaNode *yaml.Node, fie
 
 func checkCustomBuilder(builder string, commandsDefined bool, builderNode *yaml.Node, commandsNode *yaml.Node) []YamlValidationIssue {
 	if builder == customBuilder && !commandsDefined {
-		return []YamlValidationIssue{{Msg: `the "commands" property is missing in the "custom" builder`, Line: builderNode.Line}}
+		return []YamlValidationIssue{{Msg: `the "commands" property is missing in the "custom" builder`, Line: builderNode.Line, Column: builderNode.Column}}
 	} else if builder != customBuilder && commandsDefined {
-		return []YamlValidationIssue{{Msg: fmt.Sprintf(`the "commands" property is not supported by the "%s" builder`, builder), Line: commandsNode.Line}}
+		return []YamlValidationIssue{{Msg: fmt.Sprintf(`the "commands" property is not supported by the "%s" builder`, builder), Line: commandsNode.Line, Column: commandsNode.Column}}
 	}
 	return nil
 }

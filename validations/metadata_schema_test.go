@@ -94,13 +94,13 @@ resources:
 
 		datatypeNotAllowedForParametersMetadata := fmt.Sprintf(propertyExistsErrorMsg, datatypeYamlField, parametersMetadataField)
 		Ω(issues).Should(ConsistOf(
-			YamlValidationIssue{datatypeNotAllowedForParametersMetadata, 10},
-			YamlValidationIssue{datatypeNotAllowedForParametersMetadata, 22},
-			YamlValidationIssue{datatypeNotAllowedForParametersMetadata, 33},
-			YamlValidationIssue{datatypeNotAllowedForParametersMetadata, 40},
-			YamlValidationIssue{datatypeNotAllowedForParametersMetadata, 54},
-			YamlValidationIssue{datatypeNotAllowedForParametersMetadata, 63},
-			YamlValidationIssue{datatypeNotAllowedForParametersMetadata, 75},
+			YamlValidationIssue{datatypeNotAllowedForParametersMetadata, 10, 5},
+			YamlValidationIssue{datatypeNotAllowedForParametersMetadata, 22, 7},
+			YamlValidationIssue{datatypeNotAllowedForParametersMetadata, 33, 9},
+			YamlValidationIssue{datatypeNotAllowedForParametersMetadata, 40, 11},
+			YamlValidationIssue{datatypeNotAllowedForParametersMetadata, 54, 9},
+			YamlValidationIssue{datatypeNotAllowedForParametersMetadata, 63, 7},
+			YamlValidationIssue{datatypeNotAllowedForParametersMetadata, 75, 9},
 		))
 	})
 })
