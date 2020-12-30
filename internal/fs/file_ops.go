@@ -11,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-const PathNotFoundMsg = `could not read from the "%s" file`
+const PathNotFoundMsg = `could not read the "%s" file`
 
 // CreateFile - creates a new file.
 func CreateFile(path string) (file *os.File, err error) {
@@ -23,7 +23,7 @@ func CreateFile(path string) (file *os.File, err error) {
 	return file, err
 }
 
-// ReadFile reads the file and removes the \r characters
+// ReadFile reads the file and replaces Windows line breaks with \r
 func ReadFile(path string) ([]byte, error) {
 	fileContent, err := ioutil.ReadFile(filepath.Join(path))
 	if err != nil {
