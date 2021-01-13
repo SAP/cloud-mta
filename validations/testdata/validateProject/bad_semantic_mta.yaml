@@ -15,4 +15,5 @@ modules:
 
 resources:
  - name: uaa_mtahtml5
+ - name: uaa_mtahtml5
 

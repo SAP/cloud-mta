@@ -37,14 +37,15 @@ func Validate(mtaPath string, extensions []string) ValidationResult {
 	// Assuming the project path is the folder of the mta.yaml
 	projectPath := filepath.Dir(mtaPath)
 	mtaYamlFileName := filepath.Base(mtaPath)
-	warningIssues, errorIssues, e := validateMtaYaml(projectPath, mtaYamlFileName, true, true, true, "")
+	// Paths validation is excluded because it doesn't prevent building the MTA (the paths can be created during the build)
+	errorIssues, warningIssues, e := validateMtaYaml(projectPath, mtaYamlFileName, true, true, true, pathsValidation)
 	if e != nil {
 		errorIssues = appendIssue(errorIssues, e.Error(), 0, 0)
 	}
 	allIssues[mtaPath] = createFileIssues(warningIssues, errorIssues)
 
 	for _, extPath := range extensions {
-		warningIssues, errorIssues, e = validateMtaext(projectPath, extPath, true, true, true, "")
+		errorIssues, warningIssues, e = validateMtaext(projectPath, extPath, true, true, true, "")
 		if e != nil {
 			errorIssues = appendIssue(errorIssues, e.Error(), 0, 0)
 		}

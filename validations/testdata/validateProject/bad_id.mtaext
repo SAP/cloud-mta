@@ -1,5 +1,5 @@
 ID: mtahtml5ext2
-extends: mtahtml5_unkmown
+extends: mtahtml5_unknown
 _schema-version: '2.1'
 version: 0.0.1
 
