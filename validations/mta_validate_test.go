@@ -125,33 +125,33 @@ var _ = Describe("MTA tests", func() {
 				}))
 			})
 
-			It("returns warnings for schema validations for mta.yaml and mtaext", func() {
+			It("returns errors for schema validations for mta.yaml and mtaext", func() {
 				mtaYamlPath := getTestPath("validateProject", "bad_schema_mta.yaml")
 				mtaExtPath := getTestPath("validateProject", "bad_schema.mtaext")
 				result := Validate(mtaYamlPath, []string{mtaExtPath})
 				Ω(result).Should(MatchAllKeys(Keys{
 					mtaYamlPath: ConsistOf(
 						MatchAllFields(Fields{
-							"Severity": Equal("warning"),
+							"Severity": Equal("error"),
 							"Message":  ContainSubstring("path"),
 							"Line":     Equal(17),
 							"Column":   Equal(4),
 						}),
 						MatchAllFields(Fields{
-							"Severity": Equal("warning"),
+							"Severity": Equal("error"),
 							"Message":  ContainSubstring("type1"),
 							"Line":     Equal(30),
 							"Column":   Equal(0), // Unmarhshal errors return without a column
 						}),
 						MatchAllFields(Fields{
-							"Severity": Equal("warning"),
+							"Severity": Equal("error"),
 							"Message":  ContainSubstring("abc"),
 							"Line":     Equal(28),
 							"Column":   Equal(0), // Unmarhshal errors return without a column
 						}),
 					),
 					mtaExtPath: ConsistOf(MatchAllFields(Fields{
-						"Severity": Equal("warning"),
+						"Severity": Equal("error"),
 						"Message":  ContainSubstring("type"),
 						"Line":     Equal(16),
 						"Column":   Equal(0),
@@ -181,24 +181,27 @@ var _ = Describe("MTA tests", func() {
 				result := Validate(mtaYamlPath, []string{mtaExtPath1, mtaExtPath2})
 				Ω(result).Should(MatchAllKeys(Keys{
 					mtaYamlPath: ConsistOf(
+						// Note: ui5appNotExisting path doesn't exist, but we shouldn't get an error on it.
+						// Requires doesn't exist
 						MatchAllFields(Fields{
-							"Severity": Equal("warning"),
-							"Message":  ContainSubstring("ui5appNotExisting"),
-							"Line":     Equal(8),
-							"Column":   Equal(10),
-						}),
-						MatchAllFields(Fields{
-							"Severity": Equal("warning"),
+							"Severity": Equal("error"),
 							"Message":  ContainSubstring("dest_mtahtml5"),
 							"Line":     Equal(14),
 							"Column":   Equal(13),
+						}),
+						// Duplicated resource name
+						MatchAllFields(Fields{
+							"Severity": Equal("error"),
+							"Message":  ContainSubstring("uaa_mtahtml5"),
+							"Line":     Equal(18),
+							"Column":   Equal(10),
 						}),
 					),
 					mtaExtPath1: ConsistOf(
 						// Only one merge error is returned, and it's from the other file because it's in the ID
 						// which is checked before the extended module names on each mtaext file
 						MatchAllFields(Fields{
-							"Severity": Equal("warning"),
+							"Severity": Equal("error"),
 							"Message":  ContainSubstring("ui5app"),
 							"Line":     Equal(12),
 							"Column":   Equal(10),
@@ -207,7 +210,7 @@ var _ = Describe("MTA tests", func() {
 					mtaExtPath2: ConsistOf(
 						MatchAllFields(Fields{
 							"Severity": Equal("error"),
-							"Message":  ContainSubstring("mtahtml5_unkmown"),
+							"Message":  ContainSubstring("mtahtml5_unknown"),
 							"Line":     Equal(0),
 							"Column":   Equal(0),
 						}),
