@@ -1405,6 +1405,26 @@ var _ = Describe("MtaServices", func() {
 		})
 	})
 
+	var _ = Describe("GetBuildParameters", func() {
+		It("Get build parameters", func() {
+			oBuildParameters :=  BuildParams{
+				BeforeAll: [
+					Builder: "mybuilder"
+				]
+				AfterAll: [
+					Builder: "otherbuilder"
+				]
+			}
+
+			mtaPath := getTestPath("mta.yaml")
+
+			buildParameters, messages, err := GetBuildParameters(mtaPath, nil)
+			Ω(err).Should(Succeed())
+			Ω(buildParameters).Should(Equal(oBuildParameters))
+			Ω(messages).Should(BeEmpty())
+		})
+	})
+
 	var _ = Describe("UpdateBuildParameters", func() {
 		mybuilder := ProjectBuilder{
 			Builder:  "mybuilder",

@@ -19,7 +19,7 @@ func init() {
 	rootCmd.AddCommand(resolveMtaCmd)
 	rootCmd.AddCommand(validateMtaCmd)
 	addCmd.AddCommand(addModuleCmd, addResourceCmd)
-	getCmd.AddCommand(getModulesCmd, getResourcesCmd, getMtaIDCmd, getResourceConfigCmd)
+	getCmd.AddCommand(getModulesCmd, getResourcesCmd, getMtaIDCmd, getResourceConfigCmd, getBuildParametersCmd)
 	updateCmd.AddCommand(updateModuleCmd, updateResourceCmd, updateBuildParametersCmd)
 
 }
