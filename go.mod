@@ -1,5 +1,3 @@
-module github.com/hashicorp/hcl/hcl/printer
-
 go 1.15
 
 require (
