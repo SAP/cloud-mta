@@ -1,19 +1,21 @@
+module github.com/SAP/cloud-mta
+
 go 1.15
 
 require (
-	github.com/fsnotify/fsnotify v1.4.7
+	github.com/fsnotify/fsnotify v1.4.9
 	github.com/ghodss/yaml v1.0.0
 	github.com/hashicorp/hcl v1.0.0
 	github.com/inconshreveable/mousetrap v1.0.0
 	github.com/joho/godotenv v1.3.0
 	github.com/json-iterator/go v1.1.6
-	github.com/magiconair/properties v1.8.0
+	github.com/magiconair/properties v1.8.1
 	github.com/mattn/go-colorable v0.1.1
 	github.com/mattn/go-isatty v0.0.7
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
-	github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742
+	github.com/modern-go/reflect2 v1.0.1
 	github.com/nxadm/tail v1.4.4
 	github.com/onsi/ginkgo v1.15.0
 	github.com/onsi/gomega v1.10.5
@@ -25,16 +27,16 @@ require (
 	github.com/spf13/cast v1.3.0
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/jwalterweatherman v1.1.0
-	github.com/spf13/pflag v1.0.3
+	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.1
 	github.com/subosito/gotenv v1.2.0
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2
-	golang.org/x/crypto v0.0.0-20190404164418-38d8ce5564a5
-	golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3
-	golang.org/x/sys v0.0.0-20190410235845-0ad05ae3009d
-	golang.org/x/text v0.3.0
+	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
+	golang.org/x/net v0.0.0-20201202161906-c7110b5ffcbb
+	golang.org/x/sys v0.0.0-20210112080510-489259a85091
+	golang.org/x/text v0.3.3
 	gopkg.in/ini.v1 v1.57.0
-	gopkg.in/tomb.v1 v1.0.0-20140529071818-c131134a1947
+	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7
 	gopkg.in/yaml.v2 v2.3.0
 	gopkg.in/yaml.v3 v3.0.0-20190904155537-35294daf730c
 )
