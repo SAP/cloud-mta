@@ -12,7 +12,7 @@ jobs:
       - checkout
       - run: go version
       - run: go env
-      - run: go get -v -t -d ./...
+      - run: go mod
       - run: go test -v -race ./...
       - run: sudo chown circleci:circleci /go/bin
       - run: make tools
