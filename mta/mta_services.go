@@ -296,7 +296,7 @@ func IsNameUnique(path string, name string) (bool, []string, error) {
 }
 
 //getBuildParameters - gets the MTA build parameters.
-func getBuildParameters(path string, extensions []string) (*ProjectBuild, []string, error) {
+func GetBuildParameters(path string, extensions []string) (*ProjectBuild, []string, error) {
 	mta, messages, err := GetMtaFromFile(path, extensions, false)
 	if err != nil {
 		return nil, messages, err

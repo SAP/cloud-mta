@@ -1408,10 +1408,10 @@ var _ = Describe("MtaServices", func() {
 	var _ = Describe("GetBuildParameters", func() {
 		It("Get build parameters", func() {
 			oBuildParameters :=  BuildParams{
-				BeforeAll: [
+				BeforeAll[
 					Builder: "mybuilder"
 				]
-				AfterAll: [
+				AfterAll[
 					Builder: "otherbuilder"
 				]
 			}
