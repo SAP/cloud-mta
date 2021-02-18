@@ -1425,6 +1425,12 @@ var _ = Describe("MtaServices", func() {
 			Ω(*buildParameters).Should(Equal(oBuildParameters))
 			Ω(messages).Should(BeEmpty())
 		})
+
+		It("Get build parameters in a non existing mta.yaml file", func() {
+			mtaPath := getTestPath("result", "mta.yaml")
+			_, _, err := GetBuildParameters(mtaPath, nil)
+			Ω(err).Should(HaveOccurred())
+		})
 	})
 
 	var _ = Describe("UpdateBuildParameters", func() {
