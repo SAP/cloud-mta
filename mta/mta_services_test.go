@@ -1408,14 +1408,14 @@ var _ = Describe("MtaServices", func() {
 	var _ = Describe("GetBuildParameters", func() {
 		It("Get build parameters", func() {
 			myBuilder := ProjectBuilder{
-				Builder:  "mybuilder",
+				Builder: "mybuilder",
 			}
 			otherBuilder := ProjectBuilder{
-				Builder:  "otherbuilder",
+				Builder: "otherbuilder",
 			}
-			oBuildParameters :=  ProjectBuild{
+			oBuildParameters := ProjectBuild{
 				BeforeAll: []ProjectBuilder{myBuilder},
-				AfterAll: []ProjectBuilder{otherBuilder},
+				AfterAll:  []ProjectBuilder{otherBuilder},
 			}
 
 			mtaPath := getTestPath("mta.yaml")
