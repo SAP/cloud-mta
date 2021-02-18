@@ -1407,20 +1407,22 @@ var _ = Describe("MtaServices", func() {
 
 	var _ = Describe("GetBuildParameters", func() {
 		It("Get build parameters", func() {
-			oBuildParameters :=  BuildParams{
-				BeforeAll[
-					Builder: "mybuilder"
-				]
-				AfterAll[
-					Builder: "otherbuilder"
-				]
+			myBuilder := ProjectBuilder{
+				Builder:  "mybuilder",
+			}
+			otherBuilder := ProjectBuilder{
+				Builder:  "otherbuilder",
+			}
+			oBuildParameters :=  ProjectBuild{
+				BeforeAll: []ProjectBuilder{myBuilder},
+				AfterAll: []ProjectBuilder{otherBuilder},
 			}
 
 			mtaPath := getTestPath("mta.yaml")
 
 			buildParameters, messages, err := GetBuildParameters(mtaPath, nil)
 			Ω(err).Should(Succeed())
-			Ω(buildParameters).Should(Equal(oBuildParameters))
+			Ω(*buildParameters).Should(Equal(oBuildParameters))
 			Ω(messages).Should(BeEmpty())
 		})
 	})
