@@ -20,7 +20,7 @@ var deleteFileCmdPath string
 var existCmdName string
 var existCmdPath string
 var getBuildParametersCmdPath string
-var getBuildParametersCmdExtensions string
+var getBuildParametersCmdExtensions []string
 var updateBuildParametersCmdPath string
 var updateBuildParametersCmdData string
 var updateBuildParametersCmdForce bool
