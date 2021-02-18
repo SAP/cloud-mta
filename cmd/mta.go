@@ -185,7 +185,7 @@ var getBuildParametersCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return mta.RunAndWriteResultAndHash("get build parameters", getBuildParametersCmdPath, getBuildParametersCmdExtensions, func() (interface{}, []string, error) {
-			return mta.getBuildParameters(getBuildParametersCmdPath, getBuildParametersCmdExtensions)
+			return mta.GetBuildParameters(getBuildParametersCmdPath, getBuildParametersCmdExtensions)
 		})
 	},
 	Hidden:        true,
