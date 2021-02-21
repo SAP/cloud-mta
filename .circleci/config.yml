@@ -12,7 +12,7 @@ jobs:
       - checkout
       - run: go version
       - run: go env
-      - run: go get -v -t -d ./...
+      - run: go mod vendor
       - run: go test -v -race ./...
       - run: sudo chown circleci:circleci /go/bin
       - run: make tools
@@ -54,9 +54,7 @@ jobs:
       - run:
           name: install dependencies
           command: |
-            apk update && apk add curl git build-base bash
-            curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-            dep ensure
+            go mod vendor
       - run:
           name: bump version
           command: |
