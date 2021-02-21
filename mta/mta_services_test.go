@@ -1426,6 +1426,28 @@ var _ = Describe("MtaServices", func() {
 			Ω(messages).Should(BeEmpty())
 		})
 
+		It("Get build parameters using extension file", func() {
+			myBuilder := ProjectBuilder{
+				Builder: "mybuilder",
+			}
+			otherBuilder := ProjectBuilder{
+				Builder: "otherbuilder",
+			}
+			oBuildParameters := ProjectBuild{
+				BeforeAll: []ProjectBuilder{myBuilder},
+				AfterAll:  []ProjectBuilder{otherBuilder},
+			}
+
+			mtaPath := getTestPath("mta.yaml")
+			extPath := getTestPath("mta.mtaext")
+
+			buildParameters, messages, err := GetBuildParameters(mtaPath, []string{extPath})
+			Ω(err).Should(Succeed())
+			Ω(messages).Should(BeNil())
+			Ω(*buildParameters).Should(Equal(oBuildParameters))
+			Ω(messages).Should(BeEmpty())
+		})
+
 		It("Get build parameters in a non existing mta.yaml file", func() {
 			mtaPath := getTestPath("result", "mta.yaml")
 			_, _, err := GetBuildParameters(mtaPath, nil)
