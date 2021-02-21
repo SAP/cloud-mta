@@ -1441,9 +1441,9 @@ var _ = Describe("MtaServices", func() {
 			mtaPath := getTestPath("mta.yaml")
 			extPath := getTestPath("mta.mtaext")
 
+			// build parameters are invalid in the mtaext and we don't merge them
 			buildParameters, messages, err := GetBuildParameters(mtaPath, []string{extPath})
 			Ω(err).Should(Succeed())
-			Ω(messages).Should(BeNil())
 			Ω(*buildParameters).Should(Equal(oBuildParameters))
 			Ω(messages).Should(BeEmpty())
 		})
