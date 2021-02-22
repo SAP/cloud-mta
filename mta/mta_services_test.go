@@ -1633,14 +1633,14 @@ var _ = Describe("MtaServices", func() {
 		})
 
 		It("Update global parameters in a non existing mta.yaml file", func() {
-			json := "{name:fff}"
+			json := "{param:value}"
 			mtaPath := getTestPath("result", "mta.yaml")
 			_, err := UpdateGlobalParameters(mtaPath, json)
 			Ω(err).Should(HaveOccurred())
 		})
 
 		It("Update global parameters with bad json format", func() {
-			wrongJSON := "{name:fff"
+			wrongJSON := "{param:value"
 
 			mtaPath := getTestPath("result", "temp.mta.yaml")
 			jsonRootData, err := json.Marshal(getMtaInput())
