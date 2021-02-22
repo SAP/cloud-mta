@@ -19,6 +19,8 @@ var copyCmdTargetPath string
 var deleteFileCmdPath string
 var existCmdName string
 var existCmdPath string
+var getBuildParametersCmdPath string
+var getBuildParametersCmdExtensions []string
 var updateBuildParametersCmdPath string
 var updateBuildParametersCmdData string
 var updateBuildParametersCmdForce bool
@@ -50,6 +52,11 @@ func init() {
 		"the path to the file")
 	existCmd.Flags().StringVarP(&existCmdName, "name", "n", "",
 		"the name to check")
+
+	getBuildParametersCmd.Flags().StringVarP(&getBuildParametersCmdPath, "path", "p", "",
+		"the path to the yaml file")
+	getBuildParametersCmd.Flags().StringSliceVarP(&getBuildParametersCmdExtensions, "extensions", "x", nil,
+		"the paths to the MTA extension descriptors")
 
 	updateBuildParametersCmd.Flags().StringVarP(&updateBuildParametersCmdPath, "path", "p", "",
 		"the path to the file")
@@ -164,6 +171,22 @@ var existCmd = &cobra.Command{
 				return mta.IsNameUnique(existCmdPath, existCmdName)
 			},
 		)
+	},
+	Hidden:        true,
+	SilenceUsage:  true,
+	SilenceErrors: true,
+}
+
+// getBuildParametersCmd get build parameters from mta
+var getBuildParametersCmd = &cobra.Command{
+	Use:   "buildParameters",
+	Short: "Get build parameters",
+	Long:  "Get build parameters",
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return mta.RunAndWriteResultAndHash("get build parameters", getBuildParametersCmdPath, getBuildParametersCmdExtensions, func() (interface{}, []string, error) {
+			return mta.GetBuildParameters(getBuildParametersCmdPath, getBuildParametersCmdExtensions)
+		})
 	},
 	Hidden:        true,
 	SilenceUsage:  true,

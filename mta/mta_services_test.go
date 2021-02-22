@@ -1405,6 +1405,56 @@ var _ = Describe("MtaServices", func() {
 		})
 	})
 
+	var _ = Describe("GetBuildParameters", func() {
+		It("Get build parameters", func() {
+			myBuilder := ProjectBuilder{
+				Builder: "mybuilder",
+			}
+			otherBuilder := ProjectBuilder{
+				Builder: "otherbuilder",
+			}
+			oBuildParameters := ProjectBuild{
+				BeforeAll: []ProjectBuilder{myBuilder},
+				AfterAll:  []ProjectBuilder{otherBuilder},
+			}
+
+			mtaPath := getTestPath("mta.yaml")
+
+			buildParameters, messages, err := GetBuildParameters(mtaPath, nil)
+			Ω(err).Should(Succeed())
+			Ω(*buildParameters).Should(Equal(oBuildParameters))
+			Ω(messages).Should(BeEmpty())
+		})
+
+		It("Get build parameters using extension file", func() {
+			myBuilder := ProjectBuilder{
+				Builder: "mybuilder",
+			}
+			otherBuilder := ProjectBuilder{
+				Builder: "otherbuilder",
+			}
+			oBuildParameters := ProjectBuild{
+				BeforeAll: []ProjectBuilder{myBuilder},
+				AfterAll:  []ProjectBuilder{otherBuilder},
+			}
+
+			mtaPath := getTestPath("mta.yaml")
+			extPath := getTestPath("mta.mtaext")
+
+			// build parameters are invalid in the mtaext and we don't merge them
+			buildParameters, messages, err := GetBuildParameters(mtaPath, []string{extPath})
+			Ω(err).Should(Succeed())
+			Ω(*buildParameters).Should(Equal(oBuildParameters))
+			Ω(messages).Should(BeEmpty())
+		})
+
+		It("Get build parameters in a non existing mta.yaml file", func() {
+			mtaPath := getTestPath("result", "mta.yaml")
+			_, _, err := GetBuildParameters(mtaPath, nil)
+			Ω(err).Should(HaveOccurred())
+		})
+	})
+
 	var _ = Describe("UpdateBuildParameters", func() {
 		mybuilder := ProjectBuilder{
 			Builder:  "mybuilder",
