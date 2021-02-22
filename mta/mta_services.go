@@ -304,7 +304,7 @@ func GetBuildParameters(path string, extensions []string) (*ProjectBuild, []stri
 	return mta.BuildParams, messages, nil
 }
 
-//getGlobalParameters - gets the MTA build parameters.
+//getGlobalParameters - gets the MTA global parameters.
 func GetGlobalParameters(path string, extensions []string) (*map[string]interface{}, []string, error) {
 	mta, messages, err := GetMtaFromFile(path, extensions, false)
 	if err != nil {
