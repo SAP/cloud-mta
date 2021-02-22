@@ -1455,6 +1455,35 @@ var _ = Describe("MtaServices", func() {
 		})
 	})
 
+	var _ = Describe("GetGlobalParameters", func() {
+		It("Get global parameters", func() {
+			oParameters := map[string]interface{}{"deployer-version": ">=1.2.0"}
+			mtaPath := getTestPath("mta.yaml")
+
+			globalParameters, messages, err := GetGlobalParameters(mtaPath, nil)
+			Ω(err).Should(Succeed())
+			Ω(*globalParameters).Should(Equal(oParameters))
+			Ω(messages).Should(BeEmpty())
+		})
+
+		It("Get global parameters with extensions", func() {
+			oParameters := map[string]interface{}{"deployer-version": "1.2.0", "param1": "ext_param"}
+			mtaPath := getTestPath("mta.yaml")
+			extPath := getTestPath("mta.mtaext")
+
+			globalParameters, messages, err := GetGlobalParameters(mtaPath, []string{extPath})
+			Ω(err).Should(Succeed())
+			Ω(*globalParameters).Should(Equal(oParameters))
+			Ω(messages).Should(BeEmpty())
+		})
+
+		It("Get global parameters in a non existing mta.yaml file", func() {
+			mtaPath := getTestPath("result", "mta.yaml")
+			_, _, err := GetGlobalParameters(mtaPath, nil)
+			Ω(err).Should(HaveOccurred())
+		})
+	})
+
 	var _ = Describe("UpdateBuildParameters", func() {
 		mybuilder := ProjectBuilder{
 			Builder:  "mybuilder",
@@ -1541,6 +1570,83 @@ var _ = Describe("MtaServices", func() {
 			Ω(err).Should(Succeed())
 			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
 			_, err = UpdateBuildParameters(mtaPath, wrongJSON)
+			Ω(err).Should(HaveOccurred())
+		})
+	})
+
+	var _ = Describe("UpdateGlobalParameters", func() {
+
+		parameters := map[string]interface{}{"param1": "value1", "param2": "value2"}
+
+		It("Add new global parameters", func() {
+			mtaPath := getTestPath("result", "temp.mta.yaml")
+
+			jsonRootData, err := json.Marshal(getMtaInput())
+			Ω(err).Should(Succeed())
+			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
+
+			jsonGlobalParametersData, err := json.Marshal(&parameters)
+			Ω(err).Should(Succeed())
+			messages, err := UpdateGlobalParameters(mtaPath, string(jsonGlobalParametersData))
+			Ω(err).Should(Succeed())
+			Ω(messages).Should(BeEmpty())
+
+			oMtaInput := getMtaInput()
+			oMtaInput.Parameters = parameters
+			Ω(mtaPath).Should(BeAnExistingFile())
+			yamlData, err := ioutil.ReadFile(mtaPath)
+			Ω(err).Should(Succeed())
+			oMtaOutput, err := Unmarshal(yamlData)
+			Ω(err).Should(Succeed())
+			Ω(reflect.DeepEqual(oMtaInput, *oMtaOutput)).Should(BeTrue())
+		})
+
+		It("Update existing global parameters", func() {
+			updatedParameters := map[string]interface{}{"param1": "value1", "param2": "value3"}
+
+			mtaPath := getTestPath("result", "temp.mta.yaml")
+
+			jsonRootData, err := json.Marshal(getMtaInput())
+			Ω(err).Should(Succeed())
+			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
+
+			jsonGlobalParametersData, err := json.Marshal(&parameters)
+			Ω(err).Should(Succeed())
+			messages, err := UpdateGlobalParameters(mtaPath, string(jsonGlobalParametersData))
+			Ω(err).Should(Succeed())
+			Ω(messages).Should(BeEmpty())
+
+			jsonUpdateBuildParametersData, err := json.Marshal(&updatedParameters)
+			Ω(err).Should(Succeed())
+			messages, err = UpdateGlobalParameters(mtaPath, string(jsonUpdateBuildParametersData))
+			Ω(err).Should(Succeed())
+			Ω(messages).Should(BeEmpty())
+
+			oMtaInput := getMtaInput()
+			oMtaInput.Parameters = updatedParameters
+			Ω(mtaPath).Should(BeAnExistingFile())
+			yamlData, err := ioutil.ReadFile(mtaPath)
+			Ω(err).Should(Succeed())
+			oMtaOutput, err := Unmarshal(yamlData)
+			Ω(err).Should(Succeed())
+			Ω(reflect.DeepEqual(oMtaInput, *oMtaOutput)).Should(BeTrue())
+		})
+
+		It("Update global parameters in a non existing mta.yaml file", func() {
+			json := "{name:fff}"
+			mtaPath := getTestPath("result", "mta.yaml")
+			_, err := UpdateGlobalParameters(mtaPath, json)
+			Ω(err).Should(HaveOccurred())
+		})
+
+		It("Update global parameters with bad json format", func() {
+			wrongJSON := "{name:fff"
+
+			mtaPath := getTestPath("result", "temp.mta.yaml")
+			jsonRootData, err := json.Marshal(getMtaInput())
+			Ω(err).Should(Succeed())
+			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
+			_, err = UpdateGlobalParameters(mtaPath, wrongJSON)
 			Ω(err).Should(HaveOccurred())
 		})
 	})

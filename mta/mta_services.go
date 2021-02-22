@@ -304,6 +304,15 @@ func GetBuildParameters(path string, extensions []string) (*ProjectBuild, []stri
 	return mta.BuildParams, messages, nil
 }
 
+//getGlobalParameters - gets the MTA build parameters.
+func GetGlobalParameters(path string, extensions []string) (*map[string]interface{}, []string, error) {
+	mta, messages, err := GetMtaFromFile(path, extensions, false)
+	if err != nil {
+		return nil, messages, err
+	}
+	return &mta.Parameters, messages, nil
+}
+
 //UpdateBuildParameters - updates the MTA build parameters.
 func UpdateBuildParameters(path string, buildParamsDataJSON string) ([]string, error) {
 	mta, messages, err := GetMtaFromFile(path, nil, false)
@@ -318,6 +327,23 @@ func UpdateBuildParameters(path string, buildParamsDataJSON string) ([]string, e
 	}
 
 	mta.BuildParams = &buildParams
+	return messages, saveMTA(path, mta, Marshal)
+}
+
+//UpdateGlobalParameters - updates the MTA global parameters.
+func UpdateGlobalParameters(path string, globalParamsDataJSON string) ([]string, error) {
+	mta, messages, err := GetMtaFromFile(path, nil, false)
+	if err != nil {
+		return messages, err
+	}
+
+	globalParams := map[string]interface{}{}
+	err = unmarshalData(globalParamsDataJSON, &globalParams)
+	if err != nil {
+		return messages, err
+	}
+
+	mta.Parameters = globalParams
 	return messages, saveMTA(path, mta, Marshal)
 }
 

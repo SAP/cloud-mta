@@ -21,10 +21,16 @@ var existCmdName string
 var existCmdPath string
 var getBuildParametersCmdPath string
 var getBuildParametersCmdExtensions []string
+var getGlobalParametersCmdPath string
+var getGlobalParametersCmdExtensions []string
 var updateBuildParametersCmdPath string
 var updateBuildParametersCmdData string
 var updateBuildParametersCmdForce bool
 var updateBuildParametersCmdHashcode int
+var updateGlobalParametersCmdPath string
+var updateGlobalParametersCmdData string
+var updateGlobalParametersCmdForce bool
+var updateGlobalParametersCmdHashcode int
 var getMtaIDCmdPath string
 var validateMtaCmdPath string
 var validateMtaCmdExtensions []string
@@ -58,6 +64,11 @@ func init() {
 	getBuildParametersCmd.Flags().StringSliceVarP(&getBuildParametersCmdExtensions, "extensions", "x", nil,
 		"the paths to the MTA extension descriptors")
 
+	getGlobalParametersCmd.Flags().StringVarP(&getGlobalParametersCmdPath, "path", "p", "",
+		"the path to the yaml file")
+	getGlobalParametersCmd.Flags().StringSliceVarP(&getGlobalParametersCmdExtensions, "extensions", "x", nil,
+		"the paths to the MTA extension descriptors")
+
 	updateBuildParametersCmd.Flags().StringVarP(&updateBuildParametersCmdPath, "path", "p", "",
 		"the path to the file")
 	updateBuildParametersCmd.Flags().StringVarP(&updateBuildParametersCmdData, "data", "d", "",
@@ -65,6 +76,15 @@ func init() {
 	updateBuildParametersCmd.Flags().BoolVarP(&updateBuildParametersCmdForce, "force", "f", false,
 		"force action")
 	updateBuildParametersCmd.Flags().IntVarP(&updateBuildParametersCmdHashcode, "hashcode", "c", 0,
+		"data hashcode")
+
+	updateGlobalParametersCmd.Flags().StringVarP(&updateGlobalParametersCmdPath, "path", "p", "",
+		"the path to the file")
+	updateGlobalParametersCmd.Flags().StringVarP(&updateGlobalParametersCmdData, "data", "d", "",
+		"data in JSON format")
+	updateGlobalParametersCmd.Flags().BoolVarP(&updateGlobalParametersCmdForce, "force", "f", false,
+		"force action")
+	updateGlobalParametersCmd.Flags().IntVarP(&updateGlobalParametersCmdHashcode, "hashcode", "c", 0,
 		"data hashcode")
 
 	getMtaIDCmd.Flags().StringVarP(&getMtaIDCmdPath, "path", "p", "",
@@ -193,6 +213,22 @@ var getBuildParametersCmd = &cobra.Command{
 	SilenceErrors: true,
 }
 
+// getGlobalParametersCmd get global parameters from mta
+var getGlobalParametersCmd = &cobra.Command{
+	Use:   "globalParameters",
+	Short: "Get global parameters",
+	Long:  "Get global parameters",
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return mta.RunAndWriteResultAndHash("get global parameters", getGlobalParametersCmdPath, getGlobalParametersCmdExtensions, func() (interface{}, []string, error) {
+			return mta.GetGlobalParameters(getGlobalParametersCmdPath, getGlobalParametersCmdExtensions)
+		})
+	},
+	Hidden:        true,
+	SilenceUsage:  true,
+	SilenceErrors: true,
+}
+
 // updateBuildParametersCmd update build parameters in mta
 var updateBuildParametersCmd = &cobra.Command{
 	Use:   "buildParameters",
@@ -203,6 +239,22 @@ var updateBuildParametersCmd = &cobra.Command{
 		return mta.RunModifyAndWriteHash("update build parameters", updateBuildParametersCmdPath, updateBuildParametersCmdForce, func() ([]string, error) {
 			return mta.UpdateBuildParameters(updateBuildParametersCmdPath, updateBuildParametersCmdData)
 		}, updateBuildParametersCmdHashcode, false)
+	},
+	Hidden:        true,
+	SilenceUsage:  true,
+	SilenceErrors: true,
+}
+
+// updateGlobalParametersCmd update global parameters in mta
+var updateGlobalParametersCmd = &cobra.Command{
+	Use:   "globalParameters",
+	Short: "Update global parameters",
+	Long:  "Update global parameters",
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return mta.RunModifyAndWriteHash("update global parameters", updateGlobalParametersCmdPath, updateGlobalParametersCmdForce, func() ([]string, error) {
+			return mta.UpdateGlobalParameters(updateGlobalParametersCmdPath, updateGlobalParametersCmdData)
+		}, updateGlobalParametersCmdHashcode, false)
 	},
 	Hidden:        true,
 	SilenceUsage:  true,
