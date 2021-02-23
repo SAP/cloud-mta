@@ -27,6 +27,7 @@ func getMtaInput() MTA {
 		Version:       "1.2",
 		SchemaVersion: &schemaVersion,
 		Description:   "test mta creation",
+		Parameters:    map[string]interface{}{"param1": "value1", "param2": "value2"},
 	}
 	return oMtaInput
 }
@@ -1455,6 +1456,35 @@ var _ = Describe("MtaServices", func() {
 		})
 	})
 
+	var _ = Describe("GetParameters", func() {
+		It("Get parameters", func() {
+			oParameters := map[string]interface{}{"deployer-version": ">=1.2.0"}
+			mtaPath := getTestPath("mta.yaml")
+
+			parameters, messages, err := GetParameters(mtaPath, nil)
+			Ω(err).Should(Succeed())
+			Ω(*parameters).Should(Equal(oParameters))
+			Ω(messages).Should(BeEmpty())
+		})
+
+		It("Get parameters with extensions", func() {
+			oParameters := map[string]interface{}{"deployer-version": "1.2.0", "param1": "ext_param"}
+			mtaPath := getTestPath("mta.yaml")
+			extPath := getTestPath("mta.mtaext")
+
+			parameters, messages, err := GetParameters(mtaPath, []string{extPath})
+			Ω(err).Should(Succeed())
+			Ω(*parameters).Should(Equal(oParameters))
+			Ω(messages).Should(BeEmpty())
+		})
+
+		It("Get parameters in a non existing mta.yaml file", func() {
+			mtaPath := getTestPath("result", "mta.yaml")
+			_, _, err := GetParameters(mtaPath, nil)
+			Ω(err).Should(HaveOccurred())
+		})
+	})
+
 	var _ = Describe("UpdateBuildParameters", func() {
 		mybuilder := ProjectBuilder{
 			Builder:  "mybuilder",
@@ -1541,6 +1571,77 @@ var _ = Describe("MtaServices", func() {
 			Ω(err).Should(Succeed())
 			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
 			_, err = UpdateBuildParameters(mtaPath, wrongJSON)
+			Ω(err).Should(HaveOccurred())
+		})
+	})
+
+	var _ = Describe("UpdateParameters", func() {
+
+		parameters := map[string]interface{}{"param1": "value1", "param2": "value2"}
+
+		It("Add new parameters", func() {
+			mtaPath := getTestPath("result", "temp.mta.yaml")
+
+			jsonRootData, err := json.Marshal(getMtaInput())
+			Ω(err).Should(Succeed())
+			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
+
+			jsonParametersData, err := json.Marshal(&parameters)
+			Ω(err).Should(Succeed())
+			messages, err := UpdateParameters(mtaPath, string(jsonParametersData))
+			Ω(err).Should(Succeed())
+			Ω(messages).Should(BeEmpty())
+
+			oMtaInput := getMtaInput()
+			oMtaInput.Parameters = parameters
+			Ω(mtaPath).Should(BeAnExistingFile())
+			yamlData, err := ioutil.ReadFile(mtaPath)
+			Ω(err).Should(Succeed())
+			oMtaOutput, err := Unmarshal(yamlData)
+			Ω(err).Should(Succeed())
+			Ω(oMtaInput).Should(Equal(*oMtaOutput))
+		})
+
+		It("Update existing parameters", func() {
+			updatedParameters := map[string]interface{}{"param1": "value1", "param3": "value3"}
+
+			mtaPath := getTestPath("result", "temp.mta.yaml")
+
+			jsonRootData, err := json.Marshal(getMtaInput())
+			Ω(err).Should(Succeed())
+			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
+
+			jsonUpdateParametersData, err := json.Marshal(&updatedParameters)
+			Ω(err).Should(Succeed())
+			messages, err := UpdateParameters(mtaPath, string(jsonUpdateParametersData))
+			Ω(err).Should(Succeed())
+			Ω(messages).Should(BeEmpty())
+
+			oMtaInput := getMtaInput()
+			oMtaInput.Parameters = updatedParameters
+			Ω(mtaPath).Should(BeAnExistingFile())
+			yamlData, err := ioutil.ReadFile(mtaPath)
+			Ω(err).Should(Succeed())
+			oMtaOutput, err := Unmarshal(yamlData)
+			Ω(err).Should(Succeed())
+			Ω(oMtaInput).Should(Equal(*oMtaOutput))
+		})
+
+		It("Update parameters in a non existing mta.yaml file", func() {
+			json := "{param:value}"
+			mtaPath := getTestPath("result", "mta.yaml")
+			_, err := UpdateParameters(mtaPath, json)
+			Ω(err).Should(HaveOccurred())
+		})
+
+		It("Update parameters with bad json format", func() {
+			wrongJSON := "{param:value"
+
+			mtaPath := getTestPath("result", "temp.mta.yaml")
+			jsonRootData, err := json.Marshal(getMtaInput())
+			Ω(err).Should(Succeed())
+			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
+			_, err = UpdateParameters(mtaPath, wrongJSON)
 			Ω(err).Should(HaveOccurred())
 		})
 	})

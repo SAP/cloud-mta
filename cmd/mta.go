@@ -21,10 +21,15 @@ var existCmdName string
 var existCmdPath string
 var getBuildParametersCmdPath string
 var getBuildParametersCmdExtensions []string
+var getParametersCmdPath string
+var getParametersCmdExtensions []string
 var updateBuildParametersCmdPath string
 var updateBuildParametersCmdData string
 var updateBuildParametersCmdForce bool
 var updateBuildParametersCmdHashcode int
+var updateParametersCmdPath string
+var updateParametersCmdData string
+var updateParametersCmdHashcode int
 var getMtaIDCmdPath string
 var validateMtaCmdPath string
 var validateMtaCmdExtensions []string
@@ -58,6 +63,11 @@ func init() {
 	getBuildParametersCmd.Flags().StringSliceVarP(&getBuildParametersCmdExtensions, "extensions", "x", nil,
 		"the paths to the MTA extension descriptors")
 
+	getParametersCmd.Flags().StringVarP(&getParametersCmdPath, "path", "p", "",
+		"the path to the yaml file")
+	getParametersCmd.Flags().StringSliceVarP(&getParametersCmdExtensions, "extensions", "x", nil,
+		"the paths to the MTA extension descriptors")
+
 	updateBuildParametersCmd.Flags().StringVarP(&updateBuildParametersCmdPath, "path", "p", "",
 		"the path to the file")
 	updateBuildParametersCmd.Flags().StringVarP(&updateBuildParametersCmdData, "data", "d", "",
@@ -65,6 +75,13 @@ func init() {
 	updateBuildParametersCmd.Flags().BoolVarP(&updateBuildParametersCmdForce, "force", "f", false,
 		"force action")
 	updateBuildParametersCmd.Flags().IntVarP(&updateBuildParametersCmdHashcode, "hashcode", "c", 0,
+		"data hashcode")
+
+	updateParametersCmd.Flags().StringVarP(&updateParametersCmdPath, "path", "p", "",
+		"the path to the file")
+	updateParametersCmd.Flags().StringVarP(&updateParametersCmdData, "data", "d", "",
+		"data in JSON format")
+	updateParametersCmd.Flags().IntVarP(&updateParametersCmdHashcode, "hashcode", "c", 0,
 		"data hashcode")
 
 	getMtaIDCmd.Flags().StringVarP(&getMtaIDCmdPath, "path", "p", "",
@@ -193,6 +210,22 @@ var getBuildParametersCmd = &cobra.Command{
 	SilenceErrors: true,
 }
 
+// getParametersCmd get parameters from mta
+var getParametersCmd = &cobra.Command{
+	Use:   "parameters",
+	Short: "Get parameters",
+	Long:  "Get parameters",
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return mta.RunAndWriteResultAndHash("get parameters", getParametersCmdPath, getParametersCmdExtensions, func() (interface{}, []string, error) {
+			return mta.GetParameters(getParametersCmdPath, getParametersCmdExtensions)
+		})
+	},
+	Hidden:        true,
+	SilenceUsage:  true,
+	SilenceErrors: true,
+}
+
 // updateBuildParametersCmd update build parameters in mta
 var updateBuildParametersCmd = &cobra.Command{
 	Use:   "buildParameters",
@@ -203,6 +236,22 @@ var updateBuildParametersCmd = &cobra.Command{
 		return mta.RunModifyAndWriteHash("update build parameters", updateBuildParametersCmdPath, updateBuildParametersCmdForce, func() ([]string, error) {
 			return mta.UpdateBuildParameters(updateBuildParametersCmdPath, updateBuildParametersCmdData)
 		}, updateBuildParametersCmdHashcode, false)
+	},
+	Hidden:        true,
+	SilenceUsage:  true,
+	SilenceErrors: true,
+}
+
+// updateParametersCmd update parameters in mta
+var updateParametersCmd = &cobra.Command{
+	Use:   "parameters",
+	Short: "Update parameters",
+	Long:  "Update parameters",
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return mta.RunModifyAndWriteHash("update parameters", updateParametersCmdPath, false, func() ([]string, error) {
+			return mta.UpdateParameters(updateParametersCmdPath, updateParametersCmdData)
+		}, updateParametersCmdHashcode, false)
 	},
 	Hidden:        true,
 	SilenceUsage:  true,
