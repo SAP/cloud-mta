@@ -27,6 +27,7 @@ func getMtaInput() MTA {
 		Version:       "1.2",
 		SchemaVersion: &schemaVersion,
 		Description:   "test mta creation",
+		Parameters:    map[string]interface{}{"param1": "value1", "param2": "value2"},
 	}
 	return oMtaInput
 }
@@ -1455,31 +1456,31 @@ var _ = Describe("MtaServices", func() {
 		})
 	})
 
-	var _ = Describe("GetGlobalParameters", func() {
-		It("Get global parameters", func() {
+	var _ = Describe("GetParameters", func() {
+		It("Get parameters", func() {
 			oParameters := map[string]interface{}{"deployer-version": ">=1.2.0"}
 			mtaPath := getTestPath("mta.yaml")
 
-			globalParameters, messages, err := GetGlobalParameters(mtaPath, nil)
+			parameters, messages, err := GetParameters(mtaPath, nil)
 			Ω(err).Should(Succeed())
-			Ω(*globalParameters).Should(Equal(oParameters))
+			Ω(*parameters).Should(Equal(oParameters))
 			Ω(messages).Should(BeEmpty())
 		})
 
-		It("Get global parameters with extensions", func() {
+		It("Get parameters with extensions", func() {
 			oParameters := map[string]interface{}{"deployer-version": "1.2.0", "param1": "ext_param"}
 			mtaPath := getTestPath("mta.yaml")
 			extPath := getTestPath("mta.mtaext")
 
-			globalParameters, messages, err := GetGlobalParameters(mtaPath, []string{extPath})
+			parameters, messages, err := GetParameters(mtaPath, []string{extPath})
 			Ω(err).Should(Succeed())
-			Ω(*globalParameters).Should(Equal(oParameters))
+			Ω(*parameters).Should(Equal(oParameters))
 			Ω(messages).Should(BeEmpty())
 		})
 
-		It("Get global parameters in a non existing mta.yaml file", func() {
+		It("Get parameters in a non existing mta.yaml file", func() {
 			mtaPath := getTestPath("result", "mta.yaml")
-			_, _, err := GetGlobalParameters(mtaPath, nil)
+			_, _, err := GetParameters(mtaPath, nil)
 			Ω(err).Should(HaveOccurred())
 		})
 	})
@@ -1574,20 +1575,20 @@ var _ = Describe("MtaServices", func() {
 		})
 	})
 
-	var _ = Describe("UpdateGlobalParameters", func() {
+	var _ = Describe("UpdateParameters", func() {
 
 		parameters := map[string]interface{}{"param1": "value1", "param2": "value2"}
 
-		It("Add new global parameters", func() {
+		It("Add new parameters", func() {
 			mtaPath := getTestPath("result", "temp.mta.yaml")
 
 			jsonRootData, err := json.Marshal(getMtaInput())
 			Ω(err).Should(Succeed())
 			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
 
-			jsonGlobalParametersData, err := json.Marshal(&parameters)
+			jsonParametersData, err := json.Marshal(&parameters)
 			Ω(err).Should(Succeed())
-			messages, err := UpdateGlobalParameters(mtaPath, string(jsonGlobalParametersData))
+			messages, err := UpdateParameters(mtaPath, string(jsonParametersData))
 			Ω(err).Should(Succeed())
 			Ω(messages).Should(BeEmpty())
 
@@ -1598,11 +1599,11 @@ var _ = Describe("MtaServices", func() {
 			Ω(err).Should(Succeed())
 			oMtaOutput, err := Unmarshal(yamlData)
 			Ω(err).Should(Succeed())
-			Ω(reflect.DeepEqual(oMtaInput, *oMtaOutput)).Should(BeTrue())
+			Ω(oMtaInput).Should(Equal(*oMtaOutput))
 		})
 
-		It("Update existing global parameters", func() {
-			updatedParameters := map[string]interface{}{"param1": "value1", "param2": "value3"}
+		It("Update existing parameters", func() {
+			updatedParameters := map[string]interface{}{"param1": "value1", "param3": "value3"}
 
 			mtaPath := getTestPath("result", "temp.mta.yaml")
 
@@ -1610,15 +1611,9 @@ var _ = Describe("MtaServices", func() {
 			Ω(err).Should(Succeed())
 			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
 
-			jsonGlobalParametersData, err := json.Marshal(&parameters)
+			jsonUpdateParametersData, err := json.Marshal(&updatedParameters)
 			Ω(err).Should(Succeed())
-			messages, err := UpdateGlobalParameters(mtaPath, string(jsonGlobalParametersData))
-			Ω(err).Should(Succeed())
-			Ω(messages).Should(BeEmpty())
-
-			jsonUpdateBuildParametersData, err := json.Marshal(&updatedParameters)
-			Ω(err).Should(Succeed())
-			messages, err = UpdateGlobalParameters(mtaPath, string(jsonUpdateBuildParametersData))
+			messages, err := UpdateParameters(mtaPath, string(jsonUpdateParametersData))
 			Ω(err).Should(Succeed())
 			Ω(messages).Should(BeEmpty())
 
@@ -1629,24 +1624,24 @@ var _ = Describe("MtaServices", func() {
 			Ω(err).Should(Succeed())
 			oMtaOutput, err := Unmarshal(yamlData)
 			Ω(err).Should(Succeed())
-			Ω(reflect.DeepEqual(oMtaInput, *oMtaOutput)).Should(BeTrue())
+			Ω(oMtaInput).Should(Equal(*oMtaOutput))
 		})
 
-		It("Update global parameters in a non existing mta.yaml file", func() {
+		It("Update parameters in a non existing mta.yaml file", func() {
 			json := "{param:value}"
 			mtaPath := getTestPath("result", "mta.yaml")
-			_, err := UpdateGlobalParameters(mtaPath, json)
+			_, err := UpdateParameters(mtaPath, json)
 			Ω(err).Should(HaveOccurred())
 		})
 
-		It("Update global parameters with bad json format", func() {
+		It("Update parameters with bad json format", func() {
 			wrongJSON := "{param:value"
 
 			mtaPath := getTestPath("result", "temp.mta.yaml")
 			jsonRootData, err := json.Marshal(getMtaInput())
 			Ω(err).Should(Succeed())
 			Ω(CreateMta(mtaPath, string(jsonRootData), os.MkdirAll)).Should(Succeed())
-			_, err = UpdateGlobalParameters(mtaPath, wrongJSON)
+			_, err = UpdateParameters(mtaPath, wrongJSON)
 			Ω(err).Should(HaveOccurred())
 		})
 	})

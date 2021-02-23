@@ -21,16 +21,15 @@ var existCmdName string
 var existCmdPath string
 var getBuildParametersCmdPath string
 var getBuildParametersCmdExtensions []string
-var getGlobalParametersCmdPath string
-var getGlobalParametersCmdExtensions []string
+var getParametersCmdPath string
+var getParametersCmdExtensions []string
 var updateBuildParametersCmdPath string
 var updateBuildParametersCmdData string
 var updateBuildParametersCmdForce bool
 var updateBuildParametersCmdHashcode int
-var updateGlobalParametersCmdPath string
-var updateGlobalParametersCmdData string
-var updateGlobalParametersCmdForce bool
-var updateGlobalParametersCmdHashcode int
+var updateParametersCmdPath string
+var updateParametersCmdData string
+var updateParametersCmdHashcode int
 var getMtaIDCmdPath string
 var validateMtaCmdPath string
 var validateMtaCmdExtensions []string
@@ -64,9 +63,9 @@ func init() {
 	getBuildParametersCmd.Flags().StringSliceVarP(&getBuildParametersCmdExtensions, "extensions", "x", nil,
 		"the paths to the MTA extension descriptors")
 
-	getGlobalParametersCmd.Flags().StringVarP(&getGlobalParametersCmdPath, "path", "p", "",
+	getParametersCmd.Flags().StringVarP(&getParametersCmdPath, "path", "p", "",
 		"the path to the yaml file")
-	getGlobalParametersCmd.Flags().StringSliceVarP(&getGlobalParametersCmdExtensions, "extensions", "x", nil,
+	getParametersCmd.Flags().StringSliceVarP(&getParametersCmdExtensions, "extensions", "x", nil,
 		"the paths to the MTA extension descriptors")
 
 	updateBuildParametersCmd.Flags().StringVarP(&updateBuildParametersCmdPath, "path", "p", "",
@@ -78,13 +77,11 @@ func init() {
 	updateBuildParametersCmd.Flags().IntVarP(&updateBuildParametersCmdHashcode, "hashcode", "c", 0,
 		"data hashcode")
 
-	updateGlobalParametersCmd.Flags().StringVarP(&updateGlobalParametersCmdPath, "path", "p", "",
+	updateParametersCmd.Flags().StringVarP(&updateParametersCmdPath, "path", "p", "",
 		"the path to the file")
-	updateGlobalParametersCmd.Flags().StringVarP(&updateGlobalParametersCmdData, "data", "d", "",
+	updateParametersCmd.Flags().StringVarP(&updateParametersCmdData, "data", "d", "",
 		"data in JSON format")
-	updateGlobalParametersCmd.Flags().BoolVarP(&updateGlobalParametersCmdForce, "force", "f", false,
-		"force action")
-	updateGlobalParametersCmd.Flags().IntVarP(&updateGlobalParametersCmdHashcode, "hashcode", "c", 0,
+	updateParametersCmd.Flags().IntVarP(&updateParametersCmdHashcode, "hashcode", "c", 0,
 		"data hashcode")
 
 	getMtaIDCmd.Flags().StringVarP(&getMtaIDCmdPath, "path", "p", "",
@@ -213,15 +210,15 @@ var getBuildParametersCmd = &cobra.Command{
 	SilenceErrors: true,
 }
 
-// getGlobalParametersCmd get global parameters from mta
-var getGlobalParametersCmd = &cobra.Command{
-	Use:   "globalParameters",
-	Short: "Get global parameters",
-	Long:  "Get global parameters",
+// getParametersCmd get parameters from mta
+var getParametersCmd = &cobra.Command{
+	Use:   "parameters",
+	Short: "Get parameters",
+	Long:  "Get parameters",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return mta.RunAndWriteResultAndHash("get global parameters", getGlobalParametersCmdPath, getGlobalParametersCmdExtensions, func() (interface{}, []string, error) {
-			return mta.GetGlobalParameters(getGlobalParametersCmdPath, getGlobalParametersCmdExtensions)
+		return mta.RunAndWriteResultAndHash("get parameters", getParametersCmdPath, getParametersCmdExtensions, func() (interface{}, []string, error) {
+			return mta.GetParameters(getParametersCmdPath, getParametersCmdExtensions)
 		})
 	},
 	Hidden:        true,
@@ -245,16 +242,16 @@ var updateBuildParametersCmd = &cobra.Command{
 	SilenceErrors: true,
 }
 
-// updateGlobalParametersCmd update global parameters in mta
-var updateGlobalParametersCmd = &cobra.Command{
-	Use:   "globalParameters",
-	Short: "Update global parameters",
-	Long:  "Update global parameters",
+// updateParametersCmd update parameters in mta
+var updateParametersCmd = &cobra.Command{
+	Use:   "parameters",
+	Short: "Update parameters",
+	Long:  "Update parameters",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return mta.RunModifyAndWriteHash("update global parameters", updateGlobalParametersCmdPath, updateGlobalParametersCmdForce, func() ([]string, error) {
-			return mta.UpdateGlobalParameters(updateGlobalParametersCmdPath, updateGlobalParametersCmdData)
-		}, updateGlobalParametersCmdHashcode, false)
+		return mta.RunModifyAndWriteHash("update parameters", updateParametersCmdPath, false, func() ([]string, error) {
+			return mta.UpdateParameters(updateParametersCmdPath, updateParametersCmdData)
+		}, updateParametersCmdHashcode, false)
 	},
 	Hidden:        true,
 	SilenceUsage:  true,
