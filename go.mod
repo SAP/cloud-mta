@@ -21,6 +21,6 @@ require (
 	github.com/spf13/viper v1.7.1
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2
 	gopkg.in/ini.v1 v1.57.0 // indirect
-	gopkg.in/yaml.v2 v2.3.0
+	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20190904155537-35294daf730c
 )
