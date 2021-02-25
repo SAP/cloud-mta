@@ -249,7 +249,7 @@ var updateParametersCmd = &cobra.Command{
 	Long:  "Update parameters",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return mta.RunModifyAndWriteHash("update parameters", updateParametersCmdPath, false, func() ([]string, error) {
+		return mta.RunModifyAndWriteHash("update parameters", updateParametersCmdPath, true, func() ([]string, error) {
 			return mta.UpdateParameters(updateParametersCmdPath, updateParametersCmdData)
 		}, updateParametersCmdHashcode, false)
 	},
