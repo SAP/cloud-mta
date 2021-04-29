@@ -1,0 +1,18 @@
+version: 2
+updates:
+- package-ecosystem: gomod
+  directory: "/"
+  schedule:
+    interval: daily
+    time: "10:00"
+    timezone: Etc/UCT
+  ignore:
+  - dependency-name: github.com/onsi/ginkgo
+    versions:
+    - 1.15.1
+  - dependency-name: gopkg.in/yaml.v2
+    versions:
+    - 2.4.0
+  - dependency-name: github.com/sirupsen/logrus
+    versions:
+    - 1.8.0
