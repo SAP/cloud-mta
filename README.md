@@ -106,6 +106,7 @@ To use these npm libraries from an application packaged with webpack, you have t
 For example, if the results are in the `dist` folder, add this configuration inside your webpack configuration file:
 ```javascript
 const path = require("path");
+const fs = require("fs");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const config = {
     // ...
@@ -129,6 +130,8 @@ const config = {
     ]
 };
 ```
+
+**Note:** if you did not previously use `copy-webpack-plugin` you will need to add it to the `devDependencies` in your `package.json` file.
 
 ## Contributions
 
