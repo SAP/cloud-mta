@@ -1,4 +1,4 @@
-all:format test clean dir gen build-linux build-darwin build-windows copy test
+all:format test clean dir gen build-linux build-darwin build-darwin-arm build-windows copy test
 .PHONY: format test tools
 
 
@@ -51,6 +51,9 @@ build-linux:
 
 build-darwin:
 	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 $(GOBUILD) -o release/$(BINARY_NAME) -v
+
+build-darwin-arm:
+	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 $(GOBUILD) -o release/$(BINARY_NAME)_darwin_arm -v
 
 build-windows:
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 $(GOBUILD) -o release/$(BINARY_NAME)_windows -v
