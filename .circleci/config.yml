@@ -23,8 +23,8 @@ jobs:
             go get golang.org/x/tools/cmd/cover
             go get github.com/mattn/goveralls
             go get github.com/modocache/gover
-            go install github.com/mattn/goveralls
-            go install github.com/modocache/gover
+            go install -mod=mod github.com/mattn/goveralls
+            go install -mod=mod github.com/modocache/gover
       - run: go test -v github.com/SAP/cloud-mta/mta -coverprofile=mta.coverprofile
       - run: go test -v github.com/SAP/cloud-mta/validations -coverprofile=validations.coverprofile
       - run: gover
