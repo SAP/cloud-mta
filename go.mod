@@ -5,7 +5,7 @@ go 1.15
 require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/joho/godotenv v1.3.0
-	github.com/json-iterator/go v1.1.11
+	github.com/json-iterator/go v1.1.12
 	github.com/mattn/go-colorable v0.1.1 // indirect
 	github.com/mattn/go-isatty v0.0.7 // indirect
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
