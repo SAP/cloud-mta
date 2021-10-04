@@ -62,6 +62,21 @@ var _ = Describe("Resolve", func() {
 		}
 		callResolveAndValidateOutput(wd, "eb-java", yamlPath, nil, ".env_with_vcap", expected, BeEmpty())
 	})
+
+	// If this fail you may have forgot to apply a patch
+	// see the `patches` directory in the root of this repo
+	It("resolves vcap_services from large env file ", func() {
+		wd := getTestPath("test-project")
+		yamlPath := getTestPath("test-project", "mtaLargeEnv.yaml")
+		expected := ResolveResult{
+			Properties: map[string]string{
+				`SERVICE_REPLACEMENTS`: `[{"key":"ServiceName_1","service":"BAMBA"}]`,
+				`TARGET_CONTAINER`:     `BAMBA`,
+			},
+			Messages: []string{}}
+		callResolveAndValidateOutput(wd, "db", yamlPath, nil, ".envLarge", expected, BeEmpty())
+	})
+
 	It("uses mta.yaml folder as the working dir when working dir is not sent", func() {
 		yamlPath := getTestPath("test-project", "mta.yaml")
 		envGetter = mockEnvGetterExtWithVcapServices
