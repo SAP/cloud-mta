@@ -1,0 +1,16 @@
+diff --git "a/vendor\\github.com\\joho\\godotenv\\godotenv.go" "b/vendor\\github.com\\joho\\godotenv\\godotenv.go"
+index 29b436c..2dae889 100644
+--- "a/vendor/github.com/joho/godotenv/godotenv.go"
++++ "b/vendor/github.com/joho/godotenv/godotenv.go"
+@@ -101,6 +101,11 @@ func Parse(r io.Reader) (envMap map[string]string, err error) {
+ 
+ 	var lines []string
+ 	scanner := bufio.NewScanner(r)
++	// See: https://github.com/joho/godotenv/issues/162
++	// This is a simplified "quick fix" alternative to https://github.com/joho/godotenv/pull/161
++	buf := make([]byte, 0, 64*1024)
++	// 256k max token size instead of the default 64k
++	scanner.Buffer(buf, 256*1024)
+ 	for scanner.Scan() {
+ 		lines = append(lines, scanner.Text())
+ 	}
