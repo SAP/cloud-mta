@@ -122,6 +122,8 @@ type Resource struct {
 	Optional bool `yaml:"optional,omitempty" json:"optional,omitempty"`
 	// If a resource is declared to be active, it is allocated and bound according to declared requirements
 	Active *bool `yaml:"active,omitempty" json:"active,omitempty"`
+	// A list containing the names of the resources that must be processed prior to this one.
+	ProcessedAfter []string `yaml:"processed-after,omitempty" json:"processed-after,omitempty"`
 	// list of names either matching a resource name or a name provided by another module within the same MTA
 	Requires []Requires `yaml:"requires,omitempty" json:"requires,omitempty"`
 }
