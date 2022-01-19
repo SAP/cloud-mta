@@ -159,8 +159,9 @@ var _ = Describe("Mta", func() {
 		Modules:       modules,
 		Resources: []*Resource{
 			{
-				Name: "database",
-				Type: "postgresql",
+				Name:           "database",
+				Type:           "postgresql",
+				ProcessedAfter: []string{"plugins"},
 			},
 			{
 				Name:     "plugins",
@@ -332,6 +333,21 @@ var _ = Describe("Mta", func() {
 			_, err = Unmarshal(content)
 			Ω(err).Should(HaveOccurred())
 			Ω(err.Error()).Should(ContainSubstring("line 54: cannot unmarshal !!int `1` into []string"))
+		})
+
+		It("Wrong processed-after value", func() {
+			content, err := fs.ReadFile(getTestPath("mtaWrongProcessedAfter.yaml"))
+			Ω(err).Should(Succeed())
+			_, err = Unmarshal(content)
+			Ω(err).Should(HaveOccurred())
+			Ω(err.Error()).Should(ContainSubstring("line 69: cannot unmarshal !!int `1` into []string"))
+		})
+
+		It("Correct processed-after value", func() {
+			content, err := fs.ReadFile(getTestPath("mtaCorrectProcessedAfter.yaml"))
+			Ω(err).Should(Succeed())
+			_, err = Unmarshal(content)
+			Ω(err).ShouldNot(HaveOccurred())
 		})
 
 		It("Wrong properties-metadata value", func() {
