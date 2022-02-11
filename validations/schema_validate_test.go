@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"sort"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	. "github.com/onsi/gomega/types"
+	"github.com/onsi/gomega/types"
 	"github.com/smallfish/simpleyaml"
 )
 
@@ -256,7 +255,7 @@ optionalClasses:
 	})
 })
 
-var _ = DescribeTable("GetLiteralStringValue", func(data string, matcher GomegaMatcher) {
+var _ = DescribeTable("GetLiteralStringValue", func(data string, matcher types.GomegaMatcher) {
 	y, _ := simpleyaml.NewYaml([]byte(data))
 	value := getLiteralStringValue(y)
 	Ω(value).Should(matcher)

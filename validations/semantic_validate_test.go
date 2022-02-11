@@ -3,7 +3,7 @@ package validate
 import (
 	"gopkg.in/yaml.v3"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/SAP/cloud-mta/mta"

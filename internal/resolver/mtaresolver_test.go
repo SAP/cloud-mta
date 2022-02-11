@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	. "github.com/onsi/gomega/types"
+	"github.com/onsi/gomega/types"
 
 	"github.com/SAP/cloud-mta/internal/fs"
 	"github.com/SAP/cloud-mta/mta"
@@ -19,7 +19,7 @@ func callResolveAndGetOutput(wd, moduleName, yamlPath string, extensions []strin
 	return result, messages
 }
 
-func callResolveAndValidateOutput(wd, moduleName, yamlPath string, extensions []string, envFile string, expected ResolveResult, expectedMessagesMatcher GomegaMatcher) {
+func callResolveAndValidateOutput(wd, moduleName, yamlPath string, extensions []string, envFile string, expected ResolveResult, expectedMessagesMatcher types.GomegaMatcher) {
 	actualResult, actualMessages := callResolveAndGetOutput(wd, moduleName, yamlPath, extensions, envFile)
 	Ω(actualResult).Should(Equal(expected))
 	Ω(actualMessages).Should(expectedMessagesMatcher)
