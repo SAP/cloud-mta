@@ -9,8 +9,8 @@ require (
 	github.com/mattn/go-colorable v0.1.1 // indirect
 	github.com/mattn/go-isatty v0.0.7 // indirect
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
-	github.com/onsi/ginkgo v1.16.2
-	github.com/onsi/gomega v1.13.0
+	github.com/onsi/ginkgo v1.16.4
+	github.com/onsi/gomega v1.27.5
 	github.com/pelletier/go-toml v1.3.0 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.1
@@ -22,5 +22,5 @@ require (
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2
 	gopkg.in/ini.v1 v1.57.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0
-	gopkg.in/yaml.v3 v3.0.0-20190904155537-35294daf730c
+	gopkg.in/yaml.v3 v3.0.1
 )
