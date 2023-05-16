@@ -2,9 +2,10 @@ package commands
 
 import (
 	"fmt"
+
 	"github.com/SAP/cloud-mta/internal/logs"
-	"github.com/SAP/cloud-mta/internal/resolver"
 	"github.com/SAP/cloud-mta/mta"
+	"github.com/SAP/cloud-mta/resolver"
 	"github.com/spf13/cobra"
 )
 
