@@ -1,6 +1,8 @@
 _schema-version: "2.1"
 ID: reproduce_bug_env
 version: 0.0.1
+parameters:
+  service-name: BAMBA
 modules:
 - name: db
   type: hdb
@@ -21,7 +23,5 @@ resources:
     hdi-container-name: ${service-name}
 - name: cross-container-service-1
   type: org.cloudfoundry.existing-service
-  parameters:
-    service-name: BAMBA
   properties:
     the-service-name: ${service-name}

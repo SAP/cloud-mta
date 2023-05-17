@@ -168,6 +168,13 @@ func resolvePath(path string, parts ...string) string {
 	return absolutePath
 }
 
+// ResolveResourceProperties is the main function to trigger the resolution
+func (m *MTAResolver) ResolveResourceProperties(resource *mta.Resource) {
+	for key, value := range resource.Parameters {
+		resource.Parameters[key] = m.resolvePlaceholders(nil, nil, nil, value)
+	}
+}
+
 // ResolvePropertiesAndParameters is the main function to trigger the resolution
 func (m *MTAResolver) ResolvePropertiesAndParameters(module *mta.Module, envFilePath string) {
 
