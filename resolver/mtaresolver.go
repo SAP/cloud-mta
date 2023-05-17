@@ -455,7 +455,7 @@ func (m *MTAResolver) getParameterFromSource(source *mtaSource, paramName string
 	return ""
 }
 
-func (m *MTAResolver) getParameter(sourceModule *mta.Module, source *mtaSource, requires *mta.Requires, paramName string) string {
+func (m *MTAResolver) getParameter(sourceModule *mta.Module, source *mtaSource, requires *mta.Requires, paramName string) any {
 	//first on source parameters scope
 	paramValStr := m.getParameterFromSource(source, paramName)
 
@@ -466,14 +466,14 @@ func (m *MTAResolver) getParameter(sourceModule *mta.Module, source *mtaSource, 
 
 	//then try on requires level
 	if requires != nil {
-		paramVal, ok := getStringFromMap(requires.Parameters, paramName)
+		paramVal, ok := requires.Parameters[paramName]
 		if ok {
 			return paramVal
 		}
 	}
 
 	if sourceModule != nil {
-		paramVal, ok := getStringFromMap(sourceModule.Parameters, paramName)
+		paramVal, ok := sourceModule.Parameters[paramName]
 		if ok {
 			return paramVal
 		}
@@ -485,7 +485,7 @@ func (m *MTAResolver) getParameter(sourceModule *mta.Module, source *mtaSource, 
 	}
 
 	//then on MTA root scope
-	paramVal, ok := getStringFromMap(m.Parameters, paramName)
+	paramVal, ok := m.Parameters[paramName]
 	if ok {
 		return paramVal
 	}
