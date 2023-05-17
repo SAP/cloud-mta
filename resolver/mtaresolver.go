@@ -402,8 +402,8 @@ func (m *MTAResolver) resolvePlaceholders(sourceModule *mta.Module, source *mtaS
 }
 
 func (m *MTAResolver) resolvePlaceholdersString(sourceModule *mta.Module, source *mtaSource, requires *mta.Requires, value string) any {
-	pos := 0
-	pos, placeholderName, wholeValue := parseNextVariable(pos, value, placeholderPrefix)
+	originalValue := value
+	pos, placeholderName, wholeValue := parseNextVariable(0, value, placeholderPrefix)
 
 	if pos < 0 {
 		return value
@@ -411,7 +411,11 @@ func (m *MTAResolver) resolvePlaceholdersString(sourceModule *mta.Module, source
 	placeholderValue := m.getParameter(sourceModule, source, requires, placeholderName)
 
 	if wholeValue {
-		return placeholderValue
+		if placeholderValue == originalValue {
+			return placeholderValue
+		} else {
+			return m.resolvePlaceholders(sourceModule, source, requires, placeholderValue)
+		}
 	}
 	for pos >= 0 {
 		phValueStr, _ := convertToString(placeholderValue)
@@ -422,7 +426,11 @@ func (m *MTAResolver) resolvePlaceholdersString(sourceModule *mta.Module, source
 		}
 	}
 
-	return value
+	if originalValue == value {
+		return value
+	} else {
+		return m.resolvePlaceholdersString(sourceModule, source, requires, value)
+	}
 }
 
 func (m *MTAResolver) getParameterFromSource(source *mtaSource, paramName string) string {
