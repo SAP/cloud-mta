@@ -54,7 +54,7 @@ func Resolve(workspaceDir, moduleName, path string, extensions []string, envFile
 
 	for _, module := range m.GetModules() {
 		if module.Name == moduleName {
-			m.ResolveProperties(module, envFilePath)
+			m.ResolvePropertiesAndParameters(module, envFilePath)
 
 			propVarMap, err := getPropertiesAsEnvVar(module)
 			if err != nil {
@@ -168,8 +168,8 @@ func resolvePath(path string, parts ...string) string {
 	return absolutePath
 }
 
-// ResolveProperties is the main function to trigger the resolution
-func (m *MTAResolver) ResolveProperties(module *mta.Module, envFilePath string) {
+// ResolvePropertiesAndParameters is the main function to trigger the resolution
+func (m *MTAResolver) ResolvePropertiesAndParameters(module *mta.Module, envFilePath string) {
 
 	if m.Parameters == nil {
 		m.Parameters = map[string]any{}
@@ -204,13 +204,29 @@ func (m *MTAResolver) ResolveProperties(module *mta.Module, envFilePath string) 
 		module.Properties[key] = m.resolvePlaceholders(module, nil, nil, propValue)
 	}
 
-	//required properties:
+	// top level parameters
+	for key, value := range module.Parameters {
+		// replace value with resolved value
+		paramValue := m.resolve(module, nil, value)
+		module.Parameters[key] = m.resolvePlaceholders(module, nil, nil, paramValue)
+	}
+
+	//required properties / parameters:
 	for _, req := range module.Requires {
 		requiredSource := m.findProvider(req.Name)
+
+		// properties
 		for propName, PropValue := range req.Properties {
 			resolvedValue := m.resolve(module, &req, PropValue)
 			//replace value with resolved value
 			req.Properties[propName] = m.resolvePlaceholders(module, requiredSource, &req, resolvedValue)
+		}
+
+		// parameters
+		for key, value := range req.Parameters {
+			// replace value with resolved value
+			paramValue := m.resolve(module, &req, value)
+			req.Parameters[key] = m.resolvePlaceholders(module, nil, nil, paramValue)
 		}
 	}
 }
