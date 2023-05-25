@@ -147,6 +147,68 @@ var _ = Describe("MTAResolver", func() {
 				Expect(mod.Properties).To(HaveKeyWithValue("foo", "${unknown}"))
 				Expect(mod.Properties).To(HaveKeyWithValue("bar", "${unknown}_val"))
 			})
+
+			It("should resolve fields in correct context", func() {
+				res := NewMTAResolver(&mta.MTA{
+					Parameters: map[string]interface{}{
+						"url": "global",
+					},
+					Modules: []*mta.Module{
+						{
+							Name: "srv",
+							Parameters: map[string]interface{}{
+								"url": "module",
+							},
+							Provides: []mta.Provides{
+								{
+									Name: "srv-url",
+									Properties: map[string]interface{}{
+										"url": "url used: ${url}",
+									},
+								},
+							},
+						},
+					},
+				}, "")
+				mod := &mta.Module{
+					Name: "router",
+					Parameters: map[string]interface{}{
+						"content": map[string]interface{}{
+							"instance": map[string]interface{}{
+								"destinations": []map[string]interface{}{
+									{
+										"URL": "~{srv-url/url}",
+									},
+								},
+							},
+						},
+					},
+					Requires: []mta.Requires{
+						{
+							Name:  "srv-url",
+							Group: "destinations",
+							Properties: map[string]interface{}{
+								"name": "srv-api",
+								"url":  "~{url}",
+							},
+						},
+					},
+				}
+
+				res.ResolvePropertiesAndParameters(mod, "")
+				Expect(mod.GetRequiresByName("srv-url").Properties["url"]).To(Equal("url used: module"))
+				Expect(mod.Parameters).To(Equal(map[string]interface{}{
+					"content": map[string]interface{}{
+						"instance": map[string]interface{}{
+							"destinations": []map[string]interface{}{
+								{
+									"URL": "url used: module",
+								},
+							},
+						},
+					},
+				}))
+			})
 		})
 	})
 })

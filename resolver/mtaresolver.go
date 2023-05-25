@@ -272,6 +272,13 @@ func (m *MTAResolver) resolve(sourceModule *mta.Module, requires *mta.Requires, 
 			valueObj[i] = m.resolve(sourceModule, requires, v)
 		}
 		return valueObj
+	case []map[string]any:
+		for k, v := range valueObj {
+			for mk, mv := range v {
+				valueObj[k][mk] = m.resolve(sourceModule, requires, mv)
+			}
+		}
+		return valueObj
 	case string:
 		return m.resolveString(sourceModule, requires, valueObj)
 	default:
@@ -400,6 +407,13 @@ func (m *MTAResolver) resolvePlaceholders(sourceModule *mta.Module, source *mtaS
 			valueObj[k] = m.resolvePlaceholders(sourceModule, source, requires, v)
 		}
 		return valueObj
+	case []map[string]any:
+		for k, v := range valueObj {
+			for mk, mv := range v {
+				valueObj[k][mk] = m.resolvePlaceholders(sourceModule, source, requires, mv)
+			}
+		}
+		return valueObj
 	case string:
 		return m.resolvePlaceholdersString(sourceModule, source, requires, valueObj)
 	default:
@@ -524,7 +538,7 @@ func (m *MTAResolver) findProvider(name string) *mtaSource {
 	for _, module := range m.Modules {
 		for _, provides := range module.Provides {
 			if provides.Name == name {
-				source := mtaSource{Name: module.Name, Properties: provides.Properties, Parameters: nil, Type: moduleType, Module: module}
+				source := mtaSource{Name: module.Name, Properties: provides.Properties, Parameters: module.Parameters, Type: moduleType, Module: module}
 				return &source
 			}
 		}
