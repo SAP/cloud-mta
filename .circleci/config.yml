@@ -7,7 +7,7 @@ jobs:
       - image: cimg/go:1.18
     environment:
       - DEP_VERSION: 0.5.1
-    working_directory: /go/src/github.com/SAP/cloud-mta
+    working_directory: /home/go/src/github.com/SAP/cloud-mta
     steps:
       - checkout
       - run: go version
@@ -19,7 +19,7 @@ jobs:
             cd patches
             sh apply-patches.sh
       - run: go test -v -race ./...
-      - run: sudo chown circleci:circleci /go/bin
+      - run: sudo chown circleci:circleci /home/go/bin
       - run: make tools
       - run: make lint
       - run:
@@ -50,7 +50,7 @@ jobs:
   release:
     docker:
       - image: cimg/go:1.18
-    working_directory: /go/src/github.com/SAP/cloud-mta
+    working_directory: /home/go/src/github.com/SAP/cloud-mta
     steps:
       - add_ssh_keys:
           fingerprints:
@@ -114,7 +114,7 @@ jobs:
   publish:
     docker:
       - image: circleci/node:13.1.0
-    working_directory: ~/go/src/github.com/SAP/cloud-mta
+    working_directory: ~/home/go/src/github.com/SAP/cloud-mta
     steps:
       - add_ssh_keys:
           fingerprints:
