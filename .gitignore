@@ -7,7 +7,6 @@ cmd/internal/
 vendor
 release
 doc.html
-bin
 node_modules
 package-lock.json
 unpacked_bin

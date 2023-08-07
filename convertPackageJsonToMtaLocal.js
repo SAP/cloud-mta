@@ -14,7 +14,5 @@ const pkgJson = JSON.parse(pkgJsonOrgStr);
 pkgJson.name = "mta-local";
 delete pkgJson.bin;
 delete pkgJson.scripts.install;
-pkgJson.devDependencies.binwrap = pkgJson.dependencies.binwrap;
-delete pkgJson.dependencies.binwrap;
 
 writeFileSync(pkgJsonPath, JSON.stringify(pkgJson, undefined, 2));
