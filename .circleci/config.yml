@@ -4,7 +4,7 @@ jobs:
   build:
     docker:
       # specify the version
-      - image: cimg/go:1.17
+      - image: cimg/go:1.18
     environment:
       - DEP_VERSION: 0.5.1
     working_directory:  ~/go/src/github.com/SAP/cloud-mta
@@ -49,7 +49,7 @@ jobs:
       
   release:
     docker:
-      - image: cimg/go:1.17
+      - image: cimg/go:1.18
     working_directory: ~/go/src/github.com/SAP/cloud-mta
     steps:
       - add_ssh_keys:
@@ -68,7 +68,7 @@ jobs:
       - run:
           name: install goreleaser
           command: |
-            go install github.com/goreleaser/goreleaser@v1.17.2
+            go install github.com/goreleaser/goreleaser@v1.18.2
             echo "goreleaser --version:"
             goreleaser --version
       - run:
