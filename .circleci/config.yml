@@ -68,7 +68,7 @@ jobs:
       - run:
           name: install goreleaser
           command: |
-            go install github.com/goreleaser/goreleaser@v1.18.2
+            go install github.com/goreleaser/goreleaser@v1.17.2
             echo "goreleaser --version:"
             goreleaser --version
       - run:
@@ -119,7 +119,7 @@ jobs:
             
   publish:
     docker:
-      - image: circleci/node:13.1.0
+      - image: cimg/node:lts
     working_directory: ~/go/src/github.com/SAP/cloud-mta
     steps:
       - add_ssh_keys:
