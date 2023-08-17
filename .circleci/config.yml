@@ -66,6 +66,12 @@ jobs:
             cd patches
             sh apply-patches.sh
       - run:
+          name: install goreleaser
+          command: |
+            go install github.com/goreleaser/goreleaser@v1.18.2
+            echo "goreleaser --version:"
+            goreleaser --version
+      - run:
           name: bump version
           command: |
             #Make sure HEAD points to master
@@ -109,7 +115,7 @@ jobs:
             #Make sure HEAD points to master
             git checkout master
             export GITHUB_TOKEN=${CLOUD_MTA_BOT_GITHUB_TOKEN}
-            curl -sL https://git.io/goreleaser | bash  
+            goreleaser release
             
   publish:
     docker:
