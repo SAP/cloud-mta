@@ -133,14 +133,14 @@ const config = {
 
 **Note:** if you did not previously use `copy-webpack-plugin` you will need to add it to the `devDependencies` in your `package.json` file.
 
+## Node.js v10/ECMAScript modules
+
+More and more npm packages use ECMAScript modules instead of commonJS, for ECMAScript modules are the official standard format to package JavaScript code for reuse. From v1.0.5, we use axios instead of binwrap(which has moderate severity vulnerabilities) to download binary files, but axios only supports ECMAScript modules and can't work on Node.js v10. So since v1.0.5, mta will not support Node.js v10 and lower versions.
+
 ## Contributions
 
 Contributions are greatly appreciated.
 See [CONTRIBUTING.md](https://github.com/SAP/cloud-mta/blob/master/.github/CONTRIBUTING.md) for details.
-
-## Known Issues
-
-No known major issues.  To report a new issue, please use our GitHub bug tracking system.
 
 ## Support
 
