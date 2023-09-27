@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/ghodss/yaml v1.0.0
-	github.com/joho/godotenv v1.3.0
+	github.com/joho/godotenv v1.5.1
 	github.com/json-iterator/go v1.1.11
 	github.com/onsi/ginkgo v1.16.2
 	github.com/onsi/gomega v1.13.0
