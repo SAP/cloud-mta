@@ -7,7 +7,7 @@ jobs:
       - image: cimg/go:1.18
     environment:
       - DEP_VERSION: 0.5.1
-    working_directory:  ~/go/src/github.com/SAP/cloud-mta
+    working_directory:  ~/go/src/github.com/yutaoj/cloud-mta
     steps:
       - checkout
       - run: go version
@@ -30,15 +30,15 @@ jobs:
             go get github.com/modocache/gover
             go install -mod=mod github.com/mattn/goveralls
             go install -mod=mod github.com/modocache/gover
-      - run: go test -mod=mod -v github.com/SAP/cloud-mta/mta -coverprofile=mta.coverprofile
-      - run: go test -mod=mod -v github.com/SAP/cloud-mta/validations -coverprofile=validations.coverprofile
+      - run: go test -mod=mod -v github.com/yutaoj/cloud-mta/mta -coverprofile=mta.coverprofile
+      - run: go test -mod=mod -v github.com/yutaoj/cloud-mta/validations -coverprofile=validations.coverprofile
       - run: gover
       - run: goveralls -v -service=circle-ci -coverprofile=gover.coverprofile -repotoken $COVERALLS_TOKEN
 
   compliance:
     docker:
       - image: circleci/python:3.10.0
-    working_directory: ~/go/src/github.com/SAP/cloud-mta
+    working_directory: ~/go/src/github.com/yutaoj/cloud-mta
     steps:
       - checkout
       - run:
@@ -50,7 +50,7 @@ jobs:
   release:
     docker:
       - image: cimg/go:1.18
-    working_directory: ~/go/src/github.com/SAP/cloud-mta
+    working_directory: ~/go/src/github.com/yutaoj/cloud-mta
     steps:
       - add_ssh_keys:
           fingerprints:
@@ -104,10 +104,10 @@ jobs:
             git config user.name "${CLOUD_MTA_BOT_USER}"
             git commit --allow-empty -m "[skip ci] Bump version ${MTA_VERSION}"
             #Push commit directly to master
-            git push -q https://github.com/SAP/cloud-mta.git master
+            git push -q https://github.com/yutaoj/cloud-mta.git master
             #Tag
             git tag -a v${MTA_VERSION} -m "New release ${MTA_VERSION}"
-            git push https://github.com/SAP/cloud-mta.git v${MTA_VERSION}
+            git push https://github.com/yutaoj/cloud-mta.git v${MTA_VERSION}
             
       - run:
           name: release new version
@@ -120,7 +120,7 @@ jobs:
   publish:
     docker:
       - image: cimg/node:lts
-    working_directory: ~/go/src/github.com/SAP/cloud-mta
+    working_directory: ~/go/src/github.com/yutaoj/cloud-mta
     steps:
       - add_ssh_keys:
           fingerprints:
@@ -142,7 +142,7 @@ jobs:
       - run:
           name: remove dummy release tag
           command: |
-            git push https://github.com/SAP/cloud-mta.git --delete release
+            git push https://github.com/yutaoj/cloud-mta.git --delete release
 
 workflows:
   version: 2
