@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/joho/godotenv v1.3.0
-	github.com/json-iterator/go v1.1.11
+	github.com/json-iterator/go v1.1.12
 	github.com/onsi/ginkgo v1.16.2
 	github.com/onsi/gomega v1.13.0
 	github.com/pkg/errors v0.9.1
@@ -28,7 +28,7 @@ require (
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
 	github.com/mitchellh/mapstructure v1.1.2 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/modern-go/reflect2 v1.0.1 // indirect
+	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/pelletier/go-toml v1.3.0 // indirect
 	github.com/spf13/afero v1.2.2 // indirect
