@@ -38,15 +38,19 @@ func createMtaYamlFile(path string, mkDirs func(string, os.FileMode) error) (rer
 	return
 }
 
-func GetMtaFromFile(path string, extensions []string, returnMergeError bool) (mta *MTA, messages []string, err error) {
+func GetMtaFromFile(path string, extensions []string, returnMergeError bool, strict bool) (mta *MTA, messages []string, err error) {
+	// fmt.Println("GetMtaFromFile 1111111111111111")
 	mtaContent, err := fs.ReadFile(filepath.Join(path))
 	if err != nil {
 		return nil, nil, err
 	}
 	mta, err = Unmarshal(mtaContent)
-	if err != nil {
+	if strict && err != nil {
+		//fmt.Println("GetMtaFromFile 2222222222222222222222")
 		return nil, nil, errors.Wrapf(err, UnmarshalFailsMsg, path)
 	}
+
+	//fmt.Println("GetMtaFromFile 333333333333333333333")
 
 	// If there is an error during the merge return the result so far and return the error as a message (or error if required).
 	extErr := mergeWithExtensionFiles(mta, extensions, path)
@@ -56,8 +60,30 @@ func GetMtaFromFile(path string, extensions []string, returnMergeError bool) (mt
 		}
 		messages = []string{extErr.Error()}
 	}
+	// fmt.Println("GetMtaFromFile 444444444444444")
 	return mta, messages, nil
 }
+
+// func GetMtaFromFile(path string, extensions []string, returnMergeError bool) (mta *MTA, messages []string, err error) {
+// 	mtaContent, err := fs.ReadFile(filepath.Join(path))
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
+// 	mta, err = Unmarshal(mtaContent)
+// 	if err != nil {
+// 		return nil, nil, errors.Wrapf(err, UnmarshalFailsMsg, path)
+// 	}
+
+// 	// If there is an error during the merge return the result so far and return the error as a message (or error if required).
+// 	extErr := mergeWithExtensionFiles(mta, extensions, path)
+// 	if extErr != nil {
+// 		if returnMergeError {
+// 			return mta, nil, extErr
+// 		}
+// 		messages = []string{extErr.Error()}
+// 	}
+// 	return mta, messages, nil
+// }
 
 func unmarshalData(dataJSON string, o interface{}) error {
 	dataYaml, err := ghodss.JSONToYAML([]byte(dataJSON))
@@ -93,9 +119,9 @@ func DeleteMta(path string) error {
 	return fs.DeleteDir(path)
 }
 
-//AddModule - adds a new module.
+// AddModule - adds a new module.
 func AddModule(path string, moduleDataJSON string, marshal func(*MTA) ([]byte, error)) ([]string, error) {
-	mta, messages, err := GetMtaFromFile(filepath.Join(path), nil, false)
+	mta, messages, err := GetMtaFromFile(filepath.Join(path), nil, false, true)
 	if err != nil {
 		return messages, err
 	}
@@ -110,9 +136,9 @@ func AddModule(path string, moduleDataJSON string, marshal func(*MTA) ([]byte, e
 	return messages, saveMTA(path, mta, marshal)
 }
 
-//AddResource - adds a new resource.
+// AddResource - adds a new resource.
 func AddResource(path string, resourceDataJSON string, marshal func(*MTA) ([]byte, error)) ([]string, error) {
-	mta, messages, err := GetMtaFromFile(path, nil, false)
+	mta, messages, err := GetMtaFromFile(path, nil, false, true)
 	if err != nil {
 		return messages, err
 	}
@@ -127,18 +153,18 @@ func AddResource(path string, resourceDataJSON string, marshal func(*MTA) ([]byt
 	return messages, saveMTA(path, mta, marshal)
 }
 
-//GetModules - gets all modules.
+// GetModules - gets all modules.
 func GetModules(path string, extensions []string) ([]*Module, []string, error) {
-	mta, messages, err := GetMtaFromFile(path, extensions, false)
+	mta, messages, err := GetMtaFromFile(path, extensions, false, true)
 	if err != nil {
 		return nil, messages, err
 	}
 	return mta.Modules, messages, nil
 }
 
-//GetResources - gets all resources.
+// GetResources - gets all resources.
 func GetResources(path string, extensions []string) ([]*Resource, []string, error) {
-	mta, messages, err := GetMtaFromFile(path, extensions, false)
+	mta, messages, err := GetMtaFromFile(path, extensions, false, true)
 	if err != nil {
 		return nil, messages, err
 	}
@@ -148,7 +174,7 @@ func GetResources(path string, extensions []string) ([]*Resource, []string, erro
 // GetResourceConfig returns the configuration for a resource (its service creation parameters).
 // If both the config and path parameters are defined, the result is merged.
 func GetResourceConfig(path string, extensions []string, resourceName string, workspaceDir string) (map[string]interface{}, []string, error) {
-	mta, messages, err := GetMtaFromFile(path, extensions, false)
+	mta, messages, err := GetMtaFromFile(path, extensions, false, true)
 	if err != nil {
 		return nil, messages, err
 	}
@@ -214,7 +240,7 @@ func mergeMaps(first map[string]interface{}, second map[string]interface{}) map[
 // UpdateModule updates an existing module according to the module name. If more than one module with this
 // name exists, one of the modules is updated to the existing structure.
 func UpdateModule(path string, moduleDataJSON string, marshal func(*MTA) ([]byte, error)) ([]string, error) {
-	mtaObj, messages, err := GetMtaFromFile(path, nil, false)
+	mtaObj, messages, err := GetMtaFromFile(path, nil, false, true)
 	if err != nil {
 		return messages, err
 	}
@@ -239,7 +265,7 @@ func UpdateModule(path string, moduleDataJSON string, marshal func(*MTA) ([]byte
 // UpdateResource updates an existing resource according to the resource name. If more than one resource with this
 // name exists, one of the resources is updated in the existing structure.
 func UpdateResource(path string, resourceDataJSON string, marshal func(*MTA) ([]byte, error)) ([]string, error) {
-	mtaObj, messages, err := GetMtaFromFile(path, nil, false)
+	mtaObj, messages, err := GetMtaFromFile(path, nil, false, true)
 	if err != nil {
 		return messages, err
 	}
@@ -261,18 +287,18 @@ func UpdateResource(path string, resourceDataJSON string, marshal func(*MTA) ([]
 	return messages, fmt.Errorf("the '%s' resource does not exist", resource.Name)
 }
 
-//GetMtaID - gets MTA ID.
+// GetMtaID - gets MTA ID.
 func GetMtaID(path string) (string, []string, error) {
-	mta, messages, err := GetMtaFromFile(path, nil, false)
+	mta, messages, err := GetMtaFromFile(path, nil, false, true)
 	if err != nil {
 		return "", messages, err
 	}
 	return mta.ID, messages, nil
 }
 
-//IsNameUnique - checks if the name already exists as a `module`/`resource`/`provide` name.
+// IsNameUnique - checks if the name already exists as a `module`/`resource`/`provide` name.
 func IsNameUnique(path string, name string) (bool, []string, error) {
-	mta, messages, err := GetMtaFromFile(path, nil, false)
+	mta, messages, err := GetMtaFromFile(path, nil, false, true)
 	if err != nil {
 		return true, messages, err
 	}
@@ -295,27 +321,27 @@ func IsNameUnique(path string, name string) (bool, []string, error) {
 	return false, messages, nil
 }
 
-//getBuildParameters - gets the MTA build parameters.
+// getBuildParameters - gets the MTA build parameters.
 func GetBuildParameters(path string, extensions []string) (*ProjectBuild, []string, error) {
-	mta, messages, err := GetMtaFromFile(path, extensions, false)
+	mta, messages, err := GetMtaFromFile(path, extensions, false, true)
 	if err != nil {
 		return nil, messages, err
 	}
 	return mta.BuildParams, messages, nil
 }
 
-//getParameters - gets the MTA parameters.
+// getParameters - gets the MTA parameters.
 func GetParameters(path string, extensions []string) (*map[string]interface{}, []string, error) {
-	mta, messages, err := GetMtaFromFile(path, extensions, false)
+	mta, messages, err := GetMtaFromFile(path, extensions, false, true)
 	if err != nil {
 		return nil, messages, err
 	}
 	return &mta.Parameters, messages, nil
 }
 
-//UpdateBuildParameters - updates the MTA build parameters.
+// UpdateBuildParameters - updates the MTA build parameters.
 func UpdateBuildParameters(path string, buildParamsDataJSON string) ([]string, error) {
-	mta, messages, err := GetMtaFromFile(path, nil, false)
+	mta, messages, err := GetMtaFromFile(path, nil, false, true)
 	if err != nil {
 		return messages, err
 	}
@@ -330,9 +356,9 @@ func UpdateBuildParameters(path string, buildParamsDataJSON string) ([]string, e
 	return messages, saveMTA(path, mta, Marshal)
 }
 
-//UpdateParameters - updates the MTA parameters.
+// UpdateParameters - updates the MTA parameters.
 func UpdateParameters(path string, paramsDataJSON string) ([]string, error) {
-	mta, messages, err := GetMtaFromFile(path, nil, false)
+	mta, messages, err := GetMtaFromFile(path, nil, false, true)
 	if err != nil {
 		return messages, err
 	}

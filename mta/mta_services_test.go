@@ -57,7 +57,7 @@ var _ = Describe("MtaServices", func() {
 		mtaYamlSchemaVersion := "2.1"
 
 		It("returns MTA for valid filename without extensions", func() {
-			mta, messages, err := GetMtaFromFile(filepath.Join(wd, "testdata", "mtaValid.yaml"), nil, true)
+			mta, messages, err := GetMtaFromFile(filepath.Join(wd, "testdata", "mtaValid.yaml"), nil, true, true)
 			Ω(err).Should(Succeed())
 			Ω(messages).Should(BeEmpty())
 			Ω(mta).ShouldNot(BeNil())
@@ -131,19 +131,19 @@ var _ = Describe("MtaServices", func() {
 			}))
 		})
 		It("returns error for invalid filename", func() {
-			_, messages, err := GetMtaFromFile(filepath.Join(wd, "testdata", "mtaNonExisting.yaml"), nil, true)
+			_, messages, err := GetMtaFromFile(filepath.Join(wd, "testdata", "mtaNonExisting.yaml"), nil, true, true)
 			Ω(err).Should(HaveOccurred())
 			Ω(messages).Should(BeEmpty())
 		})
 		It("returns error for invalid mta yaml file", func() {
-			_, messages, err := GetMtaFromFile(filepath.Join(wd, "testdata", "mtaInvalid.yaml"), nil, true)
+			_, messages, err := GetMtaFromFile(filepath.Join(wd, "testdata", "mtaInvalid.yaml"), nil, true, true)
 			Ω(err).Should(HaveOccurred())
 			Ω(messages).Should(BeEmpty())
 		})
 		It("returns MTA with merged extensions for valid mta.yaml and extensions", func() {
 			mtaPath := filepath.Join(wd, "testdata", "testext", "mta.yaml")
 			extPath := filepath.Join(wd, "testdata", "testext", "cf-mtaext.yaml")
-			mta, messages, err := GetMtaFromFile(mtaPath, []string{extPath}, true)
+			mta, messages, err := GetMtaFromFile(mtaPath, []string{extPath}, true, true)
 			Ω(err).Should(Succeed())
 			Ω(messages).Should(BeEmpty())
 			Ω(mta).ShouldNot(BeNil())
@@ -205,7 +205,7 @@ var _ = Describe("MtaServices", func() {
 		It("returns extensions errors in messages when extensions are invalid and returnMergeError is false", func() {
 			mtaPath := filepath.Join(wd, "testdata", "testext", "mta.yaml")
 			extPath := filepath.Join(wd, "testdata", "testext", "unknown_extends.mtaext")
-			mta, messages, err := GetMtaFromFile(mtaPath, []string{extPath}, false)
+			mta, messages, err := GetMtaFromFile(mtaPath, []string{extPath}, false, true)
 			Ω(err).Should(Succeed())
 			Ω(messages).Should(ConsistOf(ContainSubstring(unknownExtendsMsg, "")))
 			Ω(mta).ShouldNot(BeNil())
@@ -262,7 +262,7 @@ var _ = Describe("MtaServices", func() {
 		It("returns extensions errors as error when extensions are invalid and returnMergeError is true", func() {
 			mtaPath := filepath.Join(wd, "testdata", "testext", "mta.yaml")
 			extPath := filepath.Join(wd, "testdata", "testext", "unknown_extends.mtaext")
-			mta, messages, err := GetMtaFromFile(mtaPath, []string{extPath}, true)
+			mta, messages, err := GetMtaFromFile(mtaPath, []string{extPath}, true, true)
 			Ω(err).Should(HaveOccurred())
 			Ω(err.Error()).Should(ContainSubstring(unknownExtendsMsg, ""))
 			Ω(messages).Should(BeEmpty())
@@ -320,7 +320,7 @@ var _ = Describe("MtaServices", func() {
 		It("returns error on extension when an extension version mismatches the MTA version", func() {
 			mtaPath := filepath.Join(wd, "testdata", "testext", "mta.yaml")
 			extPath := filepath.Join(wd, "testdata", "testext", "bad_version.mtaext")
-			_, _, err := GetMtaFromFile(mtaPath, []string{extPath}, true)
+			_, _, err := GetMtaFromFile(mtaPath, []string{extPath}, true, true)
 			Ω(err).Should(HaveOccurred())
 			Ω(err.Error()).Should(ContainSubstring(versionMismatchMsg, "3.1", extPath, mtaYamlSchemaVersion))
 		})

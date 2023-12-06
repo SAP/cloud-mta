@@ -52,7 +52,7 @@ func Validate(mtaPath string, extensions []string) ValidationResult {
 		allIssues[extPath] = createFileIssues(warningIssues, errorIssues)
 	}
 
-	_, _, e = mta.GetMtaFromFile(mtaPath, extensions, true)
+	_, _, e = mta.GetMtaFromFile(mtaPath, extensions, true, true)
 	if e != nil {
 		// Ignore errors which are not on a specific extension (if they are on the mta.yaml we already got them earlier)
 		// and parse errors from extensions (we already got them earlier too)
