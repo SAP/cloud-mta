@@ -1,8 +1,0 @@
-Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: cloud-mta
-Upstream-Contact: young-yang03 <young.yang03@sap.com>
-Source: https://github.com/SAP/cloud-mta
-
-Files: *
-Copyright: 2019-2021 SAP SE or an SAP affiliate company and cloud-mta contributors
-License: Apache-2.0
