@@ -74,7 +74,7 @@ The tool commands (APIs) are used to do the following:
 
 ## Command-Line Tool
 
-Some of the tool's features are available as an command-line tool, which can be downloaded from the GitHub releases page or installed as an npm package.
+Some of the tool's features are available as a command-line tool, which can be downloaded from the GitHub releases page or installed as an npm package.
 
 The commands of the CLI tool are used as APIs by other programs, such as the `mta-lib` npm package which exposes Javascript APIs for reading and manipulating the `mta.yaml` file.  
 
