@@ -137,12 +137,17 @@ const config = {
 
 More and more npm packages use ECMAScript modules instead of commonJS, for ECMAScript modules are the official standard format to package JavaScript code for reuse. From v1.0.5, we use axios instead of binwrap(which has moderate severity vulnerabilities) to download binary files, but axios only supports ECMAScript modules and can't work on Node.js v10 and lower minor version of Node.js v11, v12, v13. The axios can work on latest version of Node.js v11.15, v12.22, v13.14. So since v1.0.5, mta will not support Node.js v10 and lower versions, including lower minor version of Node.js v11, v12, v13.
 
-## Contributions
+## Support, Feedback, Contributing
 
-Contributions are greatly appreciated.
-See [CONTRIBUTING.md](https://github.com/SAP/cloud-mta/blob/master/.github/CONTRIBUTING.md) for details.
+This project is open to feature requests/suggestions, bug reports etc. via [GitHub issues](https://github.com/SAP/cloud-mta/issues). Contribution and feedback are encouraged and always welcome. For more information about how to contribute, the project structure, as well as additional contribution information, see our [Contribution Guidelines](CONTRIBUTING.md).
 
-## Support
+## Security / Disclosure
+If you find any bug that may be a security problem, please follow our instructions at [in our security policy](https://github.com/SAP/cloud-mta/security/policy) on how to report it. Please do not create GitHub issues for security-related doubts or problems.
 
-Please follow our [issue template](https://github.com/SAP/cloud-mta/blob/master/.github/ISSUE_TEMPLATE/bug_report.md) on how to report an issue.
+## Code of Conduct
 
+We as members, contributors, and leaders pledge to make participation in our community a harassment-free experience for everyone. By participating in this project, you agree to abide by its [Code of Conduct](https://github.com/SAP/.github/blob/main/CODE_OF_CONDUCT.md) at all times.
+
+## Licensing
+
+Copyright 2019-2026 SAP SE or an SAP affiliate company and cloud-mta contributors. Please see our [LICENSE](LICENSE) for copyright and license information. Detailed information including third-party components and their licensing/copyright information is available [via the REUSE tool](https://api.reuse.software/info/github.com/SAP/cloud-mta).
