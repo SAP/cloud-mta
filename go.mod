@@ -1,13 +1,13 @@
 module github.com/SAP/cloud-mta
 
-go 1.18
+go 1.25.0
 
 require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/joho/godotenv v1.3.0
 	github.com/json-iterator/go v1.1.12
 	github.com/onsi/ginkgo v1.16.2
-	github.com/onsi/gomega v1.13.0
+	github.com/onsi/gomega v1.42.1
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/smallfish/simpleyaml v0.0.0-20170911015856-a32031077861
@@ -20,6 +20,7 @@ require (
 
 require (
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
+	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/magiconair/properties v1.8.1 // indirect
@@ -36,10 +37,12 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
-	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9 // indirect
-	golang.org/x/net v0.0.0-20210428140749-89ef3d95e781 // indirect
-	golang.org/x/sys v0.0.0-20210423082822-04245dca01da // indirect
-	golang.org/x/text v0.3.6 // indirect
+	go.yaml.in/yaml/v3 v3.0.4 // indirect
+	golang.org/x/crypto v0.53.0 // indirect
+	golang.org/x/net v0.56.0 // indirect
+	golang.org/x/sys v0.46.0 // indirect
+	golang.org/x/term v0.44.0 // indirect
+	golang.org/x/text v0.38.0 // indirect
 	gopkg.in/ini.v1 v1.57.0 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 )
